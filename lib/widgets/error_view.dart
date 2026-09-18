@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Error state with an optional retry button. Shows a friendly message only.
+import '../core/design/tokens.dart';
+import 'components/app_button.dart';
+
+/// Custom error state with an accent halo and a retry action.
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.message, this.onRetry});
 
@@ -11,22 +14,49 @@ class ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
+            Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppGradients.card,
+                border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.4),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.danger.withValues(alpha: 0.22),
+                    blurRadius: 24,
+                    spreadRadius: -4,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                size: 40,
+                color: AppColors.danger,
+              ),
             ),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.subhead,
+              ),
+            ),
             if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.tonal(
+              const SizedBox(height: AppSpacing.lg),
+              AppButton(
+                label: 'Thử lại',
+                variant: AppButtonVariant.secondary,
+                fullWidth: false,
                 onPressed: onRetry,
-                child: const Text('Thử lại'),
               ),
             ],
           ],

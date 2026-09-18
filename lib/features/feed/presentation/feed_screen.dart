@@ -4,42 +4,113 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/constants.dart';
+import '../../../core/design/tokens.dart';
+import '../../../widgets/components/app_scaffold.dart';
+import '../../../widgets/components/app_top_bar.dart';
+import '../../../widgets/components/press_scale.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
 import '../providers/feed_providers.dart';
 import 'widgets/post_card.dart';
 
-/// Home feed with two tabs: chronological "Đang theo dõi" and "Yêu thích".
-class FeedScreen extends StatelessWidget {
+/// Home feed with two custom segments: chronological "Đang theo dõi" and
+/// "Yêu thích".
+class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
 
   @override
+  State<FeedScreen> createState() => _FeedScreenState();
+}
+
+class _FeedScreenState extends State<FeedScreen> {
+  int _tab = 0;
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Snapshot', style: brandWordmark(context, size: 26)),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.add_box_outlined),
-              tooltip: 'Đăng bài',
-              onPressed: () => context.push(Routes.createPost),
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Đang theo dõi'),
-              Tab(text: 'Yêu thích'),
-            ],
+    return AppScaffold(
+      topBar: AppTopBar(
+        titleWidget: Text('Snapshot', style: brandWordmark(context, size: 26)),
+        actions: [
+          AppIconButton(
+            icon: Icons.add_box_outlined,
+            tooltip: 'Đăng bài',
+            onTap: () => context.push(Routes.createPost),
           ),
+        ],
+        bottom: _SegmentedTabs(
+          index: _tab,
+          labels: const ['Đang theo dõi', 'Yêu thích'],
+          onChanged: (i) => setState(() => _tab = i),
         ),
-        body: const TabBarView(
-          children: [
-            _FeedList(kind: FeedKind.following),
-            _FeedList(kind: FeedKind.favorites),
-          ],
-        ),
+      ),
+      body: IndexedStack(
+        index: _tab,
+        children: const [
+          _FeedList(kind: FeedKind.following),
+          _FeedList(kind: FeedKind.favorites),
+        ],
+      ),
+    );
+  }
+}
+
+/// Custom pill segmented control (replaces Material TabBar).
+class _SegmentedTabs extends StatelessWidget {
+  const _SegmentedTabs({
+    required this.index,
+    required this.labels,
+    required this.onChanged,
+  });
+
+  final int index;
+  final List<String> labels;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
+      padding: const EdgeInsets.all(AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: AppColors.layer1,
+        borderRadius: AppRadius.brMd,
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Row(
+        children: List.generate(labels.length, (i) {
+          final active = i == index;
+          return Expanded(
+            child: PressScale(
+              onTap: () => onChanged(i),
+              child: AnimatedContainer(
+                duration: AppMotion.base,
+                curve: AppMotion.standard,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                decoration: BoxDecoration(
+                  gradient: active ? AppGradients.elevated : null,
+                  borderRadius: AppRadius.brMd,
+                  boxShadow: active ? AppShadows.soft : null,
+                ),
+                child: Text(
+                  labels[i],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: active
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
+                    fontSize: AppType.body,
+                    fontWeight: active ? AppType.bold : AppType.medium,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -88,17 +159,21 @@ class _FeedListState extends ConsumerState<_FeedList>
     }
     if (state.posts.isEmpty) {
       return RefreshIndicator(
+        color: AppColors.primary,
+        backgroundColor: AppColors.layer2,
         onRefresh: () =>
             ref.read(feedControllerProvider(widget.kind).notifier).refresh(),
         child: ListView(
           children: [
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.6,
+              height: MediaQuery.of(context).size.height * 0.55,
               child: EmptyView(
                 message: widget.kind == FeedKind.favorites
                     ? 'Chưa có bài viết từ danh sách Yêu thích.\nThêm người vào Yêu thích từ menu bài viết.'
-                    : 'Chưa có bài viết. Hãy theo dõi thêm người hoặc đăng bài.',
-                icon: Icons.dynamic_feed,
+                    : 'Chưa có bài viết.\nHãy theo dõi thêm người hoặc đăng bài.',
+                icon: widget.kind == FeedKind.favorites
+                    ? Icons.star_rounded
+                    : Icons.dynamic_feed_rounded,
               ),
             ),
           ],
@@ -107,24 +182,48 @@ class _FeedListState extends ConsumerState<_FeedList>
     }
 
     return RefreshIndicator(
+      color: AppColors.primary,
+      backgroundColor: AppColors.layer2,
       onRefresh: () =>
           ref.read(feedControllerProvider(widget.kind).notifier).refresh(),
       child: ListView.builder(
         controller: _scroll,
+        padding: const EdgeInsets.only(
+          top: AppSpacing.xs,
+          bottom: AppSpacing.xl,
+        ),
         itemCount: state.posts.length + 1,
         itemBuilder: (_, i) {
           if (i == state.posts.length) {
             return Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Center(
                 child: state.hasMore
-                    ? const CircularProgressIndicator()
-                    : const Text('Đã hết bài viết'),
+                    ? const SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : Text(
+                        'Đã hết bài viết',
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: AppType.label,
+                        ),
+                      ),
               ),
             );
           }
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.sm,
+            ),
             child: PostCard(post: state.posts[i]),
           );
         },

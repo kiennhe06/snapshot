@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Full-width primary button that shows a spinner while [isLoading].
+import '../../../../widgets/components/app_button.dart';
+
+/// Thin wrapper kept for existing call sites; delegates to the custom [AppButton].
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,
@@ -17,21 +19,11 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
-      onPressed: isLoading ? null : onPressed,
-      child: isLoading
-          ? const SizedBox(
-              height: 22,
-              width: 22,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[Icon(icon), const SizedBox(width: 8)],
-                Text(label),
-              ],
-            ),
+    return AppButton(
+      label: label,
+      onPressed: onPressed,
+      isLoading: isLoading,
+      icon: icon,
     );
   }
 }

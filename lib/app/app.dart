@@ -15,9 +15,10 @@ class App extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Snapshot',
       debugShowCheckedModeBanner: false,
-      theme: buildLightTheme(),
-      darkTheme: buildDarkTheme(),
-      themeMode: ThemeMode.system,
+      // "Moment" light look (soft pink, airy), single theme.
+      theme: buildAppTheme(),
+      darkTheme: buildAppTheme(),
+      themeMode: ThemeMode.light,
       routerConfig: router,
       supportedLocales: const [Locale('vi'), Locale('en')],
       localizationsDelegates: const [

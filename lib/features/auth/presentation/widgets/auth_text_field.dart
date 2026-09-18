@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Reusable labelled text field used across auth screens.
+import '../../../../widgets/components/app_text_field.dart';
+
+/// Thin wrapper kept for existing call sites; delegates to the custom
+/// [AppTextField].
 class AuthTextField extends StatelessWidget {
   const AuthTextField({
     super.key,
@@ -29,19 +32,17 @@ class AuthTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return AppTextField(
       controller: controller,
-      keyboardType: keyboardType,
+      label: label,
+      hint: hint,
+      icon: prefixIcon,
       obscureText: obscureText,
-      validator: validator,
+      keyboardType: keyboardType,
       textInputAction: textInputAction,
+      suffix: suffix,
+      validator: validator,
       autofillHints: autofillHints,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
-        suffixIcon: suffix,
-      ),
     );
   }
 }

@@ -5,14 +5,17 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants.dart';
+import '../../../../core/design/tokens.dart';
 import '../../../../models/post.dart';
+import '../../../../widgets/components/app_card.dart';
+import '../../../../widgets/components/app_top_bar.dart';
+import '../../../../widgets/components/press_scale.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../../profile/providers/profile_providers.dart';
 import '../../providers/feed_providers.dart';
 
-/// A single feed post: author header, media carousel, like/comment actions and
-/// caption. Images are cached ([CachedNetworkImage]) and carry alt text as a
-/// semantics label for screen readers.
+/// A feed post as a custom depth card: author header, media carousel, like/
+/// comment actions and caption. No Material ListTile/Card.
 class PostCard extends ConsumerStatefulWidget {
   const PostCard({super.key, required this.post});
 
@@ -32,174 +35,251 @@ class _PostCardState extends ConsumerState<PostCard> {
     final isLiked =
         ref.watch(isLikedProvider(post.postId)).valueOrNull ?? false;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          leading: GestureDetector(
-            onTap: () => context.push('${Routes.userProfile}/${post.authorId}'),
-            child: CircleAvatar(
-              backgroundImage: author?.photoUrl != null
-                  ? CachedNetworkImageProvider(author!.photoUrl!)
-                  : null,
-              child: author?.photoUrl == null ? const Icon(Icons.person) : null,
+    return AppCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                PressScale(
+                  onTap: () =>
+                      context.push('${Routes.userProfile}/${post.authorId}'),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.layer3,
+                    backgroundImage: author?.photoUrl != null
+                        ? CachedNetworkImageProvider(author!.photoUrl!)
+                        : null,
+                    child: author?.photoUrl == null
+                        ? const Icon(
+                            Icons.person,
+                            size: AppIconSize.md,
+                            color: AppColors.textSecondary,
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        author?.username.isNotEmpty == true
+                            ? author!.username
+                            : (author?.displayName ?? '...'),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: AppType.subhead,
+                          fontWeight: AppType.bold,
+                        ),
+                      ),
+                      if (post.location != null)
+                        Text(
+                          post.location!,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: AppType.small,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                AppIconButton(
+                  icon: Icons.more_horiz_rounded,
+                  onTap: () => _postMenu(context, post),
+                ),
+              ],
             ),
           ),
-          title: Text(
-            author?.username.isNotEmpty == true
-                ? author!.username
-                : (author?.displayName ?? '...'),
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          subtitle: post.location != null ? Text(post.location!) : null,
-          trailing: IconButton(
-            icon: const Icon(Icons.more_horiz),
-            onPressed: () => _postMenu(context, post),
-          ),
-        ),
 
-        // Media carousel
-        AspectRatio(
-          aspectRatio: 1,
-          child: Stack(
-            alignment: Alignment.bottomCenter,
-            children: [
-              PageView.builder(
-                itemCount: post.media.length,
-                onPageChanged: (i) => setState(() => _page = i),
-                itemBuilder: (_, i) {
-                  final m = post.media[i];
-                  if (m.type == 'video') {
-                    return Container(
-                      color: Colors.black,
-                      child: const Center(
-                        child: Icon(
-                          Icons.play_circle_outline,
-                          color: Colors.white,
-                          size: 56,
+          // Media carousel
+          AspectRatio(
+            aspectRatio: 1,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                PageView.builder(
+                  itemCount: post.media.length,
+                  onPageChanged: (i) => setState(() => _page = i),
+                  itemBuilder: (_, i) {
+                    final m = post.media[i];
+                    if (m.type == 'video') {
+                      return Container(
+                        color: AppColors.layer3,
+                        child: const Center(
+                          child: Icon(
+                            Icons.play_circle_outline_rounded,
+                            color: AppColors.primary,
+                            size: 56,
+                          ),
+                        ),
+                      );
+                    }
+                    return Semantics(
+                      label: m.altText.isEmpty ? null : m.altText,
+                      image: true,
+                      child: CachedNetworkImage(
+                        imageUrl: m.url,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        placeholder: (_, _) =>
+                            Container(color: AppColors.layer1),
+                        errorWidget: (_, _, _) => const Icon(
+                          Icons.broken_image_rounded,
+                          color: AppColors.textTertiary,
                         ),
                       ),
                     );
-                  }
-                  return Semantics(
-                    label: m.altText.isEmpty ? null : m.altText,
-                    image: true,
-                    child: CachedNetworkImage(
-                      imageUrl: m.url,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: (_, _) => Container(color: Colors.black12),
-                      errorWidget: (_, _, _) => const Icon(Icons.broken_image),
-                    ),
-                  );
-                },
-              ),
-              if (post.media.length > 1)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(post.media.length, (i) {
-                      final active = i == _page;
-                      return Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: active ? Colors.white : Colors.white54,
-                        ),
-                      );
-                    }),
-                  ),
+                  },
                 ),
-            ],
-          ),
-        ),
-
-        // Actions
-        Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                isLiked ? Icons.favorite : Icons.favorite_border,
-                color: isLiked ? Theme.of(context).colorScheme.primary : null,
-              ),
-              tooltip: isLiked ? 'Bỏ thích' : 'Thích',
-              onPressed: () {
-                final uid = ref.read(authStateProvider).valueOrNull?.uid;
-                if (uid != null) {
-                  ref.read(feedRepositoryProvider).toggleLike(post.postId, uid);
-                }
-              },
+                if (post.media.length > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(post.media.length, (i) {
+                        final active = i == _page;
+                        return Container(
+                          width: 6,
+                          height: 6,
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: active
+                                ? AppColors.primary
+                                : AppColors.textPrimary.withValues(alpha: 0.5),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(Icons.mode_comment_outlined),
-              onPressed: post.commentsDisabled
-                  ? null
-                  : () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Bình luận sẽ có ở giai đoạn sau.'),
+          ),
+
+          // Actions + caption
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AppIconButton(
+                      icon: isLiked
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: isLiked ? AppColors.primary : null,
+                      tooltip: isLiked ? 'Bỏ thích' : 'Thích',
+                      onTap: () {
+                        final uid = ref
+                            .read(authStateProvider)
+                            .valueOrNull
+                            ?.uid;
+                        if (uid != null) {
+                          ref
+                              .read(feedRepositoryProvider)
+                              .toggleLike(post.postId, uid);
+                        }
+                      },
+                    ),
+                    AppIconButton(
+                      icon: Icons.mode_comment_outlined,
+                      tooltip: 'Bình luận',
+                      onTap: post.commentsDisabled
+                          ? null
+                          : () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Bình luận sẽ có ở giai đoạn sau.',
+                                ),
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!post.likesHidden)
+                        Text(
+                          '${post.likesCount} lượt thích',
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: AppType.body,
+                            fontWeight: AppType.bold,
+                          ),
+                        ),
+                      if (post.caption.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.xs),
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: AppType.body,
+                                height: 1.35,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: author?.username.isNotEmpty == true
+                                      ? '${author!.username} '
+                                      : '',
+                                  style: const TextStyle(
+                                    fontWeight: AppType.bold,
+                                  ),
+                                ),
+                                TextSpan(text: post.caption),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (!post.commentsDisabled && post.commentsCount > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.xs),
+                          child: Text(
+                            'Xem tất cả ${post.commentsCount} bình luận',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: AppType.label,
+                            ),
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: Text(
+                          DateFormat(
+                            'dd/MM/yyyy HH:mm',
+                            'vi',
+                          ).format(post.createdAt),
+                          style: const TextStyle(
+                            color: AppColors.textTertiary,
+                            fontSize: AppType.small,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-
-        // Likes + caption
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!post.likesHidden)
-                Text(
-                  '${post.likesCount} lượt thích',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              if (post.caption.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: RichText(
-                    text: TextSpan(
-                      style: DefaultTextStyle.of(context).style,
-                      children: [
-                        TextSpan(
-                          text:
-                              '${author?.username.isNotEmpty == true ? author!.username : ''} ',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        TextSpan(text: post.caption),
-                      ],
-                    ),
-                  ),
-                ),
-              if (!post.commentsDisabled && post.commentsCount > 0)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Xem tất cả ${post.commentsCount} bình luận',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 8),
-                child: Text(
-                  DateFormat('dd/MM/yyyy HH:mm', 'vi').format(post.createdAt),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-              ),
-            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -214,7 +294,9 @@ class _PostCardState extends ConsumerState<PostCard> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(isFav ? Icons.star : Icons.star_border),
+              leading: Icon(
+                isFav ? Icons.star_rounded : Icons.star_border_rounded,
+              ),
               title: Text(
                 isFav ? 'Bỏ khỏi Yêu thích' : 'Thêm vào Yêu thích (Favorites)',
               ),
@@ -232,7 +314,7 @@ class _PostCardState extends ConsumerState<PostCard> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person_outline),
+              leading: const Icon(Icons.person_outline_rounded),
               title: const Text('Xem trang cá nhân'),
               onTap: () {
                 Navigator.pop(context);
