@@ -30,6 +30,11 @@ service cloud.firestore {
         allow read: if signedIn();
         allow write: if signedIn() && request.auth.uid == followerUid;
       }
+
+      // Favorites (close friends) — private to the owner.
+      match /favorites/{targetUid} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
     }
 
     // Username uniqueness index.
@@ -43,8 +48,15 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if signedIn()
+      allow delete: if signedIn()
         && resource.data.authorId == request.auth.uid;
+      // Author can edit anything; anyone signed in may change only the
+      // like/comment counters (needed for like/unlike from the feed).
+      allow update: if signedIn() && (
+        resource.data.authorId == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['likesCount', 'commentsCount'])
+      );
 
       match /likes/{uid} {
         allow read: if signedIn();

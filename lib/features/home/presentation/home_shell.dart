@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../core/constants.dart';
+import '../../explore/presentation/explore_screen.dart';
+import '../../feed/presentation/feed_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 
-/// Main app shell with bottom navigation. Feed arrives in a later phase; for now
-/// the two tabs are a placeholder Home and the user's own Profile.
+/// Main app shell with bottom navigation: Feed, Explore, Profile.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -23,8 +22,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       body: IndexedStack(
         index: _index,
         children: const [
-          _FeedPlaceholder(),
-          ProfileScreen(), // own profile (uid == null)
+          FeedScreen(),
+          ExploreScreen(),
+          ProfileScreen(), // own profile
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -33,43 +33,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
             label: 'Trang chủ',
           ),
+          NavigationDestination(icon: Icon(Icons.search), label: 'Khám phá'),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: 'Hồ sơ',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FeedPlaceholder extends StatelessWidget {
-  const _FeedPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Snapshot'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_box_outlined),
-            tooltip: 'Đăng bài',
-            onPressed: () => context.push(Routes.createPost),
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Bảng tin (feed) sẽ có ở giai đoạn sau.\n'
-            'Hãy vào tab Hồ sơ để đăng bài, sửa hồ sơ, tạo nametag...',
-            textAlign: TextAlign.center,
-          ),
-        ),
       ),
     );
   }
