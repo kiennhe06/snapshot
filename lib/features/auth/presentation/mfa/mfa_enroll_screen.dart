@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../data/auth_service.dart';
@@ -43,7 +44,12 @@ class _MfaEnrollScreenState extends ConsumerState<MfaEnrollScreen> {
 
   Future<void> _sendCode() async {
     if (!_phone.text.trim().startsWith('+')) {
-      _snack('Nhập số theo định dạng quốc tế, ví dụ +84901234567.');
+      _snack(
+        tr(
+          'Nhập số theo định dạng quốc tế, ví dụ +84901234567.',
+          'Enter the number in international format, e.g. +84901234567.',
+        ),
+      );
       return;
     }
     setState(() => _loading = true);
@@ -83,7 +89,9 @@ class _MfaEnrollScreenState extends ConsumerState<MfaEnrollScreen> {
         } catch (_) {}
       }
       if (!mounted) return;
-      _snack('Đã bật xác thực 2 lớp.');
+      _snack(
+        tr('Đã bật xác thực 2 lớp.', 'Two-factor authentication enabled.'),
+      );
       context.pop();
     } on FirebaseAuthException catch (e) {
       _snack(authErrorMessage(e));
@@ -96,16 +104,23 @@ class _MfaEnrollScreenState extends ConsumerState<MfaEnrollScreen> {
   Widget build(BuildContext context) {
     final isCodeStep = _verification != null;
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Bật xác thực 2 lớp', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Bật xác thực 2 lớp', 'Enable two-factor authentication'),
+        showBack: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Thêm số điện thoại làm lớp bảo mật thứ hai. Mỗi lần đăng nhập '
-              'bạn sẽ cần nhập thêm mã OTP.',
-              style: TextStyle(
+            Text(
+              tr(
+                'Thêm số điện thoại làm lớp bảo mật thứ hai. Mỗi lần đăng nhập '
+                    'bạn sẽ cần nhập thêm mã OTP.',
+                'Add a phone number as a second security layer. Each time you '
+                    'sign in you will need to enter an extra OTP code.',
+              ),
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.subhead,
                 height: 1.4,
@@ -114,7 +129,7 @@ class _MfaEnrollScreenState extends ConsumerState<MfaEnrollScreen> {
             const SizedBox(height: AppSpacing.xl),
             AppTextField(
               controller: _phone,
-              label: 'Số điện thoại (+84...)',
+              label: tr('Số điện thoại (+84...)', 'Phone number (+84...)'),
               keyboardType: TextInputType.phone,
               icon: Icons.phone_outlined,
             ),
@@ -122,14 +137,16 @@ class _MfaEnrollScreenState extends ConsumerState<MfaEnrollScreen> {
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
                 controller: _code,
-                label: 'Mã OTP (6 số)',
+                label: tr('Mã OTP (6 số)', 'OTP code (6 digits)'),
                 keyboardType: TextInputType.number,
                 icon: Icons.sms_outlined,
               ),
             ],
             const SizedBox(height: AppSpacing.xxl),
             AppButton(
-              label: isCodeStep ? 'Xác nhận & bật 2FA' : 'Gửi mã OTP',
+              label: isCodeStep
+                  ? tr('Xác nhận & bật 2FA', 'Confirm & enable 2FA')
+                  : tr('Gửi mã OTP', 'Send OTP code'),
               isLoading: _loading,
               onPressed: isCodeStep ? _confirm : _sendCode,
             ),

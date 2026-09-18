@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/constants.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../models/app_user.dart';
 import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
@@ -26,7 +27,11 @@ class ProfileScreen extends ConsumerWidget {
     final myUid = ref.watch(authStateProvider).valueOrNull?.uid;
     final profileUid = uid ?? myUid;
     if (profileUid == null) {
-      return const AppScaffold(body: EmptyView(message: 'Bạn chưa đăng nhập.'));
+      return AppScaffold(
+        body: EmptyView(
+          message: tr('Bạn chưa đăng nhập.', 'You are not signed in.'),
+        ),
+      );
     }
     final isMe = profileUid == myUid;
 
@@ -38,7 +43,7 @@ class ProfileScreen extends ConsumerWidget {
           if (isMe) ...[
             AppIconButton(
               icon: Icons.add_box_outlined,
-              tooltip: 'Đăng bài',
+              tooltip: tr('Đăng bài', 'New post'),
               onTap: () => context.push(Routes.createPost),
             ),
             _SettingsButton(uid: profileUid),
@@ -50,7 +55,9 @@ class ProfileScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(userProfileProvider(profileUid)),
         builder: (user) {
           if (user == null) {
-            return const EmptyView(message: 'Không tìm thấy người dùng.');
+            return EmptyView(
+              message: tr('Không tìm thấy người dùng.', 'User not found.'),
+            );
           }
           return _ProfileBody(user: user, isMe: isMe);
         },
@@ -68,7 +75,7 @@ class _TitleUsername extends ConsumerWidget {
     final user = ref.watch(userProfileProvider(uid)).valueOrNull;
     final name = user?.username.isNotEmpty == true
         ? '@${user!.username}'
-        : (user?.displayName ?? 'Hồ sơ');
+        : (user?.displayName ?? tr('Hồ sơ', 'Profile'));
     return Text(
       name,
       style: const TextStyle(
@@ -110,10 +117,12 @@ class _ProfileBody extends ConsumerWidget {
           onShowQr: () => context.push('${Routes.qrNametag}?uid=${user.uid}'),
         ),
         if (locked)
-          const Expanded(
+          Expanded(
             child: EmptyView(
-              message:
-                  'Đây là tài khoản riêng tư.\nHãy theo dõi để xem bài viết.',
+              message: tr(
+                'Đây là tài khoản riêng tư.\nHãy theo dõi để xem bài viết.',
+                'This account is private.\nFollow to see their posts.',
+              ),
               icon: Icons.lock_outline_rounded,
             ),
           )
@@ -198,8 +207,11 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
                     child: PostGrid(
                       posts: active,
                       emptyMessage: widget.isMe
-                          ? 'Chưa có bài viết. Nhấn + để đăng bài đầu tiên.'
-                          : 'Chưa có bài viết nào.',
+                          ? tr(
+                              'Chưa có bài viết. Nhấn + để đăng bài đầu tiên.',
+                              'No posts yet. Tap + to share your first one.',
+                            )
+                          : tr('Chưa có bài viết nào.', 'No posts yet.'),
                       onTap: (p) => _showPostViewer(context, p),
                       onLongPress: onLongPress,
                     ),
@@ -208,14 +220,20 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
               ),
               PostGrid(
                 posts: reels,
-                emptyMessage: 'Chưa có video/reels nào.',
+                emptyMessage: tr(
+                  'Chưa có video/reels nào.',
+                  'No videos/reels yet.',
+                ),
                 emptyIcon: Icons.movie_outlined,
                 onTap: (p) => _showPostViewer(context, p),
                 onLongPress: onLongPress,
               ),
               PostGrid(
                 posts: tagged,
-                emptyMessage: 'Chưa có bài viết được gắn thẻ.',
+                emptyMessage: tr(
+                  'Chưa có bài viết được gắn thẻ.',
+                  'No tagged posts yet.',
+                ),
                 emptyIcon: Icons.person_pin_outlined,
                 onTap: (p) => _showPostViewer(context, p),
               ),
@@ -230,7 +248,9 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
     showAppMenu(context, [
       AppMenuAction(
         icon: post.isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
-        label: post.isPinned ? 'Bỏ ghim' : 'Ghim lên hồ sơ (tối đa 3)',
+        label: post.isPinned
+            ? tr('Bỏ ghim', 'Unpin')
+            : tr('Ghim lên hồ sơ (tối đa 3)', 'Pin to profile (max 3)'),
         onTap: () async {
           final repo = ref.read(postRepositoryProvider);
           try {
@@ -242,7 +262,11 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(e is StateError ? e.message : 'Lỗi')),
+                SnackBar(
+                  content: Text(
+                    e is StateError ? e.message : tr('Lỗi', 'Error'),
+                  ),
+                ),
               );
             }
           }
@@ -250,26 +274,29 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
       ),
       AppMenuAction(
         icon: Icons.edit_outlined,
-        label: 'Chỉnh sửa bài viết',
+        label: tr('Chỉnh sửa bài viết', 'Edit post'),
         onTap: () => context.push(Routes.editPost, extra: post),
       ),
       AppMenuAction(
         icon: Icons.archive_outlined,
-        label: 'Lưu trữ bài viết',
+        label: tr('Lưu trữ bài viết', 'Archive post'),
         onTap: () async {
           await ref.read(postRepositoryProvider).setArchived(post.postId, true);
         },
       ),
       AppMenuAction(
         icon: Icons.delete_outline_rounded,
-        label: 'Xoá bài viết',
+        label: tr('Xoá bài viết', 'Delete post'),
         destructive: true,
         onTap: () async {
           final ok = await showAppConfirm(
             context,
-            title: 'Xoá bài viết',
-            message: 'Bạn có chắc muốn xoá bài viết này?',
-            confirmLabel: 'Xoá',
+            title: tr('Xoá bài viết', 'Delete post'),
+            message: tr(
+              'Bạn có chắc muốn xoá bài viết này?',
+              'Are you sure you want to delete this post?',
+            ),
+            confirmLabel: tr('Xoá', 'Delete'),
             destructive: true,
           );
           if (ok) {
@@ -329,9 +356,9 @@ class _PinnedRow extends StatelessWidget {
             color: AppColors.textSecondary,
           ),
           const SizedBox(width: AppSpacing.sm),
-          const Text(
-            'Đã ghim',
-            style: TextStyle(
+          Text(
+            tr('Đã ghim', 'Pinned'),
+            style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: AppType.body,
               fontWeight: AppType.medium,
@@ -369,7 +396,7 @@ class _SettingsButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return AppIconButton(
       icon: Icons.menu_rounded,
-      tooltip: 'Cài đặt',
+      tooltip: tr('Cài đặt', 'Settings'),
       onTap: () => _openMenu(context, ref),
     );
   }
@@ -380,22 +407,37 @@ class _SettingsButton extends ConsumerWidget {
     showAppMenu(context, [
       AppMenuAction(
         icon: Icons.edit_note_rounded,
-        label: 'Bản nháp',
+        label: tr('Bản nháp', 'Drafts'),
         onTap: () => context.push(Routes.drafts),
       ),
       AppMenuAction(
         icon: Icons.archive_outlined,
-        label: 'Bài lưu trữ',
+        label: tr('Bài lưu trữ', 'Archive'),
         onTap: () => context.push(Routes.archive),
       ),
       AppMenuAction(
+        icon: Icons.bookmark_border_rounded,
+        label: tr('Bài đã lưu', 'Saved'),
+        onTap: () => context.push(Routes.saved),
+      ),
+      AppMenuAction(
+        icon: Icons.speaker_notes_off_outlined,
+        label: tr(
+          'Từ khoá ẩn (lọc bình luận)',
+          'Hidden words (comment filter)',
+        ),
+        onTap: () => context.push(Routes.hiddenWords),
+      ),
+      AppMenuAction(
         icon: Icons.lock_reset_rounded,
-        label: 'Đổi mật khẩu',
+        label: tr('Đổi mật khẩu', 'Change password'),
         onTap: () => context.push(Routes.changePassword),
       ),
       AppMenuAction(
         icon: isPrivate ? Icons.public_rounded : Icons.lock_outline_rounded,
-        label: isPrivate ? 'Chuyển sang công khai' : 'Chuyển sang riêng tư',
+        label: isPrivate
+            ? tr('Chuyển sang công khai', 'Switch to public')
+            : tr('Chuyển sang riêng tư', 'Switch to private'),
         onTap: () async {
           final u = ref.read(userProfileProvider(uid)).valueOrNull;
           if (u != null) {
@@ -407,17 +449,24 @@ class _SettingsButton extends ConsumerWidget {
       ),
       AppMenuAction(
         icon: Icons.shield_outlined,
-        label: 'Bật 2FA',
+        label: tr('Bật 2FA', 'Enable 2FA'),
         onTap: () => context.push(Routes.mfaEnroll),
       ),
       AppMenuAction(
         icon: Icons.history_rounded,
-        label: 'Lịch sử đăng nhập',
+        label: tr('Lịch sử đăng nhập', 'Login history'),
         onTap: () => context.push(Routes.loginHistory),
       ),
       AppMenuAction(
+        icon: Icons.language_rounded,
+        label: currentLang == AppLang.vi
+            ? 'Ngôn ngữ: Tiếng Việt → English'
+            : 'Language: English → Tiếng Việt',
+        onTap: () => ref.read(localeProvider.notifier).toggle(),
+      ),
+      AppMenuAction(
         icon: Icons.logout_rounded,
-        label: 'Đăng xuất',
+        label: tr('Đăng xuất', 'Log out'),
         destructive: true,
         onTap: () async {
           await ref.read(authServiceProvider).signOut();

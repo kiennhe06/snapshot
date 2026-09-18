@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
@@ -17,7 +18,7 @@ class ArchiveScreen extends ConsumerWidget {
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
 
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Bài lưu trữ', showBack: true),
+      topBar: AppTopBar(title: tr('Bài lưu trữ', 'Archive'), showBack: true),
       body: uid == null
           ? const SizedBox.shrink()
           : AsyncValueView<List<Post>>(
@@ -27,7 +28,10 @@ class ArchiveScreen extends ConsumerWidget {
                 final archived = posts.where((p) => p.isArchived).toList();
                 return PostGrid(
                   posts: archived,
-                  emptyMessage: 'Chưa có bài viết nào được lưu trữ.',
+                  emptyMessage: tr(
+                    'Chưa có bài viết nào được lưu trữ.',
+                    'No archived posts yet.',
+                  ),
                   emptyIcon: Icons.archive_outlined,
                   onLongPress: (post) => _showRestore(context, ref, post),
                 );
@@ -40,7 +44,7 @@ class ArchiveScreen extends ConsumerWidget {
     showAppMenu(context, [
       AppMenuAction(
         icon: Icons.unarchive_outlined,
-        label: 'Khôi phục về hồ sơ',
+        label: tr('Khôi phục về hồ sơ', 'Restore to profile'),
         onTap: () async {
           await ref
               .read(postRepositoryProvider)

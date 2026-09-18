@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/constants.dart';
 import '../../../models/app_user.dart';
@@ -37,7 +38,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         titleWidget: _searchField(),
         bottom: AppSegmentedTabs(
           index: _tab,
-          labels: const ['Người dùng', 'Hashtag', 'Địa điểm'],
+          labels: [
+            tr('Người dùng', 'People'),
+            tr('Hashtag', 'Hashtags'),
+            tr('Địa điểm', 'Places'),
+          ],
           onChanged: (i) => setState(() => _tab = i),
         ),
       ),
@@ -79,10 +84,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 color: AppColors.textPrimary,
                 fontSize: AppType.subhead,
               ),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Tìm kiếm...',
-                hintStyle: TextStyle(color: AppColors.textTertiary),
+                hintText: tr('Tìm kiếm...', 'Search...'),
+                hintStyle: const TextStyle(color: AppColors.textTertiary),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -102,17 +107,22 @@ class _UserResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (query.isEmpty) {
-      return const _Hint('Nhập tên hoặc username để tìm.');
+      return _Hint(
+        tr(
+          'Nhập tên hoặc username để tìm.',
+          'Enter a name or username to search.',
+        ),
+      );
     }
     final result = ref.watch(userSearchProvider(query));
     return result.when(
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppColors.primary),
       ),
-      error: (_, _) => const _Hint('Lỗi tìm kiếm.'),
+      error: (_, _) => _Hint(tr('Lỗi tìm kiếm.', 'Search error.')),
       data: (users) {
         if (users.isEmpty) {
-          return const _Hint('Không tìm thấy người dùng.');
+          return _Hint(tr('Không tìm thấy người dùng.', 'No users found.'));
         }
         return ListView(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -143,17 +153,17 @@ class _PostResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (query.isEmpty) {
-      return const _Hint('Nhập từ khoá để tìm.');
+      return _Hint(tr('Nhập từ khoá để tìm.', 'Enter a keyword to search.'));
     }
     final result = ref.watch(provider);
     return result.when(
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppColors.primary),
       ),
-      error: (_, _) => const _Hint('Lỗi tìm kiếm.'),
+      error: (_, _) => _Hint(tr('Lỗi tìm kiếm.', 'Search error.')),
       data: (posts) {
         if (posts.isEmpty) {
-          return const _Hint('Không có kết quả.');
+          return _Hint(tr('Không có kết quả.', 'No results.'));
         }
         return GridView.builder(
           padding: const EdgeInsets.all(AppSpacing.md),

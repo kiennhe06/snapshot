@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../providers/profile_providers.dart';
 
@@ -53,10 +54,13 @@ class QrNametagScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xxl),
-              const Text(
-                'Cho bạn bè quét mã này để mở hồ sơ của bạn.',
+              Text(
+                tr(
+                  'Cho bạn bè quét mã này để mở hồ sơ của bạn.',
+                  'Let friends scan this code to open your profile.',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.subhead,
                 ),

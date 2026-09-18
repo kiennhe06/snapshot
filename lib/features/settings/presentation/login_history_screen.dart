@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/login_session.dart';
 import '../../../widgets/async_value_view.dart';
@@ -17,16 +18,24 @@ class LoginHistoryScreen extends ConsumerWidget {
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
 
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Lịch sử đăng nhập', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Lịch sử đăng nhập', 'Login history'),
+        showBack: true,
+      ),
       body: uid == null
-          ? const EmptyView(message: 'Bạn chưa đăng nhập.')
+          ? EmptyView(
+              message: tr('Bạn chưa đăng nhập.', 'You are not signed in.'),
+            )
           : AsyncValueView<List<LoginSession>>(
               value: ref.watch(sessionsProvider(uid)),
               onRetry: () => ref.invalidate(sessionsProvider(uid)),
               builder: (sessions) {
                 if (sessions.isEmpty) {
-                  return const EmptyView(
-                    message: 'Chưa có phiên đăng nhập nào được ghi lại.',
+                  return EmptyView(
+                    message: tr(
+                      'Chưa có phiên đăng nhập nào được ghi lại.',
+                      'No login sessions have been recorded yet.',
+                    ),
                     icon: Icons.devices_other,
                   );
                 }
@@ -53,19 +62,21 @@ class _SessionCard extends StatelessWidget {
   final VoidCallback onRevoke;
 
   String _method(String code) => switch (code) {
-    'password' => 'Email/Mật khẩu',
+    'password' => tr('Email/Mật khẩu', 'Email/Password'),
     'google.com' => 'Google',
-    'phone' => 'Số điện thoại',
+    'phone' => tr('Số điện thoại', 'Phone'),
     _ => code,
   };
 
   Future<void> _confirmRevoke(BuildContext context) async {
     final ok = await showAppConfirm(
       context,
-      title: 'Thu hồi phiên?',
-      message:
-          'Thiết bị "${session.deviceName}" sẽ bị đăng xuất khỏi tài khoản này.',
-      confirmLabel: 'Thu hồi',
+      title: tr('Thu hồi phiên?', 'Revoke session?'),
+      message: tr(
+        'Thiết bị "${session.deviceName}" sẽ bị đăng xuất khỏi tài khoản này.',
+        'The device "${session.deviceName}" will be signed out of this account.',
+      ),
+      confirmLabel: tr('Thu hồi', 'Revoke'),
       destructive: true,
     );
     if (ok) onRevoke();
@@ -125,9 +136,9 @@ class _SessionCard extends StatelessWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
-                        child: const Text(
-                          'Thiết bị này',
-                          style: TextStyle(
+                        child: Text(
+                          tr('Thiết bị này', 'This device'),
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: AppType.small,
                             fontWeight: AppType.medium,
@@ -146,7 +157,10 @@ class _SessionCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Đăng nhập: ${df.format(session.createdAt)}',
+                  tr(
+                    'Đăng nhập: ${df.format(session.createdAt)}',
+                    'Signed in: ${df.format(session.createdAt)}',
+                  ),
                   style: const TextStyle(
                     color: AppColors.textTertiary,
                     fontSize: AppType.label,
@@ -159,7 +173,7 @@ class _SessionCard extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             AppIconButton(
               icon: Icons.delete_outline_rounded,
-              tooltip: 'Thu hồi phiên',
+              tooltip: tr('Thu hồi phiên', 'Revoke session'),
               color: AppColors.danger,
               onTap: () => _confirmRevoke(context),
             ),

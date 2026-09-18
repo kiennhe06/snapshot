@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/post.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../interactions/providers/interaction_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../data/feed_repository.dart';
 
@@ -123,16 +124,29 @@ class FeedController extends FamilyNotifier<FeedState, FeedKind> {
     final uid = _uid;
     final following = ref.read(followingIdsProvider).valueOrNull ?? const [];
     final favorites = ref.read(favoriteIdsProvider).valueOrNull ?? const [];
+    final blocked = ref.read(blockedIdsProvider).valueOrNull ?? const [];
+    final muted = ref.read(mutedIdsProvider).valueOrNull ?? const [];
+    // Blocked authors are hidden everywhere; muted authors are hidden from the
+    // home feeds (but still reachable via their profile).
+    bool allowed(Post p) => !blocked.contains(p.authorId);
+    bool notMuted(Post p) => !muted.contains(p.authorId);
     return switch (_kind) {
       FeedKind.following =>
         posts
             .where((p) => p.authorId == uid || following.contains(p.authorId))
+            .where(allowed)
+            .where(notMuted)
             .toList(),
       FeedKind.favorites =>
-        posts.where((p) => favorites.contains(p.authorId)).toList(),
+        posts
+            .where((p) => favorites.contains(p.authorId))
+            .where(allowed)
+            .toList(),
       FeedKind.explore =>
         posts
             .where((p) => p.authorId != uid && !following.contains(p.authorId))
+            .where(allowed)
+            .where(notMuted)
             .toList(),
     };
   }

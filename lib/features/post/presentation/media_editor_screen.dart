@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/services/image_edit_service.dart';
 
@@ -55,8 +56,11 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
     final cropped = await ImageCropper().cropImage(
       sourcePath: _working.path,
       uiSettings: [
-        AndroidUiSettings(toolbarTitle: 'Cắt ảnh', lockAspectRatio: false),
-        IOSUiSettings(title: 'Cắt ảnh'),
+        AndroidUiSettings(
+          toolbarTitle: tr('Cắt ảnh', 'Crop photo'),
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(title: tr('Cắt ảnh', 'Crop photo')),
       ],
     );
     if (cropped != null) {
@@ -77,11 +81,11 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
     const panelBg = AppColors.textPrimary;
     return AppScaffold(
       topBar: AppTopBar(
-        title: 'Chỉnh sửa',
+        title: tr('Chỉnh sửa', 'Edit'),
         showBack: true,
         actions: [
           AppButton(
-            label: 'Xong',
+            label: tr('Xong', 'Done'),
             variant: AppButtonVariant.ghost,
             fullWidth: false,
             height: 40,
@@ -139,21 +143,21 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _slider(
-                  'Độ sáng',
+                  tr('Độ sáng', 'Brightness'),
                   _brightness,
                   0.5,
                   1.5,
                   (v) => _brightness = v,
                 ),
                 _slider(
-                  'Tương phản',
+                  tr('Tương phản', 'Contrast'),
                   _contrast,
                   0.5,
                   1.5,
                   (v) => _contrast = v,
                 ),
                 _slider(
-                  'Màu sắc',
+                  tr('Màu sắc', 'Saturation'),
                   _saturation,
                   0.0,
                   2.0,
@@ -161,7 +165,7 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 AppButton(
-                  label: 'Cắt / Xoay',
+                  label: tr('Cắt / Xoay', 'Crop / Rotate'),
                   variant: AppButtonVariant.secondary,
                   icon: Icons.crop,
                   height: 48,

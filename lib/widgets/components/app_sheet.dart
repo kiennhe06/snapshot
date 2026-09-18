@@ -22,9 +22,12 @@ Future<void> showAppMenu(BuildContext context, List<AppMenuAction> actions) {
   return showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (_) => Container(
+    builder: (sheetContext) => Container(
       margin: const EdgeInsets.all(AppSpacing.md),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(sheetContext).size.height * 0.72,
+      ),
       decoration: BoxDecoration(
         color: AppColors.layer1,
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -44,41 +47,52 @@ Future<void> showAppMenu(BuildContext context, List<AppMenuAction> actions) {
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
-            for (final a in actions)
-              PressScale(
-                onTap: () {
-                  Navigator.pop(context);
-                  a.onTap();
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        a.icon,
-                        size: AppIconSize.md,
-                        color: a.destructive
-                            ? AppColors.danger
-                            : AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Text(
-                        a.label,
-                        style: TextStyle(
-                          color: a.destructive
-                              ? AppColors.danger
-                              : AppColors.textPrimary,
-                          fontSize: AppType.subhead,
-                          fontWeight: AppType.medium,
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final a in actions)
+                      PressScale(
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          a.onTap();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.md,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                a.icon,
+                                size: AppIconSize.md,
+                                color: a.destructive
+                                    ? AppColors.danger
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Text(
+                                  a.label,
+                                  style: TextStyle(
+                                    color: a.destructive
+                                        ? AppColors.danger
+                                        : AppColors.textPrimary,
+                                    fontSize: AppType.subhead,
+                                    fontWeight: AppType.medium,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
+            ),
           ],
         ),
       ),

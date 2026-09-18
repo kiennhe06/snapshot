@@ -12,6 +12,8 @@ import '../features/auth/presentation/sign_up_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
 import '../features/auth/providers/auth_providers.dart';
 import '../features/home/presentation/home_shell.dart';
+import '../features/interactions/presentation/hidden_words_screen.dart';
+import '../features/interactions/presentation/saved_screen.dart';
 import '../features/post/presentation/create_post_screen.dart';
 import '../features/post/presentation/drafts_screen.dart';
 import '../features/post/presentation/edit_post_screen.dart';
@@ -117,6 +119,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: Routes.drafts, builder: (_, _) => const DraftsScreen()),
       GoRoute(path: Routes.archive, builder: (_, _) => const ArchiveScreen()),
+      GoRoute(path: Routes.saved, builder: (_, _) => const SavedScreen()),
+      GoRoute(
+        path: Routes.hiddenWords,
+        builder: (_, _) => const HiddenWordsScreen(),
+      ),
     ],
   );
 });

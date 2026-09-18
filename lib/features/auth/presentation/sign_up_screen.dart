@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:snapshot/app/theme.dart';
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
@@ -65,7 +66,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Tạo tài khoản', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Tạo tài khoản', 'Create account'),
+        showBack: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Form(
@@ -81,11 +85,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               const SizedBox(height: AppSpacing.xxl),
               AppTextField(
                 controller: _name,
-                label: 'Tên hiển thị',
+                label: tr('Tên hiển thị', 'Display name'),
                 icon: Icons.person_outline,
                 textInputAction: TextInputAction.next,
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Vui lòng nhập tên'
+                    ? tr('Vui lòng nhập tên', 'Please enter your name')
                     : null,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -96,13 +100,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 icon: Icons.email_outlined,
                 textInputAction: TextInputAction.next,
                 validator: (v) => (v == null || !v.contains('@'))
-                    ? 'Email không hợp lệ'
+                    ? tr('Email không hợp lệ', 'Invalid email')
                     : null,
               ),
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
                 controller: _password,
-                label: 'Mật khẩu',
+                label: tr('Mật khẩu', 'Password'),
                 obscureText: _obscure,
                 icon: Icons.lock_outline,
                 textInputAction: TextInputAction.next,
@@ -111,22 +115,26 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   onTap: () => setState(() => _obscure = !_obscure),
                 ),
                 validator: (v) => (v == null || v.length < 6)
-                    ? 'Mật khẩu tối thiểu 6 ký tự'
+                    ? tr(
+                        'Mật khẩu tối thiểu 6 ký tự',
+                        'Password must be at least 6 characters',
+                      )
                     : null,
               ),
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
                 controller: _confirm,
-                label: 'Nhập lại mật khẩu',
+                label: tr('Nhập lại mật khẩu', 'Confirm password'),
                 obscureText: _obscure,
                 icon: Icons.lock_outline,
                 textInputAction: TextInputAction.done,
-                validator: (v) =>
-                    v != _password.text ? 'Mật khẩu không khớp' : null,
+                validator: (v) => v != _password.text
+                    ? tr('Mật khẩu không khớp', 'Passwords do not match')
+                    : null,
               ),
               const SizedBox(height: AppSpacing.xxl),
               AppButton(
-                label: 'Đăng ký',
+                label: tr('Đăng ký', 'Sign up'),
                 isLoading: _loading,
                 onPressed: _submit,
               ),

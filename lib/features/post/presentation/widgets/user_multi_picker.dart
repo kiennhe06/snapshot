@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../../models/app_user.dart';
 import '../../../profile/providers/profile_providers.dart';
@@ -104,8 +105,11 @@ class _UserMultiPickerState extends ConsumerState<_UserMultiPicker> {
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: AppTextField(
                     controller: _searchController,
-                    label: 'Tìm kiếm',
-                    hint: 'Tìm theo tên/username',
+                    label: tr('Tìm kiếm', 'Search'),
+                    hint: tr(
+                      'Tìm theo tên/username',
+                      'Search by name/username',
+                    ),
                     icon: Icons.search_rounded,
                   ),
                 ),
@@ -116,10 +120,13 @@ class _UserMultiPickerState extends ConsumerState<_UserMultiPicker> {
                         color: AppColors.primary,
                       ),
                     ),
-                    error: (_, _) => const Center(
+                    error: (_, _) => Center(
                       child: Text(
-                        'Không tải được danh sách.',
-                        style: TextStyle(
+                        tr(
+                          'Không tải được danh sách.',
+                          'Could not load the list.',
+                        ),
+                        style: const TextStyle(
                           color: AppColors.textTertiary,
                           fontSize: AppType.subhead,
                         ),
@@ -134,10 +141,13 @@ class _UserMultiPickerState extends ConsumerState<_UserMultiPicker> {
                           )
                           .toList();
                       if (filtered.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Text(
-                            'Bạn chưa theo dõi ai để chọn.',
-                            style: TextStyle(
+                            tr(
+                              'Bạn chưa theo dõi ai để chọn.',
+                              'You are not following anyone to pick.',
+                            ),
+                            style: const TextStyle(
                               color: AppColors.textTertiary,
                               fontSize: AppType.subhead,
                             ),
@@ -154,7 +164,10 @@ class _UserMultiPickerState extends ConsumerState<_UserMultiPicker> {
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: AppButton(
-                    label: 'Xong (${_selected.length})',
+                    label: tr(
+                      'Xong (${_selected.length})',
+                      'Done (${_selected.length})',
+                    ),
                     height: 48,
                     onPressed: () => Navigator.pop(context, _selected),
                   ),

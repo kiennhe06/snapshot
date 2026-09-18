@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../data/auth_service.dart';
@@ -39,7 +40,12 @@ class _PhoneSignInScreenState extends ConsumerState<PhoneSignInScreen> {
   Future<void> _sendCode() async {
     final phone = _phone.text.trim();
     if (!phone.startsWith('+')) {
-      _snack('Nhập số theo định dạng quốc tế, ví dụ +84901234567.');
+      _snack(
+        tr(
+          'Nhập số theo định dạng quốc tế, ví dụ +84901234567.',
+          'Enter the number in international format, e.g. +84901234567.',
+        ),
+      );
       return;
     }
     setState(() => _loading = true);
@@ -54,7 +60,9 @@ class _PhoneSignInScreenState extends ConsumerState<PhoneSignInScreen> {
                 _verification = verification;
                 _loading = false;
               });
-              _snack('Đã gửi mã OTP đến $phone.');
+              _snack(
+                tr('Đã gửi mã OTP đến $phone.', 'OTP code sent to $phone.'),
+              );
             },
             onFailed: (error) {
               if (!mounted) return;
@@ -78,7 +86,7 @@ class _PhoneSignInScreenState extends ConsumerState<PhoneSignInScreen> {
     final verification = _verification;
     if (verification == null) return;
     if (_code.text.trim().length < 6) {
-      _snack('Mã OTP gồm 6 chữ số.');
+      _snack(tr('Mã OTP gồm 6 chữ số.', 'The OTP code has 6 digits.'));
       return;
     }
     setState(() => _loading = true);
@@ -104,7 +112,10 @@ class _PhoneSignInScreenState extends ConsumerState<PhoneSignInScreen> {
   Widget build(BuildContext context) {
     final isCodeStep = _verification != null;
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Đăng nhập bằng SĐT', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Đăng nhập bằng SĐT', 'Sign in with phone'),
+        showBack: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
@@ -112,7 +123,7 @@ class _PhoneSignInScreenState extends ConsumerState<PhoneSignInScreen> {
           children: [
             AppTextField(
               controller: _phone,
-              label: 'Số điện thoại (+84...)',
+              label: tr('Số điện thoại (+84...)', 'Phone number (+84...)'),
               keyboardType: TextInputType.phone,
               icon: Icons.phone_outlined,
             ),
@@ -120,21 +131,23 @@ class _PhoneSignInScreenState extends ConsumerState<PhoneSignInScreen> {
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
                 controller: _code,
-                label: 'Mã OTP (6 số)',
+                label: tr('Mã OTP (6 số)', 'OTP code (6 digits)'),
                 keyboardType: TextInputType.number,
                 icon: Icons.sms_outlined,
               ),
             ],
             const SizedBox(height: AppSpacing.xxl),
             AppButton(
-              label: isCodeStep ? 'Xác nhận OTP' : 'Gửi mã OTP',
+              label: isCodeStep
+                  ? tr('Xác nhận OTP', 'Confirm OTP')
+                  : tr('Gửi mã OTP', 'Send OTP code'),
               isLoading: _loading,
               onPressed: isCodeStep ? _confirmCode : _sendCode,
             ),
             if (isCodeStep) ...[
               const SizedBox(height: AppSpacing.sm),
               AppButton(
-                label: 'Đổi số điện thoại',
+                label: tr('Đổi số điện thoại', 'Change phone number'),
                 variant: AppButtonVariant.ghost,
                 onPressed: _loading
                     ? null

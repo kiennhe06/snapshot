@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../data/auth_service.dart';
@@ -90,15 +91,21 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Xác thực 2 lớp', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Xác thực 2 lớp', 'Two-factor authentication'),
+        showBack: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Nhập mã OTP đã gửi tới số điện thoại đã đăng ký.',
-              style: TextStyle(
+            Text(
+              tr(
+                'Nhập mã OTP đã gửi tới số điện thoại đã đăng ký.',
+                'Enter the OTP code sent to your registered phone number.',
+              ),
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.subhead,
                 height: 1.4,
@@ -115,13 +122,13 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
             else
               AppTextField(
                 controller: _code,
-                label: 'Mã OTP (6 số)',
+                label: tr('Mã OTP (6 số)', 'OTP code (6 digits)'),
                 keyboardType: TextInputType.number,
                 icon: Icons.sms_outlined,
               ),
             const SizedBox(height: AppSpacing.xxl),
             AppButton(
-              label: 'Xác nhận',
+              label: tr('Xác nhận', 'Confirm'),
               isLoading: _loading,
               onPressed: _sending ? null : _confirm,
             ),

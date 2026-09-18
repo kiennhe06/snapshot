@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/post_draft.dart';
 import '../../../widgets/async_value_view.dart';
@@ -18,14 +19,14 @@ class DraftsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Bản nháp', showBack: true),
+      topBar: AppTopBar(title: tr('Bản nháp', 'Drafts'), showBack: true),
       body: AsyncValueView<List<PostDraft>>(
         value: ref.watch(draftsProvider),
         onRetry: () => ref.invalidate(draftsProvider),
         builder: (drafts) {
           if (drafts.isEmpty) {
-            return const EmptyView(
-              message: 'Chưa có bản nháp nào.',
+            return EmptyView(
+              message: tr('Chưa có bản nháp nào.', 'No drafts yet.'),
               icon: Icons.drafts_outlined,
             );
           }
@@ -61,11 +62,16 @@ class DraftsScreen extends ConsumerWidget {
                             ),
                           ),
                   ),
-                  title: d.caption.isEmpty ? '(Không có chú thích)' : d.caption,
-                  subtitle: '${d.items.length} mục',
+                  title: d.caption.isEmpty
+                      ? tr('(Không có chú thích)', '(No caption)')
+                      : d.caption,
+                  subtitle: tr(
+                    '${d.items.length} mục',
+                    '${d.items.length} items',
+                  ),
                   trailing: AppIconButton(
                     icon: Icons.delete_outline,
-                    tooltip: 'Xoá bản nháp',
+                    tooltip: tr('Xoá bản nháp', 'Delete draft'),
                     color: AppColors.danger,
                     onTap: () async {
                       await ref.read(draftRepositoryProvider).deleteDraft(d.id);

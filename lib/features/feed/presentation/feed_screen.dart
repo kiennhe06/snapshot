@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/constants.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import '../../../core/design/tokens.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
@@ -31,13 +32,16 @@ class _FeedScreenState extends State<FeedScreen> {
         actions: [
           AppIconButton(
             icon: Icons.add_box_outlined,
-            tooltip: 'Đăng bài',
+            tooltip: tr('Đăng bài', 'Post'),
             onTap: () => context.push(Routes.createPost),
           ),
         ],
         bottom: AppSegmentedTabs(
           index: _tab,
-          labels: const ['Đang theo dõi', 'Yêu thích'],
+          labels: [
+            tr('Đang theo dõi', 'Following'),
+            tr('Yêu thích', 'Favorites'),
+          ],
           onChanged: (i) => setState(() => _tab = i),
         ),
       ),
@@ -105,8 +109,14 @@ class _FeedListState extends ConsumerState<_FeedList>
               height: MediaQuery.of(context).size.height * 0.55,
               child: EmptyView(
                 message: widget.kind == FeedKind.favorites
-                    ? 'Chưa có bài viết từ danh sách Yêu thích.\nThêm người vào Yêu thích từ menu bài viết.'
-                    : 'Chưa có bài viết.\nHãy theo dõi thêm người hoặc đăng bài.',
+                    ? tr(
+                        'Chưa có bài viết từ danh sách Yêu thích.\nThêm người vào Yêu thích từ menu bài viết.',
+                        'No posts from your Favorites yet.\nAdd people to Favorites from the post menu.',
+                      )
+                    : tr(
+                        'Chưa có bài viết.\nHãy theo dõi thêm người hoặc đăng bài.',
+                        'No posts yet.\nFollow more people or create a post.',
+                      ),
                 icon: widget.kind == FeedKind.favorites
                     ? Icons.star_rounded
                     : Icons.dynamic_feed_rounded,
@@ -144,7 +154,7 @@ class _FeedListState extends ConsumerState<_FeedList>
                         ),
                       )
                     : Text(
-                        'Đã hết bài viết',
+                        tr('Đã hết bài viết', 'No more posts'),
                         style: TextStyle(
                           color: AppColors.textTertiary,
                           fontSize: AppType.label,

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/constants.dart';
 import '../../../models/app_user.dart';
@@ -70,16 +71,16 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
                           AppSpacing.lg,
                           AppSpacing.md,
                           AppSpacing.lg,
                           AppSpacing.xs,
                         ),
                         child: Text(
-                          'Gợi ý theo dõi',
-                          style: TextStyle(
+                          tr('Gợi ý theo dõi', 'Suggested for you'),
+                          style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: AppType.headline,
                             fontWeight: AppType.bold,
@@ -104,17 +105,17 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
             ),
             // Explore grid
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(
+                padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
                   AppSpacing.md,
                   AppSpacing.lg,
                   AppSpacing.sm,
                 ),
                 child: Text(
-                  'Khám phá',
-                  style: TextStyle(
+                  tr('Khám phá', 'Explore'),
+                  style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.headline,
                     fontWeight: AppType.bold,
@@ -165,9 +166,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           color: AppColors.primary,
                         )
                       : (explore.posts.isEmpty
-                            ? const Text(
-                                'Chưa có nội dung để khám phá.',
-                                style: TextStyle(
+                            ? Text(
+                                tr(
+                                  'Chưa có nội dung để khám phá.',
+                                  'Nothing to explore yet.',
+                                ),
+                                style: const TextStyle(
                                   color: AppColors.textTertiary,
                                   fontSize: AppType.label,
                                 ),
@@ -203,12 +207,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               color: AppColors.textSecondary,
             ),
             const SizedBox(width: AppSpacing.sm),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Tìm người dùng, hashtag, địa điểm',
+                tr(
+                  'Tìm người dùng, hashtag, địa điểm',
+                  'Search users, hashtags, places',
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textTertiary,
                   fontSize: AppType.body,
                 ),
@@ -255,7 +262,7 @@ class _SuggestionCard extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             AppButton(
-              label: 'Theo dõi',
+              label: tr('Theo dõi', 'Follow'),
               variant: AppButtonVariant.secondary,
               fullWidth: false,
               height: 36,
@@ -266,7 +273,14 @@ class _SuggestionCard extends ConsumerWidget {
                       .read(followRepositoryProvider)
                       .follow(currentUid: uid, targetUid: user.uid);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đã theo dõi @${user.username}')),
+                    SnackBar(
+                      content: Text(
+                        tr(
+                          'Đã theo dõi @${user.username}',
+                          'Followed @${user.username}',
+                        ),
+                      ),
+                    ),
                   );
                 }
               },

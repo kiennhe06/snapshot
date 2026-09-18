@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/tokens.dart';
+import '../../../core/i18n/i18n.dart';
 import '../../../widgets/components/app_bottom_nav.dart';
 import '../../explore/presentation/explore_screen.dart';
 import '../../feed/presentation/feed_screen.dart';
@@ -18,21 +19,21 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
 
-  static const _items = [
+  List<AppNavItem> get _items => [
     AppNavItem(
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      label: 'Trang chủ',
+      label: tr('Trang chủ', 'Home'),
     ),
     AppNavItem(
       icon: Icons.explore_outlined,
       activeIcon: Icons.explore_rounded,
-      label: 'Khám phá',
+      label: tr('Khám phá', 'Explore'),
     ),
     AppNavItem(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
-      label: 'Hồ sơ',
+      label: tr('Hồ sơ', 'Profile'),
     ),
   ];
 

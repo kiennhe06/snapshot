@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/design/tokens.dart';
+import '../core/i18n/i18n.dart';
 import 'components/app_button.dart';
 
 /// Custom error state with an accent halo and a retry action.
@@ -53,7 +54,7 @@ class ErrorView extends StatelessWidget {
             if (onRetry != null) ...[
               const SizedBox(height: AppSpacing.lg),
               AppButton(
-                label: 'Thử lại',
+                label: tr('Thử lại', 'Retry'),
                 variant: AppButtonVariant.secondary,
                 fullWidth: false,
                 onPressed: onRetry,

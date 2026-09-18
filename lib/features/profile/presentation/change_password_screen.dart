@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/utils/auth_error.dart';
 import '../providers/profile_providers.dart';
@@ -49,7 +50,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             newPassword: _next.text,
           );
       if (mounted) {
-        _snack('Đổi mật khẩu thành công.');
+        _snack(
+          tr('Đổi mật khẩu thành công.', 'Password changed successfully.'),
+        );
         context.pop();
       }
     } on FirebaseAuthException catch (e) {
@@ -62,7 +65,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Đổi mật khẩu', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Đổi mật khẩu', 'Change password'),
+        showBack: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Form(
@@ -72,34 +78,39 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             children: [
               AppTextField(
                 controller: _current,
-                label: 'Mật khẩu hiện tại',
+                label: tr('Mật khẩu hiện tại', 'Current password'),
                 obscureText: true,
                 icon: Icons.lock_outline_rounded,
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Vui lòng nhập' : null,
+                validator: (v) => (v == null || v.isEmpty)
+                    ? tr('Vui lòng nhập', 'Please enter a value')
+                    : null,
               ),
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
                 controller: _next,
-                label: 'Mật khẩu mới',
+                label: tr('Mật khẩu mới', 'New password'),
                 obscureText: true,
                 icon: Icons.lock_reset_rounded,
                 validator: (v) => (v == null || v.length < 6)
-                    ? 'Mật khẩu tối thiểu 6 ký tự'
+                    ? tr(
+                        'Mật khẩu tối thiểu 6 ký tự',
+                        'Password must be at least 6 characters',
+                      )
                     : null,
               ),
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
                 controller: _confirm,
-                label: 'Nhập lại mật khẩu mới',
+                label: tr('Nhập lại mật khẩu mới', 'Confirm new password'),
                 obscureText: true,
                 icon: Icons.lock_reset_rounded,
-                validator: (v) =>
-                    v != _next.text ? 'Mật khẩu không khớp' : null,
+                validator: (v) => v != _next.text
+                    ? tr('Mật khẩu không khớp', 'Passwords do not match')
+                    : null,
               ),
               const SizedBox(height: AppSpacing.xxl),
               AppButton(
-                label: 'Cập nhật',
+                label: tr('Cập nhật', 'Update'),
                 isLoading: _loading,
                 onPressed: _submit,
               ),

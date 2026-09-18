@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../../models/app_user.dart';
 
@@ -47,9 +48,15 @@ class ProfileHeader extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _Stat(count: postsCount, label: 'Bài viết'),
-                    _Stat(count: user.followersCount, label: 'Người theo dõi'),
-                    _Stat(count: user.followingCount, label: 'Đang theo dõi'),
+                    _Stat(count: postsCount, label: tr('Bài viết', 'Posts')),
+                    _Stat(
+                      count: user.followersCount,
+                      label: tr('Người theo dõi', 'Followers'),
+                    ),
+                    _Stat(
+                      count: user.followingCount,
+                      label: tr('Đang theo dõi', 'Following'),
+                    ),
                   ],
                 ),
               ),
@@ -109,13 +116,15 @@ class ProfileHeader extends StatelessWidget {
               Expanded(
                 child: isMe
                     ? AppButton(
-                        label: 'Chỉnh sửa hồ sơ',
+                        label: tr('Chỉnh sửa hồ sơ', 'Edit profile'),
                         variant: AppButtonVariant.secondary,
                         height: 46,
                         onPressed: onEditProfile,
                       )
                     : AppButton(
-                        label: isFollowing ? 'Đang theo dõi' : 'Theo dõi',
+                        label: isFollowing
+                            ? tr('Đang theo dõi', 'Following')
+                            : tr('Theo dõi', 'Follow'),
                         variant: isFollowing
                             ? AppButtonVariant.secondary
                             : AppButtonVariant.primary,

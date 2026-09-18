@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/stored_account.dart';
 import '../providers/auth_providers.dart';
@@ -51,16 +52,16 @@ class _AccountSwitcherSheet extends ConsumerWidget {
                   ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
                   AppSpacing.xl,
                   AppSpacing.xs,
                   AppSpacing.xl,
                   AppSpacing.md,
                 ),
                 child: Text(
-                  'Tài khoản',
-                  style: TextStyle(
+                  tr('Tài khoản', 'Accounts'),
+                  style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.title,
                     fontWeight: AppType.bold,
@@ -74,11 +75,14 @@ class _AccountSwitcherSheet extends ConsumerWidget {
                     child: CircularProgressIndicator(color: AppColors.primary),
                   ),
                 ),
-                error: (_, _) => const Padding(
-                  padding: EdgeInsets.all(AppSpacing.xxl),
+                error: (_, _) => Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xxl),
                   child: Text(
-                    'Không tải được danh sách tài khoản.',
-                    style: TextStyle(
+                    tr(
+                      'Không tải được danh sách tài khoản.',
+                      'Could not load the account list.',
+                    ),
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: AppType.subhead,
                     ),
@@ -102,7 +106,7 @@ class _AccountSwitcherSheet extends ConsumerWidget {
                       color: AppColors.borderSubtle,
                     ),
                     AppTile(
-                      title: 'Thêm tài khoản',
+                      title: tr('Thêm tài khoản', 'Add account'),
                       leading: const AppAvatar(
                         radius: 22,
                         icon: Icons.add_rounded,
@@ -175,7 +179,7 @@ class _AccountTile extends StatelessWidget {
           : AppIconButton(
               icon: Icons.logout_rounded,
               size: AppIconSize.sm,
-              tooltip: 'Xoá khỏi danh sách',
+              tooltip: tr('Xoá khỏi danh sách', 'Remove from list'),
               onTap: onRemove,
             ),
       onTap: onSwitch,

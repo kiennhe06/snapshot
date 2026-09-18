@@ -35,6 +35,23 @@ service cloud.firestore {
       match /favorites/{targetUid} {
         allow read, write: if signedIn() && request.auth.uid == uid;
       }
+
+      // Bookmarks + collections + block/mute/restrict — private to the owner.
+      match /saved/{postId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+      match /collections/{collectionId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+      match /blocked/{targetUid} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+      match /muted/{targetUid} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+      match /restricted/{targetUid} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
     }
 
     // Username uniqueness index.
@@ -63,12 +80,40 @@ service cloud.firestore {
         allow write: if signedIn() && request.auth.uid == uid;
       }
       match /comments/{commentId} {
+        function postAuthor() {
+          return get(/databases/$(database)/documents/posts/$(postId)).data.authorId;
+        }
         allow read: if signedIn();
         allow create: if signedIn()
           && request.resource.data.authorId == request.auth.uid;
-        allow update, delete: if signedIn()
-          && resource.data.authorId == request.auth.uid;
+        // Comment author or the post author can edit/delete; anyone signed in
+        // may change only likesCount (comment like), and the post author may
+        // toggle the 'pinned' flag.
+        allow update: if signedIn() && (
+          resource.data.authorId == request.auth.uid
+          || postAuthor() == request.auth.uid
+          || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['likesCount'])
+          || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['replyCount'])
+        );
+        allow delete: if signedIn() && (
+          resource.data.authorId == request.auth.uid
+          || postAuthor() == request.auth.uid
+        );
+
+        match /likes/{uid} {
+          allow read: if signedIn();
+          allow write: if signedIn() && request.auth.uid == uid;
+        }
       }
+    }
+
+    // Reports — anyone signed in can file; only backend/admin reads.
+    match /reports/{reportId} {
+      allow create: if signedIn()
+        && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false;
     }
   }
 }

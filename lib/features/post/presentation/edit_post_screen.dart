@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/post.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -66,11 +67,11 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
             likesHidden: _likesHidden,
           );
       if (mounted) {
-        _snack('Đã cập nhật bài viết.');
+        _snack(tr('Đã cập nhật bài viết.', 'Post updated.'));
         context.pop();
       }
     } catch (e) {
-      _snack('Không cập nhật được bài viết.');
+      _snack(tr('Không cập nhật được bài viết.', 'Could not update the post.'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -80,7 +81,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     final c = TextEditingController(text: _altTexts[index]);
     final r = await _showAltTextDialog(
       context,
-      title: 'Alt text ảnh ${index + 1}',
+      title: tr('Alt text ảnh ${index + 1}', 'Alt text image ${index + 1}'),
       controller: c,
     );
     if (r != null) setState(() => _altTexts[index] = r);
@@ -89,21 +90,24 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Chỉnh sửa bài viết', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Chỉnh sửa bài viết', 'Edit post'),
+        showBack: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
           AppTextField(
             controller: _caption,
-            label: 'Chú thích',
-            hint: 'Viết chú thích...',
+            label: tr('Chú thích', 'Caption'),
+            hint: tr('Viết chú thích...', 'Write a caption...'),
             maxLines: 4,
           ),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(
             controller: _location,
-            label: 'Vị trí',
-            hint: 'Thêm địa điểm',
+            label: tr('Vị trí', 'Location'),
+            hint: tr('Thêm địa điểm', 'Add a place'),
             icon: Icons.location_on_outlined,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -115,12 +119,12 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                 color: AppColors.textSecondary,
                 size: AppIconSize.md,
               ),
-              title: 'Gắn thẻ người khác',
+              title: tr('Gắn thẻ người khác', 'Tag people'),
               trailing: _CountBadge(count: _tagged.length),
               onTap: () async {
                 final r = await showUserMultiPicker(
                   context,
-                  title: 'Gắn thẻ người khác',
+                  title: tr('Gắn thẻ người khác', 'Tag people'),
                   initial: _tagged,
                 );
                 if (r != null) setState(() => _tagged = r);
@@ -140,9 +144,12 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                         color: AppColors.textSecondary,
                         size: AppIconSize.md,
                       ),
-                      title: 'Alt text ảnh ${i + 1}',
+                      title: tr(
+                        'Alt text ảnh ${i + 1}',
+                        'Alt text image ${i + 1}',
+                      ),
                       subtitle: _altTexts[i].isEmpty
-                          ? 'Chưa có mô tả'
+                          ? tr('Chưa có mô tả', 'No description yet')
                           : _altTexts[i],
                       trailing: const Icon(
                         Icons.edit,
@@ -164,12 +171,12 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
             child: Column(
               children: [
                 _SwitchRow(
-                  label: 'Tắt bình luận',
+                  label: tr('Tắt bình luận', 'Turn off commenting'),
                   value: _commentsDisabled,
                   onChanged: (v) => setState(() => _commentsDisabled = v),
                 ),
                 _SwitchRow(
-                  label: 'Ẩn lượt thích',
+                  label: tr('Ẩn lượt thích', 'Hide like count'),
                   value: _likesHidden,
                   onChanged: (v) => setState(() => _likesHidden = v),
                 ),
@@ -178,7 +185,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
           ),
           const SizedBox(height: AppSpacing.xl),
           AppButton(
-            label: 'Lưu thay đổi',
+            label: tr('Lưu thay đổi', 'Save changes'),
             isLoading: _loading,
             onPressed: _save,
           ),
@@ -301,7 +308,7 @@ Future<String?> _showAltTextDialog(
             const SizedBox(height: AppSpacing.lg),
             AppTextField(
               controller: controller,
-              label: 'Mô tả ảnh',
+              label: tr('Mô tả ảnh', 'Image description'),
               hint: hint,
               maxLines: 3,
             ),
@@ -310,7 +317,7 @@ Future<String?> _showAltTextDialog(
               children: [
                 Expanded(
                   child: AppButton(
-                    label: 'Huỷ',
+                    label: tr('Huỷ', 'Cancel'),
                     variant: AppButtonVariant.secondary,
                     height: 48,
                     onPressed: () => Navigator.pop(context),
@@ -319,7 +326,7 @@ Future<String?> _showAltTextDialog(
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: AppButton(
-                    label: 'Lưu',
+                    label: tr('Lưu', 'Save'),
                     height: 48,
                     onPressed: () => Navigator.pop(context, controller.text),
                   ),

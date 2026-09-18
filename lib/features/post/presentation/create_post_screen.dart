@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/post_draft.dart';
 import '../../auth/providers/auth_providers.dart';
@@ -83,22 +84,25 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     await showAppMenu(context, [
       AppMenuAction(
         icon: Icons.photo_library_outlined,
-        label: 'Chọn ảnh từ thư viện (nhiều ảnh)',
+        label: tr(
+          'Chọn ảnh từ thư viện (nhiều ảnh)',
+          'Choose photos from library (multiple)',
+        ),
         onTap: _pickImages,
       ),
       AppMenuAction(
         icon: Icons.photo_camera_outlined,
-        label: 'Chụp ảnh mới',
+        label: tr('Chụp ảnh mới', 'Take a new photo'),
         onTap: () => _capture(isVideo: false),
       ),
       AppMenuAction(
         icon: Icons.video_library_outlined,
-        label: 'Chọn video từ thư viện',
+        label: tr('Chọn video từ thư viện', 'Choose video from library'),
         onTap: _pickVideo,
       ),
       AppMenuAction(
         icon: Icons.videocam_outlined,
-        label: 'Quay video mới',
+        label: tr('Quay video mới', 'Record a new video'),
         onTap: () => _capture(isVideo: true),
       ),
     ]);
@@ -144,7 +148,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       if (!item.isVideo)
         AppMenuAction(
           icon: Icons.tune,
-          label: 'Chỉnh sửa ảnh (cắt, lọc, sáng/màu)',
+          label: tr(
+            'Chỉnh sửa ảnh (cắt, lọc, sáng/màu)',
+            'Edit photo (crop, filter, brightness/color)',
+          ),
           onTap: () async {
             final edited = await Navigator.of(context).push<File>(
               MaterialPageRoute(
@@ -164,12 +171,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         ),
       AppMenuAction(
         icon: Icons.accessibility_new,
-        label: 'Alt text (mô tả ảnh)',
+        label: tr('Alt text (mô tả ảnh)', 'Alt text (image description)'),
         onTap: () => _editAltText(index),
       ),
       AppMenuAction(
         icon: Icons.delete_outline,
-        label: 'Xoá khỏi bài',
+        label: tr('Xoá khỏi bài', 'Remove from post'),
         destructive: true,
         onTap: () => setState(() => _items.removeAt(index)),
       ),
@@ -180,9 +187,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     final controller = TextEditingController(text: _items[index].altText);
     final result = await _showAltTextDialog(
       context,
-      title: 'Alt text',
+      title: tr('Alt text', 'Alt text'),
       controller: controller,
-      hint: 'Mô tả nội dung ảnh cho người khiếm thị',
+      hint: tr(
+        'Mô tả nội dung ảnh cho người khiếm thị',
+        'Describe the image for visually impaired users',
+      ),
     );
     if (result != null) setState(() => _items[index].altText = result);
   }
@@ -193,7 +203,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     if (uid == null) return;
     if (_items.isEmpty) {
-      _snack('Hãy thêm ít nhất một ảnh hoặc video.');
+      _snack(
+        tr(
+          'Hãy thêm ít nhất một ảnh hoặc video.',
+          'Add at least one photo or video.',
+        ),
+      );
       return;
     }
     setState(() => _loading = true);
@@ -213,11 +228,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       // Publishing consumes the draft, if any.
       await ref.read(draftRepositoryProvider).deleteDraft(_draftId);
       if (mounted) {
-        _snack('Đã đăng bài.');
+        _snack(tr('Đã đăng bài.', 'Post published.'));
         context.pop();
       }
     } catch (e) {
-      _snack('Đăng bài thất bại. Kiểm tra kết nối.');
+      _snack(
+        tr(
+          'Đăng bài thất bại. Kiểm tra kết nối.',
+          'Failed to publish. Check your connection.',
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -246,7 +266,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     await ref.read(draftRepositoryProvider).saveDraft(draft);
     ref.invalidate(draftsProvider);
     if (mounted) {
-      _snack('Đã lưu bản nháp.');
+      _snack(tr('Đã lưu bản nháp.', 'Draft saved.'));
       context.pop();
     }
   }
@@ -257,11 +277,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       topBar: AppTopBar(
-        title: 'Đăng bài',
+        title: tr('Đăng bài', 'New post'),
         showBack: true,
         actions: [
           AppButton(
-            label: 'Lưu nháp',
+            label: tr('Lưu nháp', 'Save draft'),
             variant: AppButtonVariant.ghost,
             fullWidth: false,
             height: 40,
@@ -276,15 +296,18 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           const SizedBox(height: AppSpacing.xl),
           AppTextField(
             controller: _caption,
-            label: 'Chú thích',
-            hint: 'Viết chú thích... (dùng #hashtag)',
+            label: tr('Chú thích', 'Caption'),
+            hint: tr(
+              'Viết chú thích... (dùng #hashtag)',
+              'Write a caption... (use #hashtag)',
+            ),
             maxLines: 4,
           ),
           const SizedBox(height: AppSpacing.lg),
           AppTextField(
             controller: _location,
-            label: 'Vị trí',
-            hint: 'Thêm địa điểm',
+            label: tr('Vị trí', 'Location'),
+            hint: tr('Thêm địa điểm', 'Add a place'),
             icon: Icons.location_on_outlined,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -298,12 +321,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     color: AppColors.textSecondary,
                     size: AppIconSize.md,
                   ),
-                  title: 'Gắn thẻ người khác',
+                  title: tr('Gắn thẻ người khác', 'Tag people'),
                   trailing: _CountBadge(count: _tagged.length),
                   onTap: () async {
                     final r = await showUserMultiPicker(
                       context,
-                      title: 'Gắn thẻ người khác',
+                      title: tr('Gắn thẻ người khác', 'Tag people'),
                       initial: _tagged,
                     );
                     if (r != null) {
@@ -321,12 +344,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     color: AppColors.textSecondary,
                     size: AppIconSize.md,
                   ),
-                  title: 'Mời đồng tác giả (collab)',
+                  title: tr(
+                    'Mời đồng tác giả (collab)',
+                    'Invite collaborators (collab)',
+                  ),
                   trailing: _CountBadge(count: _coAuthors.length),
                   onTap: () async {
                     final r = await showUserMultiPicker(
                       context,
-                      title: 'Chọn đồng tác giả',
+                      title: tr('Chọn đồng tác giả', 'Choose collaborators'),
                       initial: _coAuthors,
                     );
                     if (r != null) {
@@ -350,12 +376,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             child: Column(
               children: [
                 _SwitchRow(
-                  label: 'Tắt bình luận',
+                  label: tr('Tắt bình luận', 'Turn off commenting'),
                   value: _commentsDisabled,
                   onChanged: (v) => setState(() => _commentsDisabled = v),
                 ),
                 _SwitchRow(
-                  label: 'Ẩn lượt thích',
+                  label: tr('Ẩn lượt thích', 'Hide like count'),
                   value: _likesHidden,
                   onChanged: (v) => setState(() => _likesHidden = v),
                 ),
@@ -363,7 +389,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          AppButton(label: 'Đăng', isLoading: _loading, onPressed: _publish),
+          AppButton(
+            label: tr('Đăng', 'Share'),
+            isLoading: _loading,
+            onPressed: _publish,
+          ),
         ],
       ),
     );
@@ -437,18 +467,18 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 borderRadius: AppRadius.brMd,
                 border: Border.all(color: AppColors.borderStrong, width: 1.5),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.add_a_photo_outlined,
                     size: 30,
                     color: AppColors.primary,
                   ),
-                  SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Thêm',
-                    style: TextStyle(
+                    tr('Thêm', 'Add'),
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: AppType.label,
                       fontWeight: AppType.medium,
@@ -577,7 +607,7 @@ Future<String?> _showAltTextDialog(
             const SizedBox(height: AppSpacing.lg),
             AppTextField(
               controller: controller,
-              label: 'Mô tả ảnh',
+              label: tr('Mô tả ảnh', 'Image description'),
               hint: hint,
               maxLines: 3,
             ),
@@ -586,7 +616,7 @@ Future<String?> _showAltTextDialog(
               children: [
                 Expanded(
                   child: AppButton(
-                    label: 'Huỷ',
+                    label: tr('Huỷ', 'Cancel'),
                     variant: AppButtonVariant.secondary,
                     height: 48,
                     onPressed: () => Navigator.pop(context),
@@ -595,7 +625,7 @@ Future<String?> _showAltTextDialog(
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: AppButton(
-                    label: 'Lưu',
+                    label: tr('Lưu', 'Save'),
                     height: 48,
                     onPressed: () => Navigator.pop(context, controller.text),
                   ),

@@ -41,6 +41,9 @@ dependencies:
   # Fonts (Inter body + Playfair Display wordmark) — UI/UX design system
   google_fonts: ^6.2.1
 
+  # Native share sheet
+  share_plus: ^10.1.4
+
   # Google Sign-In (v7 API mới: singleton + initialize + authenticate)
   google_sign_in: ^7.2.0
 

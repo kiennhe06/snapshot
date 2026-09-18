@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../providers/profile_providers.dart';
@@ -89,13 +90,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
       if (mounted) {
-        _snack('Đã lưu hồ sơ.');
+        _snack(tr('Đã lưu hồ sơ.', 'Profile saved.'));
         context.pop();
       }
     } on StateError catch (e) {
       _snack(e.message);
     } catch (e) {
-      _snack('Không lưu được hồ sơ. Vui lòng thử lại.');
+      _snack(
+        tr(
+          'Không lưu được hồ sơ. Vui lòng thử lại.',
+          'Could not save profile. Please try again.',
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -121,7 +127,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               : null);
 
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Chỉnh sửa hồ sơ', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Chỉnh sửa hồ sơ', 'Edit profile'),
+        showBack: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
@@ -140,7 +149,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             const SizedBox(height: AppSpacing.sm),
             Center(
               child: AppButton(
-                label: 'Đổi ảnh đại diện',
+                label: tr('Đổi ảnh đại diện', 'Change profile photo'),
                 variant: AppButtonVariant.ghost,
                 fullWidth: false,
                 height: 40,
@@ -150,7 +159,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             const SizedBox(height: AppSpacing.md),
             AppTextField(
               controller: _name,
-              label: 'Tên hiển thị',
+              label: tr('Tên hiển thị', 'Display name'),
               icon: Icons.person_outline_rounded,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -162,7 +171,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             const SizedBox(height: AppSpacing.lg),
             AppTextField(
               controller: _bio,
-              label: 'Tiểu sử',
+              label: tr('Tiểu sử', 'Bio'),
               icon: Icons.notes_rounded,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -173,7 +182,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               keyboardType: TextInputType.url,
             ),
             const SizedBox(height: AppSpacing.xxl),
-            AppButton(label: 'Lưu', isLoading: _loading, onPressed: _save),
+            AppButton(
+              label: tr('Lưu', 'Save'),
+              isLoading: _loading,
+              onPressed: _save,
+            ),
           ],
         ),
       ),

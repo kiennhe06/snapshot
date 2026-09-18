@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
@@ -34,9 +35,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       await ref.read(authServiceProvider).sendPasswordReset(_email.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.',
+            tr(
+              'Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.',
+              'Password reset email sent. Please check your inbox.',
+            ),
           ),
         ),
       );
@@ -55,7 +59,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      topBar: const AppTopBar(title: 'Quên mật khẩu', showBack: true),
+      topBar: AppTopBar(
+        title: tr('Quên mật khẩu', 'Forgot password'),
+        showBack: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Form(
@@ -63,9 +70,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.',
-                style: TextStyle(
+              Text(
+                tr(
+                  'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.',
+                  'Enter your email and we will send you a password reset link.',
+                ),
+                style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.subhead,
                   height: 1.4,
@@ -78,12 +88,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 keyboardType: TextInputType.emailAddress,
                 icon: Icons.email_outlined,
                 validator: (v) => (v == null || !v.contains('@'))
-                    ? 'Email không hợp lệ'
+                    ? tr('Email không hợp lệ', 'Invalid email')
                     : null,
               ),
               const SizedBox(height: AppSpacing.xxl),
               AppButton(
-                label: 'Gửi email',
+                label: tr('Gửi email', 'Send email'),
                 isLoading: _loading,
                 onPressed: _submit,
               ),

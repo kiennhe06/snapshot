@@ -4,13 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:share_plus/share_plus.dart';
+
 import '../../../../core/constants.dart';
 import '../../../../core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import '../../../../models/post.dart';
-import '../../../../widgets/components/app_card.dart';
-import '../../../../widgets/components/app_top_bar.dart';
-import '../../../../widgets/components/press_scale.dart';
+import '../../../../widgets/components/components.dart';
 import '../../../auth/providers/auth_providers.dart';
+import '../../../interactions/presentation/comments_screen.dart';
+import '../../../interactions/providers/interaction_providers.dart';
 import '../../../profile/providers/profile_providers.dart';
 import '../../providers/feed_providers.dart';
 
@@ -34,6 +37,8 @@ class _PostCardState extends ConsumerState<PostCard> {
     final author = ref.watch(userProfileProvider(post.authorId)).valueOrNull;
     final isLiked =
         ref.watch(isLikedProvider(post.postId)).valueOrNull ?? false;
+    final isSaved =
+        ref.watch(isSavedProvider(post.postId)).valueOrNull ?? false;
 
     return AppCard(
       padding: EdgeInsets.zero,
@@ -180,7 +185,9 @@ class _PostCardState extends ConsumerState<PostCard> {
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
                       color: isLiked ? AppColors.primary : null,
-                      tooltip: isLiked ? 'Bỏ thích' : 'Thích',
+                      tooltip: isLiked
+                          ? tr('Bỏ thích', 'Unlike')
+                          : tr('Thích', 'Like'),
                       onTap: () {
                         final uid = ref
                             .read(authStateProvider)
@@ -195,16 +202,42 @@ class _PostCardState extends ConsumerState<PostCard> {
                     ),
                     AppIconButton(
                       icon: Icons.mode_comment_outlined,
-                      tooltip: 'Bình luận',
+                      tooltip: tr('Bình luận', 'Comment'),
                       onTap: post.commentsDisabled
                           ? null
-                          : () => ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Bình luận sẽ có ở giai đoạn sau.',
-                                ),
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => CommentsScreen(post: post),
                               ),
                             ),
+                    ),
+                    AppIconButton(
+                      icon: Icons.send_outlined,
+                      tooltip: tr('Chia sẻ', 'Share'),
+                      onTap: () => Share.share(
+                        'Xem bài viết trên Snapshot: snapshot://user/${post.authorId}',
+                      ),
+                    ),
+                    const Spacer(),
+                    AppIconButton(
+                      icon: isSaved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      color: isSaved ? AppColors.primary : null,
+                      tooltip: isSaved
+                          ? tr('Bỏ lưu', 'Unsave')
+                          : tr('Lưu bài', 'Save'),
+                      onTap: () {
+                        final uid = ref
+                            .read(authStateProvider)
+                            .valueOrNull
+                            ?.uid;
+                        if (uid != null) {
+                          ref
+                              .read(saveRepositoryProvider)
+                              .toggleSave(uid: uid, postId: post.postId);
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -217,7 +250,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                     children: [
                       if (!post.likesHidden)
                         Text(
-                          '${post.likesCount} lượt thích',
+                          tr(
+                            '${post.likesCount} lượt thích',
+                            '${post.likesCount} likes',
+                          ),
                           style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: AppType.body,
@@ -252,7 +288,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                         Padding(
                           padding: const EdgeInsets.only(top: AppSpacing.xs),
                           child: Text(
-                            'Xem tất cả ${post.commentsCount} bình luận',
+                            tr(
+                              'Xem tất cả ${post.commentsCount} bình luận',
+                              'View all ${post.commentsCount} comments',
+                            ),
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: AppType.label,
@@ -287,43 +326,108 @@ class _PostCardState extends ConsumerState<PostCard> {
     final favorites = ref.read(favoriteIdsProvider).valueOrNull ?? const [];
     final isFav = favorites.contains(post.authorId);
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(
-                isFav ? Icons.star_rounded : Icons.star_border_rounded,
-              ),
-              title: Text(
-                isFav ? 'Bỏ khỏi Yêu thích' : 'Thêm vào Yêu thích (Favorites)',
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                if (uid != null) {
-                  await ref
-                      .read(feedRepositoryProvider)
-                      .setFavorite(
-                        uid: uid,
-                        targetUid: post.authorId,
-                        favorite: !isFav,
-                      );
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person_outline_rounded),
-              title: const Text('Xem trang cá nhân'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('${Routes.userProfile}/${post.authorId}');
-              },
-            ),
-          ],
-        ),
-      ),
+    final isMine = uid == post.authorId;
+    final blocked = (ref.read(blockedIdsProvider).valueOrNull ?? const [])
+        .contains(post.authorId);
+    final muted = (ref.read(mutedIdsProvider).valueOrNull ?? const []).contains(
+      post.authorId,
     );
+    final restricted = (ref.read(restrictedIdsProvider).valueOrNull ?? const [])
+        .contains(post.authorId);
+    final rel = ref.read(relationRepositoryProvider);
+
+    showAppMenu(context, [
+      AppMenuAction(
+        icon: isFav ? Icons.star_rounded : Icons.star_border_rounded,
+        label: isFav
+            ? tr('Bỏ khỏi Yêu thích', 'Remove from Favorites')
+            : tr('Thêm vào Yêu thích', 'Add to Favorites'),
+        onTap: () {
+          if (uid != null) {
+            ref
+                .read(feedRepositoryProvider)
+                .setFavorite(
+                  uid: uid,
+                  targetUid: post.authorId,
+                  favorite: !isFav,
+                );
+          }
+        },
+      ),
+      AppMenuAction(
+        icon: Icons.person_outline_rounded,
+        label: tr('Xem trang cá nhân', 'View profile'),
+        onTap: () => context.push('${Routes.userProfile}/${post.authorId}'),
+      ),
+      if (!isMine) ...[
+        AppMenuAction(
+          icon: restricted ? Icons.shield : Icons.shield_outlined,
+          label: restricted
+              ? tr('Bỏ hạn chế', 'Unrestrict')
+              : tr('Hạn chế (Restrict)', 'Restrict'),
+          onTap: () {
+            if (uid != null) {
+              rel.setRelation(
+                uid: uid,
+                kind: 'restricted',
+                targetUid: post.authorId,
+                on: !restricted,
+              );
+            }
+          },
+        ),
+        AppMenuAction(
+          icon: muted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+          label: muted
+              ? tr('Bỏ tắt tiếng', 'Unmute')
+              : tr('Tắt tiếng (Mute)', 'Mute'),
+          onTap: () {
+            if (uid != null) {
+              rel.setRelation(
+                uid: uid,
+                kind: 'muted',
+                targetUid: post.authorId,
+                on: !muted,
+              );
+            }
+          },
+        ),
+        AppMenuAction(
+          icon: Icons.block_rounded,
+          label: blocked
+              ? tr('Bỏ chặn', 'Unblock')
+              : tr('Chặn người này', 'Block this person'),
+          destructive: !blocked,
+          onTap: () {
+            if (uid != null) {
+              rel.setRelation(
+                uid: uid,
+                kind: 'blocked',
+                targetUid: post.authorId,
+                on: !blocked,
+              );
+            }
+          },
+        ),
+        AppMenuAction(
+          icon: Icons.flag_outlined,
+          label: tr('Báo cáo bài viết', 'Report post'),
+          destructive: true,
+          onTap: () {
+            if (uid != null) {
+              rel.report(
+                reporterId: uid,
+                targetType: 'post',
+                targetId: post.postId,
+                reason: 'reported from feed',
+              );
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(tr('Đã gửi báo cáo.', 'Report sent.'))),
+            );
+          },
+        ),
+      ],
+    ]);
   }
 }

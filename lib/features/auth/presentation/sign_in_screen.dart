@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:snapshot/app/theme.dart';
 import 'package:snapshot/core/constants.dart';
 import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
@@ -112,13 +113,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
                     validator: (v) => (v == null || !v.contains('@'))
-                        ? 'Email không hợp lệ'
+                        ? tr('Email không hợp lệ', 'Invalid email')
                         : null,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppTextField(
                     controller: _password,
-                    label: 'Mật khẩu',
+                    label: tr('Mật khẩu', 'Password'),
                     obscureText: _obscure,
                     icon: Icons.lock_outline,
                     textInputAction: TextInputAction.done,
@@ -128,13 +129,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       onTap: () => setState(() => _obscure = !_obscure),
                     ),
                     validator: (v) => (v == null || v.length < 6)
-                        ? 'Mật khẩu tối thiểu 6 ký tự'
+                        ? tr(
+                            'Mật khẩu tối thiểu 6 ký tự',
+                            'Password must be at least 6 characters',
+                          )
                         : null,
                   ),
                   Align(
                     alignment: Alignment.centerRight,
                     child: AppButton(
-                      label: 'Quên mật khẩu?',
+                      label: tr('Quên mật khẩu?', 'Forgot password?'),
                       variant: AppButtonVariant.ghost,
                       fullWidth: false,
                       height: 44,
@@ -143,20 +147,23 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   AppButton(
-                    label: 'Đăng nhập',
+                    label: tr('Đăng nhập', 'Sign in'),
                     isLoading: _loading,
                     onPressed: _signInEmail,
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppButton(
-                    label: 'Đăng nhập bằng Google',
+                    label: tr('Đăng nhập bằng Google', 'Sign in with Google'),
                     variant: AppButtonVariant.secondary,
                     icon: Icons.g_mobiledata,
                     onPressed: _loading ? null : _signInGoogle,
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppButton(
-                    label: 'Đăng nhập bằng số điện thoại',
+                    label: tr(
+                      'Đăng nhập bằng số điện thoại',
+                      'Sign in with phone number',
+                    ),
                     variant: AppButtonVariant.secondary,
                     icon: Icons.phone_outlined,
                     onPressed: _loading
@@ -167,15 +174,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Chưa có tài khoản?',
-                        style: TextStyle(
+                      Text(
+                        tr('Chưa có tài khoản?', "Don't have an account?"),
+                        style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: AppType.subhead,
                         ),
                       ),
                       AppButton(
-                        label: 'Đăng ký',
+                        label: tr('Đăng ký', 'Sign up'),
                         variant: AppButtonVariant.ghost,
                         fullWidth: false,
                         height: 44,
