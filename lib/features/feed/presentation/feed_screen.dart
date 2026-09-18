@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/theme.dart';
 import '../../../core/constants.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
@@ -18,7 +19,7 @@ class FeedScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Snapshot'),
+          title: Text('Snapshot', style: brandWordmark(context, size: 26)),
           actions: [
             IconButton(
               icon: const Icon(Icons.add_box_outlined),

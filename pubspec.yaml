@@ -38,6 +38,9 @@ dependencies:
   # QR code / nametag
   qr_flutter: ^4.1.0
 
+  # Fonts (Inter body + Playfair Display wordmark) — UI/UX design system
+  google_fonts: ^6.2.1
+
   # Google Sign-In (v7 API mới: singleton + initialize + authenticate)
   google_sign_in: ^7.2.0
 

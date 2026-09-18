@@ -55,3 +55,6 @@ macos/Runner/GoogleService-Info.plist
 android/key.properties
 *.jks
 *.keystore
+
+# Third-party skill tooling (large; installed locally, not needed in repo)
+.claude/skills/

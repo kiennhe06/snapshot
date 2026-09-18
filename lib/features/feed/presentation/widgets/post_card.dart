@@ -125,8 +125,9 @@ class _PostCardState extends ConsumerState<PostCard> {
             IconButton(
               icon: Icon(
                 isLiked ? Icons.favorite : Icons.favorite_border,
-                color: isLiked ? Colors.red : null,
+                color: isLiked ? Theme.of(context).colorScheme.primary : null,
               ),
+              tooltip: isLiked ? 'Bỏ thích' : 'Thích',
               onPressed: () {
                 final uid = ref.read(authStateProvider).valueOrNull?.uid;
                 if (uid != null) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/theme.dart';
 import '../../../core/constants.dart';
 import '../../../core/utils/auth_error.dart';
 import '../providers/auth_providers.dart';
@@ -101,7 +102,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     Text(
                       'Snapshot',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium,
+                      style: brandWordmark(context, size: 40),
                     ),
                     const SizedBox(height: 32),
                     AuthTextField(
