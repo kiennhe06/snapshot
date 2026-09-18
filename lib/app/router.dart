@@ -12,6 +12,12 @@ import '../features/auth/presentation/sign_up_screen.dart';
 import '../features/auth/presentation/splash_screen.dart';
 import '../features/auth/providers/auth_providers.dart';
 import '../features/home/presentation/home_shell.dart';
+import '../features/post/presentation/create_post_screen.dart';
+import '../features/profile/presentation/archive_screen.dart';
+import '../features/profile/presentation/change_password_screen.dart';
+import '../features/profile/presentation/edit_profile_screen.dart';
+import '../features/profile/presentation/profile_screen.dart';
+import '../features/profile/presentation/qr_nametag_screen.dart';
 import '../features/settings/presentation/login_history_screen.dart';
 
 /// Routes reachable while signed out (part of the sign-in flow).
@@ -77,6 +83,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.loginHistory,
         builder: (_, _) => const LoginHistoryScreen(),
       ),
+      // Phase 2 — Profile
+      GoRoute(path: Routes.profile, builder: (_, _) => const ProfileScreen()),
+      GoRoute(
+        path: '${Routes.userProfile}/:uid',
+        builder: (_, state) => ProfileScreen(uid: state.pathParameters['uid']),
+      ),
+      GoRoute(
+        path: Routes.editProfile,
+        builder: (_, _) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.changePassword,
+        builder: (_, _) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: Routes.qrNametag,
+        builder: (_, state) =>
+            QrNametagScreen(uid: state.uri.queryParameters['uid'] ?? ''),
+      ),
+      GoRoute(
+        path: Routes.createPost,
+        builder: (_, _) => const CreatePostScreen(),
+      ),
+      GoRoute(path: Routes.archive, builder: (_, _) => const ArchiveScreen()),
     ],
   );
 });

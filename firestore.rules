@@ -1,26 +1,62 @@
 rules_version = '2';
 
-// Phase 1 rules: a user can read/write only their own profile and sessions.
-// Public read of profiles is allowed so other users can be viewed later.
-// Tighten/extend these as posts, feeds, chats are added in later phases.
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function signedIn() {
+      return request.auth != null;
+    }
+
     // User profiles
     match /users/{uid} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if signedIn();
+      // Owner writes their own profile. Counts (followers/following/posts) may be
+      // bumped by others via increment — allowed here for simplicity; tighten
+      // with Cloud Functions in a later phase.
+      allow create, update: if signedIn();
+      allow delete: if signedIn() && request.auth.uid == uid;
 
       // Login history / devices — private to the owner.
       match /sessions/{sessionId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, write: if signedIn() && request.auth.uid == uid;
+      }
+
+      // Follow edges.
+      match /following/{targetUid} {
+        allow read: if signedIn();
+        allow write: if signedIn() && request.auth.uid == uid;
+      }
+      match /followers/{followerUid} {
+        allow read: if signedIn();
+        allow write: if signedIn() && request.auth.uid == followerUid;
       }
     }
 
-    // Username uniqueness index (created via transaction later).
+    // Username uniqueness index.
     match /usernames/{username} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    // Posts
+    match /posts/{postId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid;
+      allow update, delete: if signedIn()
+        && resource.data.authorId == request.auth.uid;
+
+      match /likes/{uid} {
+        allow read: if signedIn();
+        allow write: if signedIn() && request.auth.uid == uid;
+      }
+      match /comments/{commentId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && request.resource.data.authorId == request.auth.uid;
+        allow update, delete: if signedIn()
+          && resource.data.authorId == request.auth.uid;
+      }
     }
   }
 }

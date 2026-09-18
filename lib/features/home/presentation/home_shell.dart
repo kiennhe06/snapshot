@@ -3,107 +3,73 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
-import '../../auth/presentation/account_switcher_sheet.dart';
-import '../../auth/providers/auth_providers.dart';
+import '../../profile/presentation/profile_screen.dart';
 
-/// Placeholder home for Phase 1. Feed / post / profile tabs arrive in later
-/// phases; for now this is where account & security actions live so the auth
-/// flow is testable end-to-end.
-class HomeShell extends ConsumerWidget {
+/// Main app shell with bottom navigation. Feed arrives in a later phase; for now
+/// the two tabs are a placeholder Home and the user's own Profile.
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
-  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc muốn đăng xuất khỏi tài khoản này?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Huỷ'),
+  @override
+  ConsumerState<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _index,
+        children: const [
+          _FeedPlaceholder(),
+          ProfileScreen(), // own profile (uid == null)
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (i) => setState(() => _index = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            label: 'Trang chủ',
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Đăng xuất'),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            label: 'Hồ sơ',
           ),
         ],
       ),
     );
-    if (ok == true) {
-      await ref.read(authServiceProvider).signOut();
-    }
   }
+}
+
+class _FeedPlaceholder extends StatelessWidget {
+  const _FeedPlaceholder();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider).valueOrNull;
-
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Snapshot'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.switch_account),
-            tooltip: 'Chuyển tài khoản',
-            onPressed: () => showAccountSwitcher(context),
+            icon: const Icon(Icons.add_box_outlined),
+            tooltip: 'Đăng bài',
+            onPressed: () => context.push(Routes.createPost),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundImage: user?.photoURL != null
-                    ? NetworkImage(user!.photoURL!)
-                    : null,
-                child: user?.photoURL == null ? const Icon(Icons.person) : null,
-              ),
-              title: Text(user?.displayName ?? user?.email ?? 'Người dùng'),
-              subtitle: Text(user?.email ?? user?.phoneNumber ?? ''),
-            ),
+      body: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Bảng tin (feed) sẽ có ở giai đoạn sau.\n'
+            'Hãy vào tab Hồ sơ để đăng bài, sửa hồ sơ, tạo nametag...',
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          ListTile(
-            leading: const Icon(Icons.security),
-            title: const Text('Bật xác thực 2 lớp (2FA)'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Routes.mfaEnroll),
-          ),
-          ListTile(
-            leading: const Icon(Icons.devices),
-            title: const Text('Lịch sử đăng nhập / thiết bị'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Routes.loginHistory),
-          ),
-          ListTile(
-            leading: const Icon(Icons.switch_account),
-            title: const Text('Quản lý / chuyển tài khoản'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => showAccountSwitcher(context),
-          ),
-          const Divider(),
-          ListTile(
-            leading: Icon(
-              Icons.logout,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            title: Text(
-              'Đăng xuất',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            onTap: () => _confirmSignOut(context, ref),
-          ),
-          const SizedBox(height: 24),
-          const Center(
-            child: Text(
-              'Bảng tin, đăng ảnh/video và hồ sơ sẽ có ở các giai đoạn sau.',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -31,4 +31,13 @@ class Routes {
   static const String mfaEnroll = '/mfa-enroll';
   static const String home = '/';
   static const String loginHistory = '/settings/login-history';
+
+  // Phase 2 — Profile
+  static const String profile = '/profile'; // own profile
+  static const String userProfile = '/user'; // /user/:uid
+  static const String editProfile = '/edit-profile';
+  static const String changePassword = '/change-password';
+  static const String qrNametag = '/qr-nametag';
+  static const String createPost = '/create-post';
+  static const String archive = '/archive';
 }
