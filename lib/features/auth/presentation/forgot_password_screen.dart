@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/utils/auth_error.dart';
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/utils/auth_error.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
-import 'widgets/auth_text_field.dart';
-import 'widgets/primary_button.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -54,37 +54,40 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Quên mật khẩu')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.',
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Quên mật khẩu', showBack: true),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: AppType.subhead,
+                  height: 1.4,
                 ),
-                const SizedBox(height: 20),
-                AuthTextField(
-                  controller: _email,
-                  label: 'Email',
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
-                  validator: (v) => (v == null || !v.contains('@'))
-                      ? 'Email không hợp lệ'
-                      : null,
-                ),
-                const SizedBox(height: 24),
-                PrimaryButton(
-                  label: 'Gửi email',
-                  isLoading: _loading,
-                  onPressed: _submit,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              AppTextField(
+                controller: _email,
+                label: 'Email',
+                keyboardType: TextInputType.emailAddress,
+                icon: Icons.email_outlined,
+                validator: (v) => (v == null || !v.contains('@'))
+                    ? 'Email không hợp lệ'
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              AppButton(
+                label: 'Gửi email',
+                isLoading: _loading,
+                onPressed: _submit,
+              ),
+            ],
           ),
         ),
       ),

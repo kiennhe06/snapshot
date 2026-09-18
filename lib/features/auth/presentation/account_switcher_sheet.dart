@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/stored_account.dart';
 import '../providers/auth_providers.dart';
 
@@ -8,7 +10,7 @@ import '../providers/auth_providers.dart';
 Future<void> showAccountSwitcher(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
-    showDragHandle: true,
+    backgroundColor: Colors.transparent,
     isScrollControlled: true,
     builder: (_) => const _AccountSwitcherSheet(),
   );
@@ -22,43 +24,93 @@ class _AccountSwitcherSheet extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsProvider);
     final currentUid = ref.watch(authStateProvider).valueOrNull?.uid;
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: accountsAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.all(32),
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (_, _) => const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('Không tải được danh sách tài khoản.'),
-          ),
-          data: (accounts) => Column(
+    return Container(
+      margin: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.layer5,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: AppShadows.medium,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Drag handle.
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppColors.borderStrong,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                ),
+              ),
               const Padding(
-                padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.xs,
+                  AppSpacing.xl,
+                  AppSpacing.md,
+                ),
                 child: Text(
                   'Tài khoản',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppType.title,
+                    fontWeight: AppType.bold,
+                  ),
                 ),
               ),
-              ...accounts.map(
-                (a) => _AccountTile(
-                  account: a,
-                  isCurrent: a.uid == currentUid,
-                  onSwitch: () => _switchTo(context, ref, a),
-                  onRemove: () =>
-                      ref.read(accountsProvider.notifier).remove(a.uid),
+              accountsAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(AppSpacing.xxxl),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
                 ),
-              ),
-              const Divider(height: 8),
-              ListTile(
-                leading: const Icon(Icons.add),
-                title: const Text('Thêm tài khoản'),
-                onTap: () => _addAccount(context, ref),
+                error: (_, _) => const Padding(
+                  padding: EdgeInsets.all(AppSpacing.xxl),
+                  child: Text(
+                    'Không tải được danh sách tài khoản.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: AppType.subhead,
+                    ),
+                  ),
+                ),
+                data: (accounts) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ...accounts.map(
+                      (a) => _AccountTile(
+                        account: a,
+                        isCurrent: a.uid == currentUid,
+                        onSwitch: () => _switchTo(context, ref, a),
+                        onRemove: () =>
+                            ref.read(accountsProvider.notifier).remove(a.uid),
+                      ),
+                    ),
+                    const Divider(
+                      height: AppSpacing.md,
+                      color: AppColors.borderSubtle,
+                    ),
+                    AppTile(
+                      title: 'Thêm tài khoản',
+                      leading: const AppAvatar(
+                        radius: 22,
+                        icon: Icons.add_rounded,
+                      ),
+                      onTap: () => _addAccount(context, ref),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -105,34 +157,26 @@ class _AccountTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: account.photoUrl != null
+    return AppTile(
+      title: account.displayName,
+      subtitle: account.email.isNotEmpty ? account.email : account.signInMethod,
+      leading: AppAvatar(
+        radius: 22,
+        imageProvider: account.photoUrl != null
             ? NetworkImage(account.photoUrl!)
             : null,
-        child: account.photoUrl == null
-            ? Text(
-                account.displayName.isNotEmpty
-                    ? account.displayName[0].toUpperCase()
-                    : '?',
-              )
-            : null,
-      ),
-      title: Text(account.displayName),
-      subtitle: Text(
-        account.email.isNotEmpty ? account.email : account.signInMethod,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
       trailing: isCurrent
-          ? Icon(
-              Icons.check_circle,
-              color: Theme.of(context).colorScheme.primary,
+          ? const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.primary,
+              size: AppIconSize.lg,
             )
-          : IconButton(
-              icon: const Icon(Icons.logout, size: 20),
+          : AppIconButton(
+              icon: Icons.logout_rounded,
+              size: AppIconSize.sm,
               tooltip: 'Xoá khỏi danh sách',
-              onPressed: onRemove,
+              onTap: onRemove,
             ),
       onTap: onSwitch,
     );

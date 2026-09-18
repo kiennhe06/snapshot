@@ -46,7 +46,7 @@ class AppCard extends StatelessWidget {
       clipBehavior: clip ? Clip.antiAlias : Clip.none,
       decoration: BoxDecoration(
         gradient: elevated ? AppGradients.elevated : AppGradients.card,
-        borderRadius: BorderRadius.circular(radius ?? AppRadius.lg),
+        borderRadius: BorderRadius.circular(radius ?? AppRadius.xl),
         border: Border.all(
           color: borderColor ?? AppColors.borderSubtle,
           width: 1,

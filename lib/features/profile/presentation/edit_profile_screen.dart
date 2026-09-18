@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../auth/presentation/widgets/auth_text_field.dart';
-import '../../auth/presentation/widgets/primary_button.dart';
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../providers/profile_providers.dart';
 
@@ -114,73 +114,67 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _initialized = true;
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Chỉnh sửa hồ sơ')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: GestureDetector(
-                  onTap: _pickAvatar,
-                  child: CircleAvatar(
-                    radius: 48,
-                    backgroundImage: _pickedAvatar != null
-                        ? FileImage(_pickedAvatar!)
-                        : (_currentPhotoUrl != null
-                                  ? CachedNetworkImageProvider(
-                                      _currentPhotoUrl!,
-                                    )
-                                  : null)
-                              as ImageProvider?,
-                    child: _pickedAvatar == null && _currentPhotoUrl == null
-                        ? const Icon(Icons.add_a_photo, size: 32)
-                        : null,
-                  ),
+    final ImageProvider? avatarImage = _pickedAvatar != null
+        ? FileImage(_pickedAvatar!)
+        : (_currentPhotoUrl != null
+              ? CachedNetworkImageProvider(_currentPhotoUrl!)
+              : null);
+
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Chỉnh sửa hồ sơ', showBack: true),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: PressScale(
+                onTap: _pickAvatar,
+                child: AppAvatar(
+                  imageProvider: avatarImage,
+                  radius: 48,
+                  icon: Icons.add_a_photo_rounded,
                 ),
               ),
-              const SizedBox(height: 8),
-              Center(
-                child: TextButton(
-                  onPressed: _pickAvatar,
-                  child: const Text('Đổi ảnh đại diện'),
-                ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Center(
+              child: AppButton(
+                label: 'Đổi ảnh đại diện',
+                variant: AppButtonVariant.ghost,
+                fullWidth: false,
+                height: 40,
+                onPressed: _pickAvatar,
               ),
-              const SizedBox(height: 12),
-              AuthTextField(
-                controller: _name,
-                label: 'Tên hiển thị',
-                prefixIcon: Icons.person_outline,
-              ),
-              const SizedBox(height: 16),
-              AuthTextField(
-                controller: _username,
-                label: 'Username',
-                prefixIcon: Icons.alternate_email,
-              ),
-              const SizedBox(height: 16),
-              AuthTextField(
-                controller: _bio,
-                label: 'Tiểu sử',
-                prefixIcon: Icons.notes,
-              ),
-              const SizedBox(height: 16),
-              AuthTextField(
-                controller: _website,
-                label: 'Website',
-                prefixIcon: Icons.link,
-                keyboardType: TextInputType.url,
-              ),
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: 'Lưu',
-                isLoading: _loading,
-                onPressed: _save,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              controller: _name,
+              label: 'Tên hiển thị',
+              icon: Icons.person_outline_rounded,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              controller: _username,
+              label: 'Username',
+              icon: Icons.alternate_email_rounded,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              controller: _bio,
+              label: 'Tiểu sử',
+              icon: Icons.notes_rounded,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              controller: _website,
+              label: 'Website',
+              icon: Icons.link_rounded,
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            AppButton(label: 'Lưu', isLoading: _loading, onPressed: _save),
+          ],
         ),
       ),
     );

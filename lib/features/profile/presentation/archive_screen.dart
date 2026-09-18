@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../auth/providers/auth_providers.dart';
@@ -15,8 +16,8 @@ class ArchiveScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Bài lưu trữ')),
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Bài lưu trữ', showBack: true),
       body: uid == null
           ? const SizedBox.shrink()
           : AsyncValueView<List<Post>>(
@@ -36,20 +37,16 @@ class ArchiveScreen extends ConsumerWidget {
   }
 
   void _showRestore(BuildContext context, WidgetRef ref, Post post) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => SafeArea(
-        child: ListTile(
-          leading: const Icon(Icons.unarchive_outlined),
-          title: const Text('Khôi phục về hồ sơ'),
-          onTap: () async {
-            Navigator.pop(context);
-            await ref
-                .read(postRepositoryProvider)
-                .setArchived(post.postId, false);
-          },
-        ),
+    showAppMenu(context, [
+      AppMenuAction(
+        icon: Icons.unarchive_outlined,
+        label: 'Khôi phục về hồ sơ',
+        onTap: () async {
+          await ref
+              .read(postRepositoryProvider)
+              .setArchived(post.postId, false);
+        },
       ),
-    );
+    ]);
   }
 }

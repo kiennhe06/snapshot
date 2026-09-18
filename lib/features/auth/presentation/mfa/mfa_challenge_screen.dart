@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/utils/auth_error.dart';
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/utils/auth_error.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../data/auth_service.dart';
 import '../../providers/auth_providers.dart';
 import '../auth_flow.dart';
-import '../widgets/auth_text_field.dart';
-import '../widgets/primary_button.dart';
 
 /// Second-factor challenge shown when sign-in throws
 /// [FirebaseAuthMultiFactorException]. Receives the resolver via GoRouter extra.
@@ -89,36 +89,43 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Xác thực 2 lớp')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Nhập mã OTP đã gửi tới số điện thoại đã đăng ký.'),
-              const SizedBox(height: 20),
-              if (_sending)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else
-                AuthTextField(
-                  controller: _code,
-                  label: 'Mã OTP (6 số)',
-                  keyboardType: TextInputType.number,
-                  prefixIcon: Icons.sms_outlined,
-                ),
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: 'Xác nhận',
-                isLoading: _loading,
-                onPressed: _sending ? null : _confirm,
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Xác thực 2 lớp', showBack: true),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Nhập mã OTP đã gửi tới số điện thoại đã đăng ký.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.subhead,
+                height: 1.4,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            if (_sending)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              )
+            else
+              AppTextField(
+                controller: _code,
+                label: 'Mã OTP (6 số)',
+                keyboardType: TextInputType.number,
+                icon: Icons.sms_outlined,
+              ),
+            const SizedBox(height: AppSpacing.xxl),
+            AppButton(
+              label: 'Xác nhận',
+              isLoading: _loading,
+              onPressed: _sending ? null : _confirm,
+            ),
+          ],
         ),
       ),
     );

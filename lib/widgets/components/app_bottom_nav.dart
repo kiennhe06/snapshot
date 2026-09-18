@@ -14,8 +14,8 @@ class AppNavItem {
   final String label;
 }
 
-/// Custom bottom navigation (replaces Material NavigationBar). A raised layer-1
-/// bar with a rounded rose indicator behind the active item.
+/// Floating rounded bottom navigation ("Moment" style): a white pill bar with a
+/// soft shadow; the active item gets a pink pill with icon + label.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -31,63 +31,74 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: AppGradients.section,
-        border: Border(top: BorderSide(color: AppColors.borderSubtle)),
-        boxShadow: AppShadows.overlay,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        bottomInset + AppSpacing.md,
       ),
-      padding: EdgeInsets.only(
-        top: AppSpacing.sm,
-        bottom: bottomInset + AppSpacing.sm,
-        left: AppSpacing.sm,
-        right: AppSpacing.sm,
-      ),
-      child: Row(
-        children: List.generate(items.length, (i) {
-          final active = i == currentIndex;
-          final item = items[i];
-          return Expanded(
-            child: PressScale(
-              onTap: () => onTap(i),
-              child: AnimatedContainer(
-                duration: AppMotion.base,
-                curve: AppMotion.standard,
-                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: active
-                      ? AppColors.primary.withValues(alpha: 0.16)
-                      : Colors.transparent,
-                  borderRadius: AppRadius.brMd,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      active ? item.activeIcon : item.icon,
-                      size: AppIconSize.lg,
-                      color: active
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.label,
-                      style: TextStyle(
-                        fontSize: AppType.caption,
-                        fontWeight: active ? AppType.bold : AppType.medium,
-                        color: active
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: AppColors.layer1,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: AppShadows.medium,
+        ),
+        child: Row(
+          children: List.generate(items.length, (i) {
+            final active = i == currentIndex;
+            final item = items[i];
+            return Expanded(
+              child: PressScale(
+                onTap: () => onTap(i),
+                child: AnimatedContainer(
+                  duration: AppMotion.base,
+                  curve: AppMotion.standard,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    gradient: active
+                        ? const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.primaryBright,
+                              AppColors.primary,
+                            ],
+                          )
+                        : null,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        active ? item.activeIcon : item.icon,
+                        size: AppIconSize.lg,
+                        color: active ? Colors.white : AppColors.textSecondary,
                       ),
-                    ),
-                  ],
+                      if (active) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        Flexible(
+                          child: Text(
+                            item.label,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: AppType.label,
+                              fontWeight: AppType.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

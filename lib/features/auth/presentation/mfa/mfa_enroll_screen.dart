@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/utils/auth_error.dart';
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/utils/auth_error.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../data/auth_service.dart';
 import '../../providers/auth_providers.dart';
-import '../widgets/auth_text_field.dart';
-import '../widgets/primary_button.dart';
 
 /// Enables SMS-based 2FA for the signed-in user.
 ///
@@ -95,42 +95,45 @@ class _MfaEnrollScreenState extends ConsumerState<MfaEnrollScreen> {
   @override
   Widget build(BuildContext context) {
     final isCodeStep = _verification != null;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Bật xác thực 2 lớp')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Thêm số điện thoại làm lớp bảo mật thứ hai. Mỗi lần đăng nhập '
-                'bạn sẽ cần nhập thêm mã OTP.',
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Bật xác thực 2 lớp', showBack: true),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Thêm số điện thoại làm lớp bảo mật thứ hai. Mỗi lần đăng nhập '
+              'bạn sẽ cần nhập thêm mã OTP.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.subhead,
+                height: 1.4,
               ),
-              const SizedBox(height: 20),
-              AuthTextField(
-                controller: _phone,
-                label: 'Số điện thoại (+84...)',
-                keyboardType: TextInputType.phone,
-                prefixIcon: Icons.phone_outlined,
-              ),
-              if (isCodeStep) ...[
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _code,
-                  label: 'Mã OTP (6 số)',
-                  keyboardType: TextInputType.number,
-                  prefixIcon: Icons.sms_outlined,
-                ),
-              ],
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: isCodeStep ? 'Xác nhận & bật 2FA' : 'Gửi mã OTP',
-                isLoading: _loading,
-                onPressed: isCodeStep ? _confirm : _sendCode,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            AppTextField(
+              controller: _phone,
+              label: 'Số điện thoại (+84...)',
+              keyboardType: TextInputType.phone,
+              icon: Icons.phone_outlined,
+            ),
+            if (isCodeStep) ...[
+              const SizedBox(height: AppSpacing.lg),
+              AppTextField(
+                controller: _code,
+                label: 'Mã OTP (6 số)',
+                keyboardType: TextInputType.number,
+                icon: Icons.sms_outlined,
               ),
             ],
-          ),
+            const SizedBox(height: AppSpacing.xxl),
+            AppButton(
+              label: isCodeStep ? 'Xác nhận & bật 2FA' : 'Gửi mã OTP',
+              isLoading: _loading,
+              onPressed: isCodeStep ? _confirm : _sendCode,
+            ),
+          ],
         ),
       ),
     );

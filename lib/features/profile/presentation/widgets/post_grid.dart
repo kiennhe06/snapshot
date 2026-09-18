@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import 'package:snapshot/core/design/tokens.dart';
 import '../../../../models/post.dart';
 import '../../../../widgets/empty_view.dart';
 
@@ -11,7 +12,7 @@ class PostGrid extends StatelessWidget {
     super.key,
     required this.posts,
     required this.emptyMessage,
-    this.emptyIcon = Icons.grid_on,
+    this.emptyIcon = Icons.grid_on_rounded,
     this.onTap,
     this.onLongPress,
   });
@@ -46,29 +47,44 @@ class PostGrid extends StatelessWidget {
               CachedNetworkImage(
                 imageUrl: post.coverUrl,
                 fit: BoxFit.cover,
-                placeholder: (_, _) => Container(color: Colors.black12),
+                placeholder: (_, _) => Container(color: AppColors.layer3),
                 errorWidget: (_, _, _) => Container(
-                  color: Colors.black12,
-                  child: const Icon(Icons.broken_image),
+                  color: AppColors.layer3,
+                  child: const Icon(
+                    Icons.broken_image_rounded,
+                    color: AppColors.textTertiary,
+                  ),
                 ),
               ),
               if (post.isVideo)
                 const Positioned(
                   top: 6,
                   right: 6,
-                  child: Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               if (post.isCarousel)
                 const Positioned(
                   top: 6,
                   right: 6,
-                  child: Icon(Icons.collections, color: Colors.white, size: 18),
+                  child: Icon(
+                    Icons.collections_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               if (post.isPinned)
                 const Positioned(
                   top: 6,
                   left: 6,
-                  child: Icon(Icons.push_pin, color: Colors.white, size: 18),
+                  child: Icon(
+                    Icons.push_pin_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
             ],
           ),

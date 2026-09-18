@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../../../models/app_user.dart';
 
 /// Profile header: avatar, counts, name/bio/website and the primary action.
@@ -26,24 +28,21 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: user.photoUrl != null
+              AppAvatar(
+                imageProvider: user.photoUrl != null
                     ? CachedNetworkImageProvider(user.photoUrl!)
                     : null,
-                child: user.photoUrl == null
-                    ? const Icon(Icons.person, size: 40)
-                    : null,
+                radius: 40,
+                icon: Icons.person_rounded,
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: AppSpacing.xl),
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -56,29 +55,31 @@ class ProfileHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Text(
                 user.displayName,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: AppType.headline,
+                  fontWeight: AppType.bold,
                 ),
               ),
               if (user.isVerified) ...[
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.verified,
-                  size: 16,
-                  color: theme.colorScheme.primary,
+                const SizedBox(width: AppSpacing.xs),
+                const Icon(
+                  Icons.verified_rounded,
+                  size: AppIconSize.sm,
+                  color: AppColors.primary,
                 ),
               ],
               if (user.isPrivate) ...[
                 const SizedBox(width: 6),
-                Icon(
-                  Icons.lock_outline,
-                  size: 14,
-                  color: theme.colorScheme.outline,
+                const Icon(
+                  Icons.lock_outline_rounded,
+                  size: AppIconSize.xs,
+                  color: AppColors.textTertiary,
                 ),
               ],
             ],
@@ -86,37 +87,47 @@ class ProfileHeader extends StatelessWidget {
           if (user.username.isNotEmpty)
             Text(
               '@${user.username}',
-              style: TextStyle(color: theme.colorScheme.outline),
+              style: const TextStyle(
+                color: AppColors.textTertiary,
+                fontSize: AppType.body,
+              ),
             ),
           if (user.bio.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text(user.bio),
+            Text(
+              user.bio,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: AppType.subhead,
+                height: 1.35,
+              ),
+            ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
                 child: isMe
-                    ? OutlinedButton(
+                    ? AppButton(
+                        label: 'Chỉnh sửa hồ sơ',
+                        variant: AppButtonVariant.secondary,
+                        height: 46,
                         onPressed: onEditProfile,
-                        child: const Text('Chỉnh sửa hồ sơ'),
                       )
-                    : FilledButton(
+                    : AppButton(
+                        label: isFollowing ? 'Đang theo dõi' : 'Theo dõi',
+                        variant: isFollowing
+                            ? AppButtonVariant.secondary
+                            : AppButtonVariant.primary,
+                        height: 46,
                         onPressed: onToggleFollow,
-                        style: isFollowing
-                            ? FilledButton.styleFrom(
-                                backgroundColor:
-                                    theme.colorScheme.surfaceContainerHighest,
-                                foregroundColor: theme.colorScheme.onSurface,
-                              )
-                            : null,
-                        child: Text(isFollowing ? 'Đang theo dõi' : 'Theo dõi'),
                       ),
               ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: onShowQr,
-                child: const Icon(Icons.qr_code, size: 20),
+              const SizedBox(width: AppSpacing.sm),
+              AppIconButton(
+                icon: Icons.qr_code_rounded,
+                tooltip: 'Nametag',
+                onTap: onShowQr,
               ),
             ],
           ),
@@ -137,9 +148,19 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           '$count',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: AppType.title,
+            fontWeight: AppType.bold,
+          ),
         ),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: AppType.label,
+          ),
+        ),
       ],
     );
   }

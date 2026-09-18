@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/design/tokens.dart';
 
-/// Custom text field: a layer-2 rounded surface with our own label/icon layout.
-/// Uses the raw EditableText behavior of [TextField] but with all Material
-/// decoration removed (InputBorder.none) and our own container styling.
+/// Custom soft text field ("Moment" style): a rounded pink-tinted fill with a
+/// borderless resting state and a pink focus ring. Own label above the field.
 class AppTextField extends StatelessWidget {
   const AppTextField({
     super.key,
@@ -33,6 +32,11 @@ class AppTextField extends StatelessWidget {
   final int maxLines;
   final Iterable<String>? autofillHints;
 
+  OutlineInputBorder _border(Color c, double w) => OutlineInputBorder(
+    borderRadius: AppRadius.brLg,
+    borderSide: BorderSide(color: c, width: w),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -40,7 +44,7 @@ class AppTextField extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(
-            left: AppSpacing.xs,
+            left: AppSpacing.md,
             bottom: AppSpacing.xs,
           ),
           child: Text(
@@ -69,7 +73,7 @@ class AppTextField extends StatelessWidget {
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: AppColors.layer2,
+            fillColor: AppColors.layer3,
             hintText: hint,
             hintStyle: const TextStyle(color: AppColors.textTertiary),
             prefixIcon: icon == null
@@ -84,25 +88,10 @@ class AppTextField extends StatelessWidget {
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.lg,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.brMd,
-              borderSide: const BorderSide(color: AppColors.borderSubtle),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.brMd,
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.brMd,
-              borderSide: const BorderSide(color: AppColors.danger),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: AppRadius.brMd,
-              borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
-            ),
+            enabledBorder: _border(Colors.transparent, 0),
+            focusedBorder: _border(AppColors.primary, 1.5),
+            errorBorder: _border(AppColors.danger, 1),
+            focusedErrorBorder: _border(AppColors.danger, 1.5),
           ),
         ),
       ],

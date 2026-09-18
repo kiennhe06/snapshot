@@ -5,9 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 import '../../../core/constants.dart';
 import '../../../core/design/tokens.dart';
-import '../../../widgets/components/app_scaffold.dart';
-import '../../../widgets/components/app_top_bar.dart';
-import '../../../widgets/components/press_scale.dart';
+import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
 import '../providers/feed_providers.dart';
@@ -37,7 +35,7 @@ class _FeedScreenState extends State<FeedScreen> {
             onTap: () => context.push(Routes.createPost),
           ),
         ],
-        bottom: _SegmentedTabs(
+        bottom: AppSegmentedTabs(
           index: _tab,
           labels: const ['Đang theo dõi', 'Yêu thích'],
           onChanged: (i) => setState(() => _tab = i),
@@ -49,68 +47,6 @@ class _FeedScreenState extends State<FeedScreen> {
           _FeedList(kind: FeedKind.following),
           _FeedList(kind: FeedKind.favorites),
         ],
-      ),
-    );
-  }
-}
-
-/// Custom pill segmented control (replaces Material TabBar).
-class _SegmentedTabs extends StatelessWidget {
-  const _SegmentedTabs({
-    required this.index,
-    required this.labels,
-    required this.onChanged,
-  });
-
-  final int index;
-  final List<String> labels;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.md,
-        AppSpacing.md,
-      ),
-      padding: const EdgeInsets.all(AppSpacing.xs),
-      decoration: BoxDecoration(
-        color: AppColors.layer1,
-        borderRadius: AppRadius.brMd,
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Row(
-        children: List.generate(labels.length, (i) {
-          final active = i == index;
-          return Expanded(
-            child: PressScale(
-              onTap: () => onChanged(i),
-              child: AnimatedContainer(
-                duration: AppMotion.base,
-                curve: AppMotion.standard,
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                decoration: BoxDecoration(
-                  gradient: active ? AppGradients.elevated : null,
-                  borderRadius: AppRadius.brMd,
-                  boxShadow: active ? AppShadows.soft : null,
-                ),
-                child: Text(
-                  labels[i],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: active
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
-                    fontSize: AppType.body,
-                    fontWeight: active ? AppType.bold : AppType.medium,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }

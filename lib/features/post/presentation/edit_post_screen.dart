@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/post.dart';
-import '../../auth/presentation/widgets/primary_button.dart';
 import '../../profile/providers/profile_providers.dart';
 import 'widgets/user_multi_picker.dart';
 
@@ -77,55 +78,45 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   Future<void> _editAlt(int index) async {
     final c = TextEditingController(text: _altTexts[index]);
-    final r = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Alt text ảnh ${index + 1}'),
-        content: TextField(controller: c, maxLines: 3),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Huỷ'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, c.text),
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
+    final r = await _showAltTextDialog(
+      context,
+      title: 'Alt text ảnh ${index + 1}',
+      controller: c,
     );
     if (r != null) setState(() => _altTexts[index] = r);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Chỉnh sửa bài viết')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextField(
-              controller: _caption,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Chú thích',
-                alignLabelWithHint: true,
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Chỉnh sửa bài viết', showBack: true),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        children: [
+          AppTextField(
+            controller: _caption,
+            label: 'Chú thích',
+            hint: 'Viết chú thích...',
+            maxLines: 4,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppTextField(
+            controller: _location,
+            label: 'Vị trí',
+            hint: 'Thêm địa điểm',
+            icon: Icons.location_on_outlined,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppCard(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: AppTile(
+              leading: const Icon(
+                Icons.person_add_alt,
+                color: AppColors.textSecondary,
+                size: AppIconSize.md,
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _location,
-              decoration: const InputDecoration(
-                labelText: 'Vị trí',
-                prefixIcon: Icon(Icons.location_on_outlined),
-              ),
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.person_add_alt),
-              title: const Text('Gắn thẻ người khác'),
-              trailing: Text(_tagged.isEmpty ? '' : '${_tagged.length}'),
+              title: 'Gắn thẻ người khác',
+              trailing: _CountBadge(count: _tagged.length),
               onTap: () async {
                 final r = await showUserMultiPicker(
                   context,
@@ -135,42 +126,209 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                 if (r != null) setState(() => _tagged = r);
               },
             ),
-            const Divider(),
-            for (var i = 0; i < _altTexts.length; i++)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.accessibility_new),
-                title: Text('Alt text ảnh ${i + 1}'),
-                subtitle: Text(
-                  _altTexts[i].isEmpty ? 'Chưa có mô tả' : _altTexts[i],
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: const Icon(Icons.edit, size: 18),
-                onTap: () => _editAlt(i),
+          ),
+          if (_altTexts.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            AppCard(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Column(
+                children: [
+                  for (var i = 0; i < _altTexts.length; i++)
+                    AppTile(
+                      leading: const Icon(
+                        Icons.accessibility_new,
+                        color: AppColors.textSecondary,
+                        size: AppIconSize.md,
+                      ),
+                      title: 'Alt text ảnh ${i + 1}',
+                      subtitle: _altTexts[i].isEmpty
+                          ? 'Chưa có mô tả'
+                          : _altTexts[i],
+                      trailing: const Icon(
+                        Icons.edit,
+                        size: AppIconSize.sm,
+                        color: AppColors.textTertiary,
+                      ),
+                      onTap: () => _editAlt(i),
+                    ),
+                ],
               ),
-            const Divider(),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Tắt bình luận'),
-              value: _commentsDisabled,
-              onChanged: (v) => setState(() => _commentsDisabled = v),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Ẩn lượt thích'),
-              value: _likesHidden,
-              onChanged: (v) => setState(() => _likesHidden = v),
-            ),
-            const SizedBox(height: 16),
-            PrimaryButton(
-              label: 'Lưu thay đổi',
-              isLoading: _loading,
-              onPressed: _save,
             ),
           ],
+          const SizedBox(height: AppSpacing.lg),
+          AppCard(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.xs,
+            ),
+            child: Column(
+              children: [
+                _SwitchRow(
+                  label: 'Tắt bình luận',
+                  value: _commentsDisabled,
+                  onChanged: (v) => setState(() => _commentsDisabled = v),
+                ),
+                _SwitchRow(
+                  label: 'Ẩn lượt thích',
+                  value: _likesHidden,
+                  onChanged: (v) => setState(() => _likesHidden = v),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppButton(
+            label: 'Lưu thay đổi',
+            isLoading: _loading,
+            onPressed: _save,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small pill badge showing a selection count (chevron when zero).
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count == 0) {
+      return const Icon(
+        Icons.chevron_right_rounded,
+        color: AppColors.textTertiary,
+        size: AppIconSize.md,
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontSize: AppType.label,
+          fontWeight: AppType.bold,
         ),
       ),
     );
   }
+}
+
+/// Custom labelled toggle row (replaces Material SwitchListTile). Keeps the
+/// Material [Switch] primitive but tinted with brand tokens.
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: AppType.subhead,
+                fontWeight: AppType.medium,
+              ),
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.white,
+            activeTrackColor: AppColors.primary,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: AppColors.borderStrong,
+            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Token-styled alt-text editor dialog (rounded container + [AppTextField]).
+Future<String?> _showAltTextDialog(
+  BuildContext context, {
+  required String title,
+  required TextEditingController controller,
+  String? hint,
+}) {
+  return showDialog<String>(
+    context: context,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(AppSpacing.xxl),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        decoration: BoxDecoration(
+          color: AppColors.layer1,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: AppShadows.overlay,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: AppType.title,
+                fontWeight: AppType.bold,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              controller: controller,
+              label: 'Mô tả ảnh',
+              hint: hint,
+              maxLines: 3,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: 'Huỷ',
+                    variant: AppButtonVariant.secondary,
+                    height: 48,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: AppButton(
+                    label: 'Lưu',
+                    height: 48,
+                    onPressed: () => Navigator.pop(context, controller.text),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

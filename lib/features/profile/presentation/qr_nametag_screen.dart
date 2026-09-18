@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../providers/profile_providers.dart';
 
 /// Displays a scannable nametag QR code that encodes the user's profile link.
@@ -19,44 +21,47 @@ class QrNametagScreen extends ConsumerWidget {
         ? '@${user!.username}'
         : (user?.displayName ?? '');
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Nametag')),
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Nametag', showBack: true),
       body: Center(
-        child: Card(
-          margin: const EdgeInsets.all(24),
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  username,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+        child: AppCard(
+          margin: const EdgeInsets.all(AppSpacing.xxl),
+          padding: const EdgeInsets.all(AppSpacing.xxxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                username,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: AppType.title,
+                  fontWeight: AppType.bold,
                 ),
-                const SizedBox(height: 24),
-                QrImageView(
-                  data: link,
-                  version: QrVersions.auto,
-                  size: 220,
-                  eyeStyle: QrEyeStyle(
-                    eyeShape: QrEyeShape.circle,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  dataModuleStyle: QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.circle,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              QrImageView(
+                data: link,
+                version: QrVersions.auto,
+                size: 220,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.circle,
+                  color: AppColors.primary,
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Cho bạn bè quét mã này để mở hồ sơ của bạn.',
-                  textAlign: TextAlign.center,
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.circle,
+                  color: AppColors.textPrimary,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              const Text(
+                'Cho bạn bè quét mã này để mở hồ sơ của bạn.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: AppType.subhead,
+                ),
+              ),
+            ],
           ),
         ),
       ),

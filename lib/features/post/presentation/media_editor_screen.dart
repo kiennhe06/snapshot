@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/services/image_edit_service.dart';
 
 /// Full-screen editor for one image: crop/rotate, filter preset, and
@@ -71,38 +73,50 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final shown = _preview ?? _working;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: const Text('Chỉnh sửa'),
+    // Near-black editor panel/canvas (acceptable dark surface for a photo editor).
+    const panelBg = AppColors.textPrimary;
+    return AppScaffold(
+      topBar: AppTopBar(
+        title: 'Chỉnh sửa',
+        showBack: true,
         actions: [
-          TextButton(
+          AppButton(
+            label: 'Xong',
+            variant: AppButtonVariant.ghost,
+            fullWidth: false,
+            height: 40,
             onPressed: _processing ? null : _done,
-            child: const Text('Xong', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Image.file(shown, fit: BoxFit.contain),
-                if (_processing)
-                  const CircularProgressIndicator(color: Colors.white),
-              ],
+            child: Container(
+              color: panelBg,
+              width: double.infinity,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.file(shown, fit: BoxFit.contain),
+                  if (_processing)
+                    const CircularProgressIndicator(color: Colors.white),
+                ],
+              ),
             ),
           ),
           Container(
-            color: Colors.grey.shade900,
-            padding: const EdgeInsets.all(12),
+            color: panelBg,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.xl,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Filter presets.
+                // Filter presets — small pill chips.
                 SizedBox(
                   height: 40,
                   child: ListView(
@@ -110,11 +124,11 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
                     children: PhotoFilter.values.map((f) {
                       final selected = f == _filter;
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(f.label),
+                        padding: const EdgeInsets.only(right: AppSpacing.sm),
+                        child: _FilterChip(
+                          label: f.label,
                           selected: selected,
-                          onSelected: (_) {
+                          onTap: () {
                             setState(() => _filter = f);
                             _regenerate();
                           },
@@ -123,6 +137,7 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
                     }).toList(),
                   ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
                 _slider(
                   'Độ sáng',
                   _brightness,
@@ -144,19 +159,13 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
                   2.0,
                   (v) => _saturation = v,
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _crop,
-                        icon: const Icon(Icons.crop, color: Colors.white),
-                        label: const Text(
-                          'Cắt / Xoay',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: AppSpacing.sm),
+                AppButton(
+                  label: 'Cắt / Xoay',
+                  variant: AppButtonVariant.secondary,
+                  icon: Icons.crop,
+                  height: 48,
+                  onPressed: _crop,
                 ),
               ],
             ),
@@ -177,18 +186,70 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
       children: [
         SizedBox(
           width: 90,
-          child: Text(label, style: const TextStyle(color: Colors.white70)),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: AppType.body,
+            ),
+          ),
         ),
         Expanded(
-          child: Slider(
-            value: value,
-            min: min,
-            max: max,
-            onChanged: (v) => setState(() => onChange(v)),
-            onChangeEnd: (_) => _regenerate(),
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: Colors.white24,
+              thumbColor: AppColors.primary,
+              overlayColor: AppColors.primary.withValues(alpha: 0.16),
+            ),
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              onChanged: (v) => setState(() => onChange(v)),
+              onChangeEnd: (_) => _regenerate(),
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Small pill filter chip with press feedback (used on the dark editor panel).
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressScale(
+      onTap: onTap,
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary
+              : Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: AppType.body,
+            fontWeight: selected ? AppType.bold : AppType.medium,
+          ),
+        ),
+      ),
     );
   }
 }

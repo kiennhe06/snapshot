@@ -2,12 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/auth_error.dart';
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/utils/auth_error.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../data/auth_service.dart';
 import '../providers/auth_providers.dart';
 import 'auth_flow.dart';
-import 'widgets/auth_text_field.dart';
-import 'widgets/primary_button.dart';
 
 class PhoneSignInScreen extends ConsumerStatefulWidget {
   const PhoneSignInScreen({super.key});
@@ -103,44 +103,45 @@ class _PhoneSignInScreenState extends ConsumerState<PhoneSignInScreen> {
   @override
   Widget build(BuildContext context) {
     final isCodeStep = _verification != null;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Đăng nhập bằng SĐT')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AuthTextField(
-                controller: _phone,
-                label: 'Số điện thoại (+84...)',
-                keyboardType: TextInputType.phone,
-                prefixIcon: Icons.phone_outlined,
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Đăng nhập bằng SĐT', showBack: true),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTextField(
+              controller: _phone,
+              label: 'Số điện thoại (+84...)',
+              keyboardType: TextInputType.phone,
+              icon: Icons.phone_outlined,
+            ),
+            if (isCodeStep) ...[
+              const SizedBox(height: AppSpacing.lg),
+              AppTextField(
+                controller: _code,
+                label: 'Mã OTP (6 số)',
+                keyboardType: TextInputType.number,
+                icon: Icons.sms_outlined,
               ),
-              if (isCodeStep) ...[
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _code,
-                  label: 'Mã OTP (6 số)',
-                  keyboardType: TextInputType.number,
-                  prefixIcon: Icons.sms_outlined,
-                ),
-              ],
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: isCodeStep ? 'Xác nhận OTP' : 'Gửi mã OTP',
-                isLoading: _loading,
-                onPressed: isCodeStep ? _confirmCode : _sendCode,
-              ),
-              if (isCodeStep)
-                TextButton(
-                  onPressed: _loading
-                      ? null
-                      : () => setState(() => _verification = null),
-                  child: const Text('Đổi số điện thoại'),
-                ),
             ],
-          ),
+            const SizedBox(height: AppSpacing.xxl),
+            AppButton(
+              label: isCodeStep ? 'Xác nhận OTP' : 'Gửi mã OTP',
+              isLoading: _loading,
+              onPressed: isCodeStep ? _confirmCode : _sendCode,
+            ),
+            if (isCodeStep) ...[
+              const SizedBox(height: AppSpacing.sm),
+              AppButton(
+                label: 'Đổi số điện thoại',
+                variant: AppButtonVariant.ghost,
+                onPressed: _loading
+                    ? null
+                    : () => setState(() => _verification = null),
+              ),
+            ],
+          ],
         ),
       ),
     );

@@ -2,11 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/auth_error.dart';
+import 'package:snapshot/app/theme.dart';
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/utils/auth_error.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
 import 'auth_flow.dart';
-import 'widgets/auth_text_field.dart';
-import 'widgets/primary_button.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -63,71 +64,73 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tạo tài khoản')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AuthTextField(
-                  controller: _name,
-                  label: 'Tên hiển thị',
-                  prefixIcon: Icons.person_outline,
-                  textInputAction: TextInputAction.next,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Vui lòng nhập tên'
-                      : null,
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Tạo tài khoản', showBack: true),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Snapshot',
+                textAlign: TextAlign.center,
+                style: brandWordmark(context, size: 40),
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              AppTextField(
+                controller: _name,
+                label: 'Tên hiển thị',
+                icon: Icons.person_outline,
+                textInputAction: TextInputAction.next,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Vui lòng nhập tên'
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppTextField(
+                controller: _email,
+                label: 'Email',
+                keyboardType: TextInputType.emailAddress,
+                icon: Icons.email_outlined,
+                textInputAction: TextInputAction.next,
+                validator: (v) => (v == null || !v.contains('@'))
+                    ? 'Email không hợp lệ'
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppTextField(
+                controller: _password,
+                label: 'Mật khẩu',
+                obscureText: _obscure,
+                icon: Icons.lock_outline,
+                textInputAction: TextInputAction.next,
+                suffix: AppIconButton(
+                  icon: _obscure ? Icons.visibility_off : Icons.visibility,
+                  onTap: () => setState(() => _obscure = !_obscure),
                 ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _email,
-                  label: 'Email',
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
-                  textInputAction: TextInputAction.next,
-                  validator: (v) => (v == null || !v.contains('@'))
-                      ? 'Email không hợp lệ'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _password,
-                  label: 'Mật khẩu',
-                  obscureText: _obscure,
-                  prefixIcon: Icons.lock_outline,
-                  textInputAction: TextInputAction.next,
-                  suffix: IconButton(
-                    icon: Icon(
-                      _obscure ? Icons.visibility_off : Icons.visibility,
-                    ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  ),
-                  validator: (v) => (v == null || v.length < 6)
-                      ? 'Mật khẩu tối thiểu 6 ký tự'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _confirm,
-                  label: 'Nhập lại mật khẩu',
-                  obscureText: _obscure,
-                  prefixIcon: Icons.lock_outline,
-                  textInputAction: TextInputAction.done,
-                  validator: (v) =>
-                      v != _password.text ? 'Mật khẩu không khớp' : null,
-                ),
-                const SizedBox(height: 24),
-                PrimaryButton(
-                  label: 'Đăng ký',
-                  isLoading: _loading,
-                  onPressed: _submit,
-                ),
-              ],
-            ),
+                validator: (v) => (v == null || v.length < 6)
+                    ? 'Mật khẩu tối thiểu 6 ký tự'
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppTextField(
+                controller: _confirm,
+                label: 'Nhập lại mật khẩu',
+                obscureText: _obscure,
+                icon: Icons.lock_outline,
+                textInputAction: TextInputAction.done,
+                validator: (v) =>
+                    v != _password.text ? 'Mật khẩu không khớp' : null,
+              ),
+              const SizedBox(height: AppSpacing.xxl),
+              AppButton(
+                label: 'Đăng ký',
+                isLoading: _loading,
+                onPressed: _submit,
+              ),
+            ],
           ),
         ),
       ),

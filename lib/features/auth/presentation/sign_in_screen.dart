@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/theme.dart';
-import '../../../core/constants.dart';
-import '../../../core/utils/auth_error.dart';
+import 'package:snapshot/app/theme.dart';
+import 'package:snapshot/core/constants.dart';
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/core/utils/auth_error.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
 import 'auth_flow.dart';
-import 'widgets/auth_text_field.dart';
-import 'widgets/primary_button.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -81,105 +81,109 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: AutofillGroup(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    Icon(
-                      Icons.camera_alt_rounded,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.primary,
+    return AppScaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Form(
+            key: _formKey,
+            child: AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: AppSpacing.xxl),
+                  const Icon(
+                    Icons.camera_alt_rounded,
+                    size: 64,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Snapshot',
+                    textAlign: TextAlign.center,
+                    style: brandWordmark(context, size: 40),
+                  ),
+                  const SizedBox(height: AppSpacing.xxxl),
+                  AppTextField(
+                    controller: _email,
+                    label: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                    icon: Icons.email_outlined,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    validator: (v) => (v == null || !v.contains('@'))
+                        ? 'Email không hợp lệ'
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppTextField(
+                    controller: _password,
+                    label: 'Mật khẩu',
+                    obscureText: _obscure,
+                    icon: Icons.lock_outline,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    suffix: AppIconButton(
+                      icon: _obscure ? Icons.visibility_off : Icons.visibility,
+                      onTap: () => setState(() => _obscure = !_obscure),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Snapshot',
-                      textAlign: TextAlign.center,
-                      style: brandWordmark(context, size: 40),
+                    validator: (v) => (v == null || v.length < 6)
+                        ? 'Mật khẩu tối thiểu 6 ký tự'
+                        : null,
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: AppButton(
+                      label: 'Quên mật khẩu?',
+                      variant: AppButtonVariant.ghost,
+                      fullWidth: false,
+                      height: 44,
+                      onPressed: () => context.push(Routes.forgotPassword),
                     ),
-                    const SizedBox(height: 32),
-                    AuthTextField(
-                      controller: _email,
-                      label: 'Email',
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icons.email_outlined,
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [AutofillHints.email],
-                      validator: (v) => (v == null || !v.contains('@'))
-                          ? 'Email không hợp lệ'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    AuthTextField(
-                      controller: _password,
-                      label: 'Mật khẩu',
-                      obscureText: _obscure,
-                      prefixIcon: Icons.lock_outline,
-                      textInputAction: TextInputAction.done,
-                      autofillHints: const [AutofillHints.password],
-                      suffix: IconButton(
-                        icon: Icon(
-                          _obscure ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppButton(
+                    label: 'Đăng nhập',
+                    isLoading: _loading,
+                    onPressed: _signInEmail,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    label: 'Đăng nhập bằng Google',
+                    variant: AppButtonVariant.secondary,
+                    icon: Icons.g_mobiledata,
+                    onPressed: _loading ? null : _signInGoogle,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    label: 'Đăng nhập bằng số điện thoại',
+                    variant: AppButtonVariant.secondary,
+                    icon: Icons.phone_outlined,
+                    onPressed: _loading
+                        ? null
+                        : () => context.push(Routes.phoneSignIn),
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Chưa có tài khoản?',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: AppType.subhead,
                         ),
-                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
-                      validator: (v) => (v == null || v.length < 6)
-                          ? 'Mật khẩu tối thiểu 6 ký tự'
-                          : null,
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => context.push(Routes.forgotPassword),
-                        child: const Text('Quên mật khẩu?'),
+                      AppButton(
+                        label: 'Đăng ký',
+                        variant: AppButtonVariant.ghost,
+                        fullWidth: false,
+                        height: 44,
+                        onPressed: () => context.push(Routes.signUp),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    PrimaryButton(
-                      label: 'Đăng nhập',
-                      isLoading: _loading,
-                      onPressed: _signInEmail,
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _loading ? null : _signInGoogle,
-                      icon: const Icon(Icons.g_mobiledata, size: 28),
-                      label: const Text('Đăng nhập bằng Google'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _loading
-                          ? null
-                          : () => context.push(Routes.phoneSignIn),
-                      icon: const Icon(Icons.phone_outlined),
-                      label: const Text('Đăng nhập bằng số điện thoại'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('Chưa có tài khoản?'),
-                        TextButton(
-                          onPressed: () => context.push(Routes.signUp),
-                          child: const Text('Đăng ký'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),

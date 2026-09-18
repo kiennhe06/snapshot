@@ -3,20 +3,22 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:snapshot/core/design/tokens.dart';
+import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/post_draft.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/empty_view.dart';
 import '../providers/post_providers.dart';
 import 'create_post_screen.dart';
 
-/// Lists locally-saved post drafts; tap to resume, swipe/long-press to delete.
+/// Lists locally-saved post drafts; tap to resume, tap delete to remove.
 class DraftsScreen extends ConsumerWidget {
   const DraftsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Bản nháp')),
+    return AppScaffold(
+      topBar: const AppTopBar(title: 'Bản nháp', showBack: true),
       body: AsyncValueView<List<PostDraft>>(
         value: ref.watch(draftsProvider),
         onRetry: () => ref.invalidate(draftsProvider),
@@ -27,44 +29,57 @@ class DraftsScreen extends ConsumerWidget {
               icon: Icons.drafts_outlined,
             );
           }
-          return ListView.separated(
+          return ListView.builder(
+            padding: const EdgeInsets.all(AppSpacing.lg),
             itemCount: drafts.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (_, i) {
               final d = drafts[i];
               final firstPath = d.items.isNotEmpty ? d.items.first.path : null;
-              return ListTile(
-                leading: firstPath != null && File(firstPath).existsSync()
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.file(
-                          File(firstPath),
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : const Icon(Icons.image_not_supported_outlined),
-                title: Text(
-                  d.caption.isEmpty ? '(Không có chú thích)' : d.caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text('${d.items.length} mục'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: () async {
-                    await ref.read(draftRepositoryProvider).deleteDraft(d.id);
-                    ref.invalidate(draftsProvider);
+              final hasThumb =
+                  firstPath != null && File(firstPath).existsSync();
+              return AppCard(
+                margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                child: AppTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: hasThumb
+                        ? Image.file(
+                            File(firstPath),
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(
+                            width: 48,
+                            height: 48,
+                            color: AppColors.layer3,
+                            child: const Icon(
+                              Icons.image_not_supported_outlined,
+                              color: AppColors.textTertiary,
+                              size: AppIconSize.md,
+                            ),
+                          ),
+                  ),
+                  title: d.caption.isEmpty ? '(Không có chú thích)' : d.caption,
+                  subtitle: '${d.items.length} mục',
+                  trailing: AppIconButton(
+                    icon: Icons.delete_outline,
+                    tooltip: 'Xoá bản nháp',
+                    color: AppColors.danger,
+                    onTap: () async {
+                      await ref.read(draftRepositoryProvider).deleteDraft(d.id);
+                      ref.invalidate(draftsProvider);
+                    },
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CreatePostScreen(draft: d),
+                      ),
+                    );
                   },
                 ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => CreatePostScreen(draft: d),
-                    ),
-                  );
-                },
               );
             },
           );
