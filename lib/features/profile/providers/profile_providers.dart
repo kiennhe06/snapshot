@@ -48,6 +48,25 @@ final taggedPostsProvider = StreamProvider.autoDispose
       return ref.watch(postRepositoryProvider).watchTaggedPosts(uid);
     });
 
+/// AppUser list the current user follows (for tag / collab pickers).
+final followingUsersProvider = FutureProvider.autoDispose<List<AppUser>>((
+  ref,
+) async {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return const [];
+  final ids = await ref
+      .watch(followRepositoryProvider)
+      .watchFollowingIds(uid)
+      .first;
+  final repo = ref.watch(userRepositoryProvider);
+  final users = <AppUser>[];
+  for (final id in ids) {
+    final u = await repo.getUser(id);
+    if (u != null) users.add(u);
+  }
+  return users;
+});
+
 /// Whether the current user follows [targetUid].
 final isFollowingProvider = StreamProvider.autoDispose.family<bool, String>((
   ref,

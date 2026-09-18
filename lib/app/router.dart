@@ -13,6 +13,10 @@ import '../features/auth/presentation/splash_screen.dart';
 import '../features/auth/providers/auth_providers.dart';
 import '../features/home/presentation/home_shell.dart';
 import '../features/post/presentation/create_post_screen.dart';
+import '../features/post/presentation/drafts_screen.dart';
+import '../features/post/presentation/edit_post_screen.dart';
+import '../models/post.dart';
+import '../models/post_draft.dart';
 import '../features/profile/presentation/archive_screen.dart';
 import '../features/profile/presentation/change_password_screen.dart';
 import '../features/profile/presentation/edit_profile_screen.dart';
@@ -104,8 +108,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.createPost,
-        builder: (_, _) => const CreatePostScreen(),
+        builder: (_, state) =>
+            CreatePostScreen(draft: state.extra as PostDraft?),
       ),
+      GoRoute(
+        path: Routes.editPost,
+        builder: (_, state) => EditPostScreen(post: state.extra as Post),
+      ),
+      GoRoute(path: Routes.drafts, builder: (_, _) => const DraftsScreen()),
       GoRoute(path: Routes.archive, builder: (_, _) => const ArchiveScreen()),
     ],
   );

@@ -41,6 +41,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Ứng dụng cần dùng camera để chụp ảnh/quay video đăng bài.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ứng dụng cần micro để quay video có âm thanh.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Ứng dụng cần truy cập thư viện ảnh để bạn chọn ảnh/video đăng bài và ảnh đại diện.</string>
 	<key>UIApplicationSceneManifest</key>

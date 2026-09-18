@@ -10,6 +10,14 @@ class FollowRepository {
   DocumentReference<Map<String, dynamic>> _user(String uid) =>
       _db.collection('users').doc(uid);
 
+  /// Uids the given user is following (used by tag / collab pickers).
+  Stream<List<String>> watchFollowingIds(String uid) {
+    return _user(uid)
+        .collection('following')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => d.id).toList());
+  }
+
   /// True while [currentUid] follows [targetUid].
   Stream<bool> watchIsFollowing({
     required String currentUid,

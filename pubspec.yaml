@@ -25,8 +25,11 @@ dependencies:
   firebase_auth: ^6.5.0
   cloud_firestore: ^6.6.0
 
-  # Media picking + caching
+  # Media picking + editing + caching
   image_picker: ^1.1.2
+  image_cropper: ^8.0.2
+  image: ^4.3.0
+  path_provider: ^2.1.5
   cached_network_image: ^3.4.1
 
   # HTTP client (Cloudinary upload)

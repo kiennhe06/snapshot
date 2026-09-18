@@ -237,6 +237,14 @@ class _ProfileTabs extends ConsumerWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Chỉnh sửa bài viết'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push(Routes.editPost, extra: post);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.archive_outlined),
               title: const Text('Lưu trữ bài viết'),
               onTap: () async {
@@ -244,6 +252,41 @@ class _ProfileTabs extends ConsumerWidget {
                 await ref
                     .read(postRepositoryProvider)
                     .setArchived(post.postId, true);
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                'Xoá bài viết',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Xoá bài viết'),
+                    content: const Text('Bạn có chắc muốn xoá bài viết này?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Huỷ'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Xoá'),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok == true) {
+                  await ref
+                      .read(postRepositoryProvider)
+                      .deletePost(post.postId);
+                }
               },
             ),
           ],
@@ -320,6 +363,8 @@ class _SettingsMenu extends ConsumerWidget {
       icon: const Icon(Icons.menu),
       onSelected: (value) async {
         switch (value) {
+          case 'drafts':
+            context.push(Routes.drafts);
           case 'archive':
             context.push(Routes.archive);
           case 'change-password':
@@ -343,6 +388,7 @@ class _SettingsMenu extends ConsumerWidget {
         final user = ref.read(userProfileProvider(uid)).valueOrNull;
         final isPrivate = user?.isPrivate ?? false;
         return [
+          const PopupMenuItem(value: 'drafts', child: Text('Bản nháp')),
           const PopupMenuItem(value: 'archive', child: Text('Bài lưu trữ')),
           const PopupMenuItem(
             value: 'change-password',

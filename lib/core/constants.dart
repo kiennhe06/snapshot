@@ -45,5 +45,7 @@ class Routes {
   static const String changePassword = '/change-password';
   static const String qrNametag = '/qr-nametag';
   static const String createPost = '/create-post';
+  static const String editPost = '/edit-post';
+  static const String drafts = '/drafts';
   static const String archive = '/archive';
 }
