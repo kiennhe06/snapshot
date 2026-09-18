@@ -349,12 +349,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   title: 'Gắn thẻ người khác',
                   initial: _tagged,
                 );
-                if (r != null)
+                if (r != null) {
                   setState(
                     () => _tagged
                       ..clear()
                       ..addAll(r),
                   );
+                }
               },
             ),
             ListTile(
@@ -368,12 +369,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   title: 'Chọn đồng tác giả',
                   initial: _coAuthors,
                 );
-                if (r != null)
+                if (r != null) {
                   setState(
                     () => _coAuthors
                       ..clear()
                       ..addAll(r),
                   );
+                }
               },
             ),
             const Divider(),
