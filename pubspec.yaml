@@ -1,0 +1,48 @@
+name: snapshot
+description: "Instagram-style photo/video social app built with Flutter + Firebase."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Navigation
+  go_router: ^14.6.1
+
+  # Firebase
+  firebase_core: ^4.11.0
+  firebase_auth: ^6.5.0
+  cloud_firestore: ^6.6.0
+
+  # Google Sign-In (v7 API mới: singleton + initialize + authenticate)
+  google_sign_in: ^7.2.0
+
+  # Local storage cho đa tài khoản / theme
+  shared_preferences: ^2.3.3
+
+  # Thông tin thiết bị cho lịch sử đăng nhập
+  device_info_plus: ^11.2.0
+  package_info_plus: ^8.1.2
+
+  # Tiện ích
+  intl: ^0.20.2
+  uuid: ^4.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
