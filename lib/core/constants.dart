@@ -7,6 +7,12 @@ class AppConfig {
   /// for Firebase on BOTH Android and iOS. Fill after `flutterfire configure`.
   static const String googleWebClientId =
       '430324568256-n3e10gqml1j8tecnb6fal1daqg834qfj.apps.googleusercontent.com';
+
+  /// Cloudinary — free media hosting used instead of Firebase Storage.
+  /// Fill from your Cloudinary dashboard (Settings). The upload preset must be
+  /// an *unsigned* preset (safe to ship in the client).
+  static const String cloudinaryCloudName = 'mzrv16pt';
+  static const String cloudinaryUploadPreset = 'snapshot_unsigned';
 }
 
 /// Keys used with SharedPreferences.

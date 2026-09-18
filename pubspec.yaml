@@ -24,11 +24,13 @@ dependencies:
   firebase_core: ^4.11.0
   firebase_auth: ^6.5.0
   cloud_firestore: ^6.6.0
-  firebase_storage: ^13.0.0
 
   # Media picking + caching
   image_picker: ^1.1.2
   cached_network_image: ^3.4.1
+
+  # HTTP client (Cloudinary upload)
+  http: ^1.2.2
 
   # QR code / nametag
   qr_flutter: ^4.1.0
