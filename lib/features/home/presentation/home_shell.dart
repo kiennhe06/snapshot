@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/constants.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../widgets/components/app_bottom_nav.dart';
@@ -27,19 +29,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       label: tr('Trang chủ', 'Home'),
     ),
     AppNavItem(
-      icon: Icons.movie_outlined,
-      activeIcon: Icons.movie_rounded,
-      label: 'Reels',
-    ),
-    AppNavItem(
       icon: Icons.explore_outlined,
       activeIcon: Icons.explore_rounded,
       label: tr('Khám phá', 'Explore'),
     ),
     AppNavItem(
+      icon: Icons.movie_outlined,
+      activeIcon: Icons.movie_rounded,
+      label: 'Reels',
+    ),
+    AppNavItem(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
-      label: tr('Hồ sơ', 'Profile'),
+      label: tr('Cá nhân', 'You'),
     ),
   ];
 
@@ -52,8 +54,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         index: _index,
         children: const [
           FeedScreen(),
-          ReelsFeedScreen(),
           ExploreScreen(),
+          ReelsFeedScreen(),
           ProfileScreen(),
         ],
       ),
@@ -61,6 +63,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         items: _items,
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
+        onCreate: () => context.push(Routes.createPost),
+        createLabel: tr('Đăng bài', 'Post'),
       ),
     );
   }

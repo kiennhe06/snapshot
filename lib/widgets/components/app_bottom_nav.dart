@@ -14,23 +14,37 @@ class AppNavItem {
   final String label;
 }
 
-/// Floating rounded bottom navigation ("Moment" style): a white pill bar with a
-/// soft shadow; the active item gets a pink pill with icon + label.
+/// Floating bottom navigation: a pill bar of icon + label tabs with a raised
+/// gradient "create" button in the centre. Active tab reads in the brand
+/// accent; the centre action stands proud of the bar.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
     required this.items,
     required this.currentIndex,
     required this.onTap,
+    this.onCreate,
+    this.createLabel = 'Đăng bài',
   });
 
   final List<AppNavItem> items;
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final VoidCallback? onCreate;
+  final String createLabel;
 
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final mid = items.length ~/ 2; // centre insertion point
+
+    final slots = <Widget>[];
+    for (var i = 0; i < items.length; i++) {
+      if (onCreate != null && i == mid) slots.add(_createButton());
+      slots.add(Expanded(child: _tab(i)));
+    }
+    if (onCreate != null && mid == items.length) slots.add(_createButton());
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -39,65 +53,76 @@ class AppBottomNav extends StatelessWidget {
         bottomInset + AppSpacing.md,
       ),
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: AppColors.layer1,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
           border: Border.all(color: AppColors.borderSubtle),
           boxShadow: AppShadows.medium,
         ),
         child: Row(
-          children: List.generate(items.length, (i) {
-            final active = i == currentIndex;
-            final item = items[i];
-            return Expanded(
-              child: PressScale(
-                onTap: () => onTap(i),
-                child: AnimatedContainer(
-                  duration: AppMotion.base,
-                  curve: AppMotion.standard,
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  decoration: BoxDecoration(
-                    gradient: active
-                        ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.primaryBright,
-                              AppColors.primary,
-                            ],
-                          )
-                        : null,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        active ? item.activeIcon : item.icon,
-                        size: AppIconSize.lg,
-                        color: active ? Colors.white : AppColors.textSecondary,
-                      ),
-                      if (active) ...[
-                        const SizedBox(width: AppSpacing.sm),
-                        Flexible(
-                          child: Text(
-                            item.label,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: AppType.label,
-                              fontWeight: AppType.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: slots,
+        ),
+      ),
+    );
+  }
+
+  Widget _tab(int i) {
+    final active = i == currentIndex;
+    final item = items[i];
+    final color = active ? AppColors.primary : AppColors.textTertiary;
+    return PressScale(
+      onTap: () => onTap(i),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              active ? item.activeIcon : item.icon,
+              size: AppIconSize.lg,
+              color: color,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: AppType.caption,
+                fontWeight: active ? AppType.bold : AppType.medium,
               ),
-            );
-          }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _createButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: PressScale(
+        onTap: onCreate,
+        child: Container(
+          width: 52,
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.primaryBright, AppColors.primary],
+            ),
+            boxShadow: AppShadows.brandGlow,
+          ),
+          child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
         ),
       ),
     );
