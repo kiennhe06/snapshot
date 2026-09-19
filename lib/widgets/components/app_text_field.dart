@@ -19,6 +19,7 @@ class AppTextField extends StatelessWidget {
     this.maxLines = 1,
     this.autofillHints,
     this.onChanged,
+    this.maxLength,
   });
 
   final TextEditingController controller;
@@ -33,6 +34,7 @@ class AppTextField extends StatelessWidget {
   final int maxLines;
   final Iterable<String>? autofillHints;
   final ValueChanged<String>? onChanged;
+  final int? maxLength;
 
   OutlineInputBorder _border(Color c, double w) => OutlineInputBorder(
     borderRadius: AppRadius.brLg,
@@ -68,6 +70,11 @@ class AppTextField extends StatelessWidget {
           maxLines: maxLines,
           autofillHints: autofillHints,
           onChanged: onChanged,
+          maxLength: maxLength,
+          // Hide the default Material counter; the screen renders its own.
+          buildCounter:
+              (_, {required currentLength, required isFocused, maxLength}) =>
+                  null,
           cursorColor: AppColors.primary,
           style: TextStyle(
             color: AppColors.textPrimary,

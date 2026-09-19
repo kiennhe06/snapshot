@@ -39,6 +39,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _commentsDisabled = false;
   bool _likesHidden = false;
   bool _loading = false;
+  int _preview = 0; // index of the large media preview
   String _draftId = const Uuid().v4();
 
   // Background autosave state.
@@ -404,11 +405,25 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 'Write a caption... (use #hashtag)',
               ),
               maxLines: 4,
+              maxLength: 2200,
             ),
-            const SizedBox(height: AppSpacing.xl),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, right: AppSpacing.sm),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${_caption.text.characters.length}/2200',
+                  style: TextStyle(
+                    color: AppColors.textTertiary,
+                    fontSize: AppType.small,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
 
-            // SECONDARY — add to your post
-            _sectionLabel(tr('Thêm vào bài viết', 'Add to your post')),
+            // SECONDARY — interaction details & place
+            _sectionLabel(tr('Chi tiết tương tác & Vị trí', 'Details & place')),
             AppCard(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Column(
@@ -480,24 +495,67 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.xl),
 
-            // ADVANCED — folded into a sheet
+            // ADVANCED — visible inline (only functional options)
+            _sectionLabel(
+              tr('Cài đặt nâng cao & Quyền riêng tư', 'Advanced & privacy'),
+            ),
             AppCard(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-              child: AppTile(
-                leading: Icon(
-                  Icons.tune_rounded,
-                  color: AppColors.textSecondary,
-                  size: AppIconSize.md,
-                ),
-                title: tr('Cài đặt nâng cao', 'Advanced settings'),
-                subtitle: _advancedSummary(),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary,
-                ),
-                onTap: _openAdvanced,
+              child: Column(
+                children: [
+                  AppTile(
+                    leading: Icon(
+                      Icons.accessibility_new_rounded,
+                      color: AppColors.textSecondary,
+                      size: AppIconSize.md,
+                    ),
+                    title: tr('Văn bản thay thế (Alt)', 'Alt text'),
+                    subtitle: _items.isEmpty
+                        ? tr('Thêm ảnh trước', 'Add media first')
+                        : (_items.any((m) => m.altText.isNotEmpty)
+                              ? tr('Đã điền', 'Added')
+                              : tr('Mô tả ảnh cho người khiếm thị',
+                                  'Describe images')),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textTertiary,
+                    ),
+                    onTap: _items.isEmpty ? null : () => _editAltText(0),
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 52,
+                    color: AppColors.borderSubtle,
+                  ),
+                  AppToggleRow(
+                    icon: Icons.favorite_border_rounded,
+                    label: tr('Ẩn số lượt thích', 'Hide like count'),
+                    subtitle: tr(
+                      'Chỉ mình bạn thấy tổng lượt thích.',
+                      'Only you can see the total likes.',
+                    ),
+                    value: _likesHidden,
+                    onChanged: (v) {
+                      setState(() => _likesHidden = v);
+                      _markChanged();
+                    },
+                  ),
+                  AppToggleRow(
+                    icon: Icons.mode_comment_outlined,
+                    label: tr('Tắt tính năng bình luận', 'Turn off commenting'),
+                    subtitle: tr(
+                      'Người khác không thể bình luận bài này.',
+                      'Others cannot comment on this post.',
+                    ),
+                    value: _commentsDisabled,
+                    onChanged: (v) {
+                      setState(() => _commentsDisabled = v);
+                      _markChanged();
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -506,6 +564,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               label: tr('Chia sẻ', 'Share'),
               isLoading: _loading,
               onPressed: _publish,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: tr('Hủy bài viết', 'Discard'),
+              variant: AppButtonVariant.ghost,
+              onPressed: _loading ? null : _handleBack,
             ),
           ],
         ),
@@ -525,18 +589,6 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       ),
     ),
   );
-
-  String _advancedSummary() {
-    final parts = <String>[
-      _commentsDisabled
-          ? tr('Tắt bình luận', 'Comments off')
-          : tr('Cho phép bình luận', 'Comments on'),
-      _likesHidden
-          ? tr('Ẩn lượt thích', 'Likes hidden')
-          : tr('Hiện lượt thích', 'Likes shown'),
-    ];
-    return parts.join(' · ');
-  }
 
   Future<void> _editLocation() async {
     final controller = TextEditingController(text: _location.text);
@@ -570,138 +622,260 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     if (result != null) setState(() => _location.text = result);
   }
 
-  Future<void> _openAdvanced() async {
-    await showAppSheet<void>(
-      context,
-      builder: (sheetCtx) => AppSheetSurface(
-        title: tr('Cài đặt nâng cao', 'Advanced settings'),
-        child: StatefulBuilder(
-          builder: (_, setSheet) => Column(
-            mainAxisSize: MainAxisSize.min,
+  Widget _mediaSection() {
+    if (_items.isEmpty) {
+      return PressScale(
+        onTap: _addMediaSheet,
+        child: AspectRatio(
+          aspectRatio: 4 / 5,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.layer3,
+              borderRadius: AppRadius.brLg,
+              border: Border.all(color: AppColors.borderStrong, width: 1.5),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_a_photo_outlined,
+                  size: 42,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  tr('Thêm ảnh hoặc video', 'Add photo or video'),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: AppType.body,
+                    fontWeight: AppType.medium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final idx = _preview.clamp(0, _items.length - 1);
+    final cur = _items[idx];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Large preview
+        ClipRRect(
+          borderRadius: AppRadius.brLg,
+          child: AspectRatio(
+            aspectRatio: 4 / 5,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                cur.isVideo
+                    ? Container(
+                        color: AppColors.layer3,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.videocam_rounded,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        ),
+                      )
+                    : Image.file(cur.file, fit: BoxFit.cover),
+                Positioned(
+                  top: AppSpacing.sm,
+                  left: AppSpacing.sm,
+                  child: _mediaPill(
+                    '${idx + 1}/${_items.length} ${tr('ảnh', 'media')} · 4:5',
+                  ),
+                ),
+                if (!cur.isVideo)
+                  Positioned(
+                    top: AppSpacing.sm,
+                    right: AppSpacing.sm,
+                    child: PressScale(
+                      onTap: () => _itemActions(idx),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.tune_rounded,
+                          size: AppIconSize.sm,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  left: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
+                  child: _mediaPill(
+                    tr('${_items.length} đã chọn', '${_items.length} selected'),
+                  ),
+                ),
+                Positioned(
+                  right: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
+                  child: PressScale(
+                    onTap: _addMediaSheet,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.primaryBright, AppColors.primary],
+                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.add_rounded,
+                            size: AppIconSize.sm,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            tr('Thêm', 'Add'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: AppType.label,
+                              fontWeight: AppType.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        // Thumbnail strip
+        SizedBox(
+          height: 64,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
             children: [
-              AppToggleRow(
-                label: tr('Cho phép bình luận', 'Allow comments'),
-                subtitle: tr(
-                  'Người khác có thể bình luận bài này.',
-                  'Others can comment on this post.',
+              for (var i = 0; i < _items.length; i++) _thumb(i),
+              PressScale(
+                onTap: _addMediaSheet,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  margin: const EdgeInsets.only(right: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppColors.layer3,
+                    borderRadius: AppRadius.brMd,
+                    border: Border.all(color: AppColors.borderStrong),
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: AppColors.primary,
+                    size: AppIconSize.lg,
+                  ),
                 ),
-                value: !_commentsDisabled,
-                onChanged: (v) {
-                  setSheet(() {});
-                  setState(() => _commentsDisabled = !v);
-                  _markChanged();
-                },
-              ),
-              AppToggleRow(
-                label: tr('Hiện lượt thích', 'Show like count'),
-                subtitle: tr(
-                  'Mọi người thấy tổng lượt thích.',
-                  'Everyone can see the like count.',
-                ),
-                value: !_likesHidden,
-                onChanged: (v) {
-                  setSheet(() {});
-                  setState(() => _likesHidden = !v);
-                  _markChanged();
-                },
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _mediaSection() {
-    return SizedBox(
-      height: 110,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          ..._items.asMap().entries.map((e) {
-            final i = e.key;
-            final m = e.value;
-            return Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.sm),
-              child: PressScale(
-                onTap: () => _itemActions(i),
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: AppRadius.brMd,
-                      child: m.isVideo
-                          ? Container(
-                              width: 110,
-                              height: 110,
-                              color: AppColors.layer3,
-                              child: Icon(
-                                Icons.videocam,
-                                size: 40,
-                                color: AppColors.textSecondary,
-                              ),
-                            )
-                          : Image.file(
-                              m.file,
-                              width: 110,
-                              height: 110,
-                              fit: BoxFit.cover,
-                            ),
-                    ),
-                    if (m.altText.isNotEmpty)
-                      Positioned(
-                        bottom: AppSpacing.xs,
-                        left: AppSpacing.xs,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            color: AppColors.textPrimary.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(AppRadius.xxs),
-                          ),
-                          child: const Icon(
-                            Icons.accessibility_new,
-                            size: AppIconSize.xs,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                  ],
+  Widget _mediaPill(String text) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
+    decoration: BoxDecoration(
+      color: Colors.black.withValues(alpha: 0.55),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+    ),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: AppType.small,
+        fontWeight: AppType.bold,
+      ),
+    ),
+  );
+
+  Widget _thumb(int i) {
+    final m = _items[i];
+    final selected = i == _preview.clamp(0, _items.length - 1);
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.sm),
+      child: PressScale(
+        onTap: () => setState(() => _preview = i),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.brMd,
+                border: Border.all(
+                  color: selected ? AppColors.primary : Colors.transparent,
+                  width: 2,
                 ),
               ),
-            );
-          }),
-          // Add button — soft dashed-style rounded tile.
-          PressScale(
-            onTap: _addMediaSheet,
-            child: Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                color: AppColors.layer3,
-                borderRadius: AppRadius.brMd,
-                border: Border.all(color: AppColors.borderStrong, width: 1.5),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add_a_photo_outlined,
-                    size: 30,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    tr('Thêm', 'Add'),
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: AppType.label,
-                      fontWeight: AppType.medium,
-                    ),
-                  ),
-                ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: m.isVideo
+                    ? Container(
+                        width: 56,
+                        height: 56,
+                        color: AppColors.layer3,
+                        child: Icon(
+                          Icons.videocam,
+                          size: 22,
+                          color: AppColors.textSecondary,
+                        ),
+                      )
+                    : Image.file(
+                        m.file,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                      ),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              top: -2,
+              right: -2,
+              child: PressScale(
+                onTap: () {
+                  setState(() {
+                    _items.removeAt(i);
+                    if (_preview >= _items.length) {
+                      _preview = _items.isEmpty ? 0 : _items.length - 1;
+                    }
+                  });
+                  _markChanged();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
