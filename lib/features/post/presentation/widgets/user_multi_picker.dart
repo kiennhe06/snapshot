@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
+import 'package:snapshot/widgets/loading_view.dart';
 import '../../../../models/app_user.dart';
 import '../../../profile/providers/profile_providers.dart';
 
@@ -15,10 +16,8 @@ Future<Set<String>?> showUserMultiPicker(
   required String title,
   Set<String> initial = const {},
 }) {
-  return showModalBottomSheet<Set<String>>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+  return showAppSheet<Set<String>>(
+    context,
     builder: (_) => _UserMultiPicker(title: title, initial: initial),
   );
 }
@@ -58,122 +57,77 @@ class _UserMultiPickerState extends ConsumerState<_UserMultiPicker> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
-        margin: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.layer1,
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
-          boxShadow: AppShadows.medium,
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Column(
-              children: [
-                // Drag handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(
-                    top: AppSpacing.md,
-                    bottom: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.borderStrong,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
+      child: AppSheetSurface(
+        title: widget.title,
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: AppTextField(
+                  controller: _searchController,
+                  label: tr('Tìm kiếm', 'Search'),
+                  hint: tr('Tìm theo tên/username', 'Search by name/username'),
+                  icon: Icons.search_rounded,
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.xs,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
+              ),
+              Expanded(
+                child: usersAsync.when(
+                  loading: () => const LoadingView(),
+                  error: (_, _) => Center(
                     child: Text(
-                      widget.title,
+                      tr(
+                        'Không tải được danh sách.',
+                        'Could not load the list.',
+                      ),
                       style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: AppType.headline,
-                        fontWeight: AppType.bold,
+                        color: AppColors.textTertiary,
+                        fontSize: AppType.subhead,
                       ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: AppTextField(
-                    controller: _searchController,
-                    label: tr('Tìm kiếm', 'Search'),
-                    hint: tr(
-                      'Tìm theo tên/username',
-                      'Search by name/username',
-                    ),
-                    icon: Icons.search_rounded,
-                  ),
-                ),
-                Expanded(
-                  child: usersAsync.when(
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    error: (_, _) => Center(
-                      child: Text(
-                        tr(
-                          'Không tải được danh sách.',
-                          'Could not load the list.',
-                        ),
-                        style: const TextStyle(
-                          color: AppColors.textTertiary,
-                          fontSize: AppType.subhead,
-                        ),
-                      ),
-                    ),
-                    data: (users) {
-                      final filtered = users
-                          .where(
-                            (u) =>
-                                u.username.toLowerCase().contains(_query) ||
-                                u.displayName.toLowerCase().contains(_query),
-                          )
-                          .toList();
-                      if (filtered.isEmpty) {
-                        return Center(
-                          child: Text(
-                            tr(
-                              'Bạn chưa theo dõi ai để chọn.',
-                              'You are not following anyone to pick.',
-                            ),
-                            style: const TextStyle(
-                              color: AppColors.textTertiary,
-                              fontSize: AppType.subhead,
-                            ),
+                  data: (users) {
+                    final filtered = users
+                        .where(
+                          (u) =>
+                              u.username.toLowerCase().contains(_query) ||
+                              u.displayName.toLowerCase().contains(_query),
+                        )
+                        .toList();
+                    if (filtered.isEmpty) {
+                      return Center(
+                        child: Text(
+                          tr(
+                            'Bạn chưa theo dõi ai để chọn.',
+                            'You are not following anyone to pick.',
                           ),
-                        );
-                      }
-                      return ListView(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        children: filtered.map(_tile).toList(),
+                          style: const TextStyle(
+                            color: AppColors.textTertiary,
+                            fontSize: AppType.subhead,
+                          ),
+                        ),
                       );
-                    },
-                  ),
+                    }
+                    return ListView(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      children: filtered.map(_tile).toList(),
+                    );
+                  },
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: AppButton(
-                    label: tr(
-                      'Xong (${_selected.length})',
-                      'Done (${_selected.length})',
-                    ),
-                    height: 48,
-                    onPressed: () => Navigator.pop(context, _selected),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: AppButton(
+                  label: tr(
+                    'Xong (${_selected.length})',
+                    'Done (${_selected.length})',
                   ),
+                  height: 48,
+                  onPressed: () => Navigator.pop(context, _selected),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

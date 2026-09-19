@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
+import 'package:snapshot/widgets/loading_view.dart';
 import '../../../models/stored_account.dart';
 import '../providers/auth_providers.dart';
 
@@ -33,9 +34,7 @@ class _AccountSwitcherSheet extends ConsumerWidget {
             accountsAsync.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(AppSpacing.xxxl),
-                child: Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
+                child: LoadingView(),
               ),
               error: (_, _) => Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
