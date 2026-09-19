@@ -92,7 +92,7 @@ class StoryStickerView extends ConsumerWidget {
         const SizedBox(width: AppSpacing.xs),
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: AppType.label,
             fontWeight: AppType.bold,
@@ -202,7 +202,7 @@ class _PollSticker extends ConsumerWidget {
               child: Text(
                 question,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.subhead,
                   fontWeight: AppType.bold,
@@ -305,7 +305,7 @@ class _PollOption extends StatelessWidget {
                   if (showPct)
                     Text(
                       '${(pct * 100).round()}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: AppType.label,
                         fontWeight: AppType.bold,
@@ -362,7 +362,7 @@ class _SliderStickerState extends ConsumerState<_SliderSticker> {
             Text(
               question,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.subhead,
                 fontWeight: AppType.bold,
@@ -414,7 +414,7 @@ class _SliderStickerState extends ConsumerState<_SliderSticker> {
           if (avg != null)
             Text(
               '${tr('Trung bình: ', 'Average: ')}${(avg * 100).round()}%',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.small,
               ),
@@ -457,7 +457,7 @@ class _QuizStickerState extends State<_QuizSticker> {
               child: Text(
                 question,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.subhead,
                   fontWeight: AppType.bold,
@@ -486,7 +486,7 @@ class _QuizStickerState extends State<_QuizSticker> {
                   ),
                   child: Text(
                     options[i],
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: AppType.body,
                       fontWeight: AppType.medium,
@@ -519,7 +519,7 @@ class _QuestionSticker extends StatelessWidget {
             Text(
               prompt,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.subhead,
                 fontWeight: AppType.bold,
@@ -535,7 +535,7 @@ class _QuestionSticker extends StatelessWidget {
               ),
               child: Text(
                 tr('Trả lời...', 'Answer...'),
-                style: const TextStyle(color: AppColors.textTertiary),
+                style: TextStyle(color: AppColors.textTertiary),
               ),
             ),
           ],
@@ -588,7 +588,7 @@ class _CountdownStickerState extends State<_CountdownSticker> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: AppType.subhead,
               fontWeight: AppType.bold,
@@ -597,7 +597,7 @@ class _CountdownStickerState extends State<_CountdownSticker> {
           const SizedBox(height: AppSpacing.xs),
           Text(
             done ? tr('Đã kết thúc', 'Ended') : '${d}d ${h}h ${m}m ${s}s',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.primary,
               fontSize: AppType.title,
               fontWeight: AppType.heavy,

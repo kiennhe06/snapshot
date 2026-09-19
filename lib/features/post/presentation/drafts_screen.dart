@@ -55,7 +55,7 @@ class DraftsScreen extends ConsumerWidget {
                             width: 48,
                             height: 48,
                             color: AppColors.layer3,
-                            child: const Icon(
+                            child: Icon(
                               Icons.image_not_supported_outlined,
                               color: AppColors.textTertiary,
                               size: AppIconSize.md,

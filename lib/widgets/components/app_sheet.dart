@@ -127,7 +127,7 @@ Future<bool> showAppConfirm(
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.title,
                 fontWeight: AppType.bold,
@@ -136,7 +136,7 @@ Future<bool> showAppConfirm(
             const SizedBox(height: AppSpacing.sm),
             Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.subhead,
                 height: 1.4,

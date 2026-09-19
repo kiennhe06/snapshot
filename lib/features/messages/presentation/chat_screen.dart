@@ -264,7 +264,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   'Only admins can send.',
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textTertiary),
+                style: TextStyle(color: AppColors.textTertiary),
               ),
             ),
         ],
@@ -289,7 +289,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       color: AppColors.layer3,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.reply_rounded,
             size: AppIconSize.sm,
             color: AppColors.primary,
@@ -300,7 +300,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               tr('Trả lời: ', 'Reply: ') + preview,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.label,
               ),
@@ -308,7 +308,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           GestureDetector(
             onTap: () => setState(() => _replyTo = null),
-            child: const Icon(
+            child: Icon(
               Icons.close_rounded,
               size: AppIconSize.sm,
               color: AppColors.textSecondary,
@@ -331,13 +331,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             GestureDetector(
               onTap: () => _stopRecording(cancel: true),
-              child: const Icon(
+              child: Icon(
                 Icons.delete_outline_rounded,
                 color: AppColors.danger,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            const Icon(
+            Icon(
               Icons.fiber_manual_record_rounded,
               color: AppColors.danger,
               size: 14,
@@ -346,7 +346,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Expanded(
               child: Text(
                 tr('Đang ghi âm...', 'Recording...'),
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
             GestureDetector(
@@ -355,7 +355,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 width: 44,
                 height: 44,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     colors: [AppColors.primaryBright, AppColors.primary],
@@ -404,7 +404,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   minLines: 1,
                   maxLines: 5,
                   cursorColor: AppColors.primary,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.subhead,
                   ),
@@ -412,7 +412,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     isDense: true,
                     border: InputBorder.none,
                     hintText: tr('Nhắn tin...', 'Message...'),
-                    hintStyle: const TextStyle(color: AppColors.textTertiary),
+                    hintStyle: TextStyle(color: AppColors.textTertiary),
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.md,
                     ),
@@ -422,7 +422,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             const SizedBox(width: AppSpacing.sm),
             if (_sending)
-              const SizedBox(
+              SizedBox(
                 width: 44,
                 height: 44,
                 child: Center(
@@ -443,7 +443,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   width: 44,
                   height: 44,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [AppColors.primaryBright, AppColors.primary],
@@ -660,7 +660,7 @@ class _Header extends ConsumerWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.headline,
                   fontWeight: AppType.bold,
@@ -669,7 +669,7 @@ class _Header extends ConsumerWidget {
               if (sub != null)
                 Text(
                   sub,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
                     fontSize: AppType.small,
                   ),
@@ -708,7 +708,7 @@ class _PinnedBar extends ConsumerWidget {
       color: AppColors.layer3,
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.push_pin_rounded,
             size: AppIconSize.sm,
             color: AppColors.primary,
@@ -719,7 +719,7 @@ class _PinnedBar extends ConsumerWidget {
               preview,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.label,
               ),
@@ -728,7 +728,7 @@ class _PinnedBar extends ConsumerWidget {
           if (pinned.length > 1)
             Text(
               '+${pinned.length - 1}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textTertiary,
                 fontSize: AppType.small,
               ),
@@ -763,7 +763,7 @@ class _TypingIndicator extends StatelessWidget {
         ),
         child: Text(
           tr('đang gõ...', 'typing...'),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: AppType.label,
           ),

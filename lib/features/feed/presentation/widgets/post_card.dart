@@ -62,7 +62,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                         ? CachedNetworkImageProvider(author!.photoUrl!)
                         : null,
                     child: author?.photoUrl == null
-                        ? const Icon(
+                        ? Icon(
                             Icons.person,
                             size: AppIconSize.md,
                             color: AppColors.textSecondary,
@@ -79,7 +79,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                         author?.username.isNotEmpty == true
                             ? author!.username
                             : (author?.displayName ?? '...'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: AppType.subhead,
                           fontWeight: AppType.bold,
@@ -88,7 +88,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                       if (post.location != null)
                         Text(
                           post.location!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: AppType.small,
                           ),
@@ -127,7 +127,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                         width: double.infinity,
                         placeholder: (_, _) =>
                             Container(color: AppColors.layer1),
-                        errorWidget: (_, _, _) => const Icon(
+                        errorWidget: (_, _, _) => Icon(
                           Icons.broken_image_rounded,
                           color: AppColors.textTertiary,
                         ),
@@ -262,7 +262,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                             '${post.likesCount} lượt thích',
                             '${post.likesCount} likes',
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: AppType.body,
                             fontWeight: AppType.bold,
@@ -273,7 +273,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                           padding: const EdgeInsets.only(top: AppSpacing.xs),
                           child: RichText(
                             text: TextSpan(
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: AppType.body,
                                 height: 1.35,
@@ -300,7 +300,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                               'Xem tất cả ${post.commentsCount} bình luận',
                               'View all ${post.commentsCount} comments',
                             ),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: AppType.label,
                             ),
@@ -313,7 +313,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                             'dd/MM/yyyy HH:mm',
                             'vi',
                           ).format(post.createdAt),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textTertiary,
                             fontSize: AppType.small,
                           ),

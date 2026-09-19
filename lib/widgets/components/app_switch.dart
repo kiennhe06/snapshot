@@ -23,7 +23,7 @@ class AppSwitch extends StatelessWidget {
         alignment: value ? Alignment.centerRight : Alignment.centerLeft,
         decoration: BoxDecoration(
           gradient: value
-              ? const LinearGradient(
+              ? LinearGradient(
                   colors: [AppColors.primaryBright, AppColors.primary],
                 )
               : null,
@@ -33,7 +33,7 @@ class AppSwitch extends StatelessWidget {
         child: Container(
           width: 24,
           height: 24,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
             boxShadow: AppShadows.soft,

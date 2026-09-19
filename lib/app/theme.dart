@@ -18,8 +18,9 @@ TextStyle brandWordmark(BuildContext context, {double size = 24}) {
 }
 
 ThemeData buildAppTheme() {
-  const scheme = ColorScheme(
-    brightness: Brightness.light,
+    final brightness = isDarkDisplay ? Brightness.dark : Brightness.light;
+    final scheme = ColorScheme(
+    brightness: brightness,
     primary: AppColors.primary,
     onPrimary: Color(0xFFFFFFFF),
     secondary: AppColors.accent,
@@ -38,7 +39,7 @@ ThemeData buildAppTheme() {
 
   final textTheme =
       GoogleFonts.interTextTheme(
-        ThemeData(brightness: Brightness.light).textTheme,
+        ThemeData(brightness: brightness).textTheme,
       ).apply(
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
@@ -51,7 +52,7 @@ ThemeData buildAppTheme() {
     textTheme: textTheme,
     splashFactory: InkSparkle.splashFactory,
 
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       foregroundColor: AppColors.textPrimary,
       elevation: 0,
@@ -59,7 +60,7 @@ ThemeData buildAppTheme() {
       centerTitle: false,
     ),
 
-    dividerTheme: const DividerThemeData(
+    dividerTheme: DividerThemeData(
       color: AppColors.borderSubtle,
       thickness: 0.5,
       space: 0.5,
@@ -71,7 +72,7 @@ ThemeData buildAppTheme() {
       shape: RoundedRectangleBorder(borderRadius: AppRadius.brLg),
     ),
 
-    bottomSheetTheme: const BottomSheetThemeData(
+    bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: AppColors.layer5,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
@@ -100,7 +101,7 @@ ThemeData buildAppTheme() {
       trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
     ),
 
-    tabBarTheme: const TabBarThemeData(
+    tabBarTheme: TabBarThemeData(
       labelColor: AppColors.primary,
       unselectedLabelColor: AppColors.textSecondary,
       indicatorColor: AppColors.primary,
@@ -108,9 +109,9 @@ ThemeData buildAppTheme() {
       labelStyle: TextStyle(fontWeight: AppType.bold),
     ),
 
-    iconTheme: const IconThemeData(color: AppColors.textSecondary),
+    iconTheme: IconThemeData(color: AppColors.textSecondary),
 
-    progressIndicatorTheme: const ProgressIndicatorThemeData(
+    progressIndicatorTheme: ProgressIndicatorThemeData(
       color: AppColors.primary,
     ),
   );

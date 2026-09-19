@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
+import '../../../core/design/display_theme.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../widgets/components/components.dart';
@@ -18,6 +19,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final me = ref.watch(myProfileProvider).valueOrNull;
     final isPrivate = me?.isPrivate ?? false;
+    final isDark = ref.watch(displayThemeProvider) == DisplaySkin.dark;
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
 
     return AppScaffold(
@@ -106,6 +108,22 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 onTap: () => ref.read(localeProvider.notifier).toggle(),
               ),
+              const _RowDivider(),
+              _SettingRow(
+                icon: isDark
+                    ? Icons.dark_mode_rounded
+                    : Icons.light_mode_rounded,
+                label: tr('Giao diện', 'Display'),
+                subtitle: isDark
+                    ? tr('Tối · Nova', 'Dark · Nova')
+                    : tr('Sáng · Moment', 'Light · Moment'),
+                trailing: AppSwitch(
+                  value: isDark,
+                  onChanged: (v) => ref
+                      .read(displayThemeProvider.notifier)
+                      .set(v ? DisplaySkin.dark : DisplaySkin.light),
+                ),
+              ),
             ],
           ),
         ],
@@ -133,7 +151,7 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Text(
             title.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: AppType.label,
               fontWeight: AppType.bold,
@@ -164,7 +182,7 @@ class _RowDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.only(left: 56),
       child: Divider(height: 1, thickness: 1, color: AppColors.borderSubtle),
     );
@@ -204,7 +222,7 @@ class _SettingRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.subhead,
                     fontWeight: AppType.medium,
@@ -215,7 +233,7 @@ class _SettingRow extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       subtitle!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textTertiary,
                         fontSize: AppType.label,
                         height: 1.3,
@@ -228,7 +246,7 @@ class _SettingRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           trailing ??
               (onTap != null
-                  ? const Icon(
+                  ? Icon(
                       Icons.chevron_right_rounded,
                       color: AppColors.textTertiary,
                     )
@@ -261,14 +279,14 @@ class _LangPill extends StatelessWidget {
         children: [
           Text(
             current,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.primary,
               fontSize: AppType.label,
               fontWeight: AppType.bold,
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(
+          Icon(
             Icons.unfold_more_rounded,
             size: AppIconSize.sm,
             color: AppColors.primary,

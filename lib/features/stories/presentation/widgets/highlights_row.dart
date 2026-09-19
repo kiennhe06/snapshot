@@ -51,12 +51,12 @@ class HighlightsRow extends ConsumerWidget {
                 color: AppColors.layer3,
                 border: Border.all(color: AppColors.borderStrong),
               ),
-              child: const Icon(Icons.add, color: AppColors.textSecondary),
+              child: Icon(Icons.add, color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               tr('Mới', 'New'),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.small,
               ),
@@ -88,7 +88,7 @@ class HighlightsRow extends ConsumerWidget {
                     ? CachedNetworkImageProvider(h.coverUrl)
                     : null,
                 child: h.coverUrl.isEmpty
-                    ? const Icon(
+                    ? Icon(
                         Icons.star_rounded,
                         color: AppColors.textSecondary,
                       )
@@ -103,7 +103,7 @@ class HighlightsRow extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.small,
                 ),
@@ -145,7 +145,7 @@ class HighlightsRow extends ConsumerWidget {
             children: [
               Text(
                 tr('Tạo highlight', 'New highlight'),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.title,
                   fontWeight: AppType.bold,

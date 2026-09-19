@@ -67,7 +67,7 @@ class ProfileHeader extends StatelessWidget {
             children: [
               Text(
                 user.displayName,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.headline,
                   fontWeight: AppType.bold,
@@ -75,7 +75,7 @@ class ProfileHeader extends StatelessWidget {
               ),
               if (user.isVerified) ...[
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(
+                Icon(
                   Icons.verified_rounded,
                   size: AppIconSize.sm,
                   color: AppColors.primary,
@@ -83,7 +83,7 @@ class ProfileHeader extends StatelessWidget {
               ],
               if (user.isPrivate) ...[
                 const SizedBox(width: 6),
-                const Icon(
+                Icon(
                   Icons.lock_outline_rounded,
                   size: AppIconSize.xs,
                   color: AppColors.textTertiary,
@@ -94,7 +94,7 @@ class ProfileHeader extends StatelessWidget {
           if (user.username.isNotEmpty)
             Text(
               '@${user.username}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textTertiary,
                 fontSize: AppType.body,
               ),
@@ -103,7 +103,7 @@ class ProfileHeader extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               user.bio,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.subhead,
                 height: 1.35,
@@ -157,7 +157,7 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           '$count',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: AppType.title,
             fontWeight: AppType.bold,
@@ -165,7 +165,7 @@ class _Stat extends StatelessWidget {
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: AppType.label,
           ),

@@ -9,15 +9,16 @@ class EmptyView extends StatelessWidget {
     super.key,
     required this.message,
     this.icon = Icons.inbox_rounded,
-    this.accent = AppColors.primary,
+    this.accent,
   });
 
   final String message;
   final IconData icon;
-  final Color accent;
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
+    final accent = this.accent ?? AppColors.primary;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -64,7 +65,7 @@ class EmptyView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.subhead,
                 height: 1.4,

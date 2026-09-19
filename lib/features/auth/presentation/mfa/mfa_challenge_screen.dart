@@ -103,7 +103,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
                 'Nhập mã OTP đã gửi tới số điện thoại đã đăng ký.',
                 'Enter the OTP code sent to your registered phone number.',
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.subhead,
                 height: 1.4,
@@ -111,7 +111,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
             ),
             const SizedBox(height: AppSpacing.xl),
             if (_sending)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
                 child: Center(
                   child: CircularProgressIndicator(color: AppColors.primary),

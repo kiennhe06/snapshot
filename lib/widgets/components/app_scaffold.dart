@@ -24,7 +24,7 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(gradient: AppBackground.glow),
+      decoration: BoxDecoration(gradient: AppBackground.glow),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         floatingActionButton: floatingAction,

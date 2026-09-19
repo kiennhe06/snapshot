@@ -47,7 +47,7 @@ class _HiddenWordsScreenState extends ConsumerState<HiddenWordsScreen> {
               'Bình luận chứa các từ này sẽ được ẩn khỏi bài viết của bạn.',
               'Comments containing these words will be hidden from your posts.',
             ),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: AppType.subhead,
               height: 1.4,
@@ -88,7 +88,7 @@ class _HiddenWordsScreenState extends ConsumerState<HiddenWordsScreen> {
               child: Center(
                 child: Text(
                   tr('Chưa có từ khoá nào.', 'No keywords yet.'),
-                  style: const TextStyle(color: AppColors.textTertiary),
+                  style: TextStyle(color: AppColors.textTertiary),
                 ),
               ),
             )
@@ -114,7 +114,7 @@ class _HiddenWordsScreenState extends ConsumerState<HiddenWordsScreen> {
                       children: [
                         Text(
                           w,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: AppType.label,
                             fontWeight: AppType.medium,
@@ -124,7 +124,7 @@ class _HiddenWordsScreenState extends ConsumerState<HiddenWordsScreen> {
                         PressScale(
                           onTap: () =>
                               _save(words.where((x) => x != w).toList()),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close_rounded,
                             size: AppIconSize.sm,
                             color: AppColors.textSecondary,

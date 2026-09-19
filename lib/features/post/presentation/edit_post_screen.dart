@@ -114,7 +114,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: AppTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.person_add_alt,
                 color: AppColors.textSecondary,
                 size: AppIconSize.md,
@@ -139,7 +139,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                 children: [
                   for (var i = 0; i < _altTexts.length; i++)
                     AppTile(
-                      leading: const Icon(
+                      leading: Icon(
                         Icons.accessibility_new,
                         color: AppColors.textSecondary,
                         size: AppIconSize.md,
@@ -151,7 +151,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                       subtitle: _altTexts[i].isEmpty
                           ? tr('Chưa có mô tả', 'No description yet')
                           : _altTexts[i],
-                      trailing: const Icon(
+                      trailing: Icon(
                         Icons.edit,
                         size: AppIconSize.sm,
                         color: AppColors.textTertiary,
@@ -203,7 +203,7 @@ class _CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (count == 0) {
-      return const Icon(
+      return Icon(
         Icons.chevron_right_rounded,
         color: AppColors.textTertiary,
         size: AppIconSize.md,
@@ -220,7 +220,7 @@ class _CountBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.primary,
           fontSize: AppType.label,
           fontWeight: AppType.bold,
@@ -257,7 +257,7 @@ Future<String?> _showAltTextDialog(
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.title,
                 fontWeight: AppType.bold,

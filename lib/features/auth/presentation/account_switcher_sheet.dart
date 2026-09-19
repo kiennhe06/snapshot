@@ -43,7 +43,7 @@ class _AccountSwitcherSheet extends ConsumerWidget {
                     'Không tải được danh sách tài khoản.',
                     'Could not load the account list.',
                   ),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: AppType.subhead,
                   ),
@@ -62,7 +62,7 @@ class _AccountSwitcherSheet extends ConsumerWidget {
                           ref.read(accountsProvider.notifier).remove(a.uid),
                     ),
                   ),
-                  const Divider(
+                  Divider(
                     height: AppSpacing.md,
                     color: AppColors.borderSubtle,
                   ),
@@ -131,7 +131,7 @@ class _AccountTile extends StatelessWidget {
             : null,
       ),
       trailing: isCurrent
-          ? const Icon(
+          ? Icon(
               Icons.check_circle_rounded,
               color: AppColors.primary,
               size: AppIconSize.lg,

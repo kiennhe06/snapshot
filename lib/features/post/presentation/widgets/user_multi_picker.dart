@@ -81,7 +81,7 @@ class _UserMultiPickerState extends ConsumerState<_UserMultiPicker> {
                         'Không tải được danh sách.',
                         'Could not load the list.',
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textTertiary,
                         fontSize: AppType.subhead,
                       ),
@@ -102,7 +102,7 @@ class _UserMultiPickerState extends ConsumerState<_UserMultiPicker> {
                             'Bạn chưa theo dõi ai để chọn.',
                             'You are not following anyone to pick.',
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textTertiary,
                             fontSize: AppType.subhead,
                           ),

@@ -118,7 +118,7 @@ class _SessionCard extends StatelessWidget {
                       child: Text(
                         session.deviceName,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: AppType.subhead,
                           fontWeight: AppType.medium,
@@ -138,7 +138,7 @@ class _SessionCard extends StatelessWidget {
                         ),
                         child: Text(
                           tr('Thiết bị này', 'This device'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.primary,
                             fontSize: AppType.small,
                             fontWeight: AppType.medium,
@@ -151,7 +151,7 @@ class _SessionCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   '${session.osVersion} · ${_method(session.signInMethod)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: AppType.label,
                   ),
@@ -161,7 +161,7 @@ class _SessionCard extends StatelessWidget {
                     'Đăng nhập: ${df.format(session.createdAt)}',
                     'Signed in: ${df.format(session.createdAt)}',
                   ),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textTertiary,
                     fontSize: AppType.label,
                   ),

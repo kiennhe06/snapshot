@@ -50,7 +50,7 @@ class PostGrid extends StatelessWidget {
                 placeholder: (_, _) => Container(color: AppColors.layer3),
                 errorWidget: (_, _, _) => Container(
                   color: AppColors.layer3,
-                  child: const Icon(
+                  child: Icon(
                     Icons.broken_image_rounded,
                     color: AppColors.textTertiary,
                   ),

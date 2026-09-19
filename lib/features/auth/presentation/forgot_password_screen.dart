@@ -71,7 +71,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.',
                   'Enter your email and we will send you a password reset link.',
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.subhead,
                   height: 1.4,

@@ -216,7 +216,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                           ),
                         ),
                         if (_current.closeFriendsOnly)
-                          const Icon(
+                          Icon(
                             Icons.star_rounded,
                             color: AppColors.success,
                             size: 18,
@@ -281,7 +281,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.add_circle_outline,
                       size: 18,
                       color: AppColors.primary,
@@ -289,7 +289,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       '${tr('Thêm của bạn', 'Add yours')}: ${_current.addYoursPrompt}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textPrimary,
                         fontWeight: AppType.bold,
                         fontSize: AppType.label,
@@ -363,7 +363,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
             children: [
               Text(
                 sticker.data['prompt']?.toString() ?? tr('Trả lời', 'Answer'),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.subhead,
                   fontWeight: AppType.bold,
@@ -472,7 +472,7 @@ class _SeenBar extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Text(
                 '${tr('Người đã xem', 'Viewers')} (${viewers.length})',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.headline,
                   fontWeight: AppType.bold,

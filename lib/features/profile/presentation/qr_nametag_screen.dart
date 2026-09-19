@@ -33,7 +33,7 @@ class QrNametagScreen extends ConsumerWidget {
             children: [
               Text(
                 username,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.title,
                   fontWeight: AppType.bold,
@@ -44,11 +44,11 @@ class QrNametagScreen extends ConsumerWidget {
                 data: link,
                 version: QrVersions.auto,
                 size: 220,
-                eyeStyle: const QrEyeStyle(
+                eyeStyle: QrEyeStyle(
                   eyeShape: QrEyeShape.circle,
                   color: AppColors.primary,
                 ),
-                dataModuleStyle: const QrDataModuleStyle(
+                dataModuleStyle: QrDataModuleStyle(
                   dataModuleShape: QrDataModuleShape.circle,
                   color: AppColors.textPrimary,
                 ),
@@ -60,7 +60,7 @@ class QrNametagScreen extends ConsumerWidget {
                   'Let friends scan this code to open your profile.',
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.subhead,
                 ),

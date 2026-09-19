@@ -132,7 +132,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
               errorWidget: (_, _, _) => Container(
                 color: AppColors.layer3,
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   Icons.broken_image_rounded,
                   color: AppColors.textTertiary,
                 ),
@@ -164,7 +164,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             children: [
               Text(
                 tr('Tạo bộ sưu tập', 'Create collection'),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: AppType.title,
                   fontWeight: AppType.bold,

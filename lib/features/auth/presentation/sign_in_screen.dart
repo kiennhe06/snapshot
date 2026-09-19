@@ -91,7 +91,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.xxl),
-                  const Icon(
+                  Icon(
                     Icons.camera_alt_rounded,
                     size: 64,
                     color: AppColors.primary,
@@ -174,7 +174,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     children: [
                       Text(
                         tr('Chưa có tài khoản?', "Don't have an account?"),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: AppType.subhead,
                         ),

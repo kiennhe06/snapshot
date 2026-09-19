@@ -32,7 +32,7 @@ class MusicPageScreen extends ConsumerWidget {
                 gradient: AppGradients.elevated,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.music_note_rounded,
                 color: AppColors.primary,
               ),
@@ -47,7 +47,7 @@ class MusicPageScreen extends ConsumerWidget {
                     musicTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: AppType.subhead,
                       fontWeight: AppType.bold,
@@ -55,7 +55,7 @@ class MusicPageScreen extends ConsumerWidget {
                   ),
                   Text(
                     tr('Âm thanh', 'Audio'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: AppType.small,
                     ),
@@ -87,7 +87,7 @@ class MusicPageScreen extends ConsumerWidget {
                   children: [
                     Text(
                       '${reels.length} ${tr('reel', 'reels')}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontWeight: AppType.medium,
                       ),

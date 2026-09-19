@@ -80,7 +80,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         ),
                         child: Text(
                           tr('Gợi ý theo dõi', 'Suggested for you'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: AppType.headline,
                             fontWeight: AppType.bold,
@@ -115,7 +115,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 ),
                 child: Text(
                   tr('Khám phá', 'Explore'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.headline,
                     fontWeight: AppType.bold,
@@ -146,7 +146,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         errorWidget: (_, _, _) => Container(
                           color: AppColors.layer3,
                           alignment: Alignment.center,
-                          child: const Icon(
+                          child: Icon(
                             Icons.broken_image_rounded,
                             color: AppColors.textTertiary,
                           ),
@@ -162,7 +162,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Center(
                   child: explore.isLoading
-                      ? const CircularProgressIndicator(
+                      ? CircularProgressIndicator(
                           color: AppColors.primary,
                         )
                       : (explore.posts.isEmpty
@@ -171,7 +171,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                   'Chưa có nội dung để khám phá.',
                                   'Nothing to explore yet.',
                                 ),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textTertiary,
                                   fontSize: AppType.label,
                                 ),
@@ -201,7 +201,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.search_rounded,
               size: AppIconSize.md,
               color: AppColors.textSecondary,
@@ -215,7 +215,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textTertiary,
                   fontSize: AppType.body,
                 ),
@@ -254,7 +254,7 @@ class _SuggestionCard extends ConsumerWidget {
               user.username.isNotEmpty ? '@${user.username}' : user.displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.body,
                 fontWeight: AppType.medium,

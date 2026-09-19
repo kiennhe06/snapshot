@@ -352,7 +352,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   'You can finish it later from Drafts.',
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.subhead,
                 ),
@@ -414,7 +414,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               child: Column(
                 children: [
                   AppTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.location_on_outlined,
                       color: AppColors.textSecondary,
                       size: AppIconSize.md,
@@ -423,14 +423,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     subtitle: _location.text.isEmpty
                         ? tr('Thêm địa điểm', 'Add a place')
                         : _location.text,
-                    trailing: const Icon(
+                    trailing: Icon(
                       Icons.chevron_right_rounded,
                       color: AppColors.textTertiary,
                     ),
                     onTap: _editLocation,
                   ),
                   AppTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.person_add_alt,
                       color: AppColors.textSecondary,
                       size: AppIconSize.md,
@@ -454,7 +454,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     },
                   ),
                   AppTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.group_add_outlined,
                       color: AppColors.textSecondary,
                       size: AppIconSize.md,
@@ -486,14 +486,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             AppCard(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: AppTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.tune_rounded,
                   color: AppColors.textSecondary,
                   size: AppIconSize.md,
                 ),
                 title: tr('Cài đặt nâng cao', 'Advanced settings'),
                 subtitle: _advancedSummary(),
-                trailing: const Icon(
+                trailing: Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.textTertiary,
                 ),
@@ -517,7 +517,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: AppSpacing.sm),
     child: Text(
       text.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
         color: AppColors.textSecondary,
         fontSize: AppType.label,
         fontWeight: AppType.bold,
@@ -634,7 +634,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                               width: 110,
                               height: 110,
                               color: AppColors.layer3,
-                              child: const Icon(
+                              child: Icon(
                                 Icons.videocam,
                                 size: 40,
                                 color: AppColors.textSecondary,
@@ -683,7 +683,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.add_a_photo_outlined,
                     size: 30,
                     color: AppColors.primary,
@@ -691,7 +691,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     tr('Thêm', 'Add'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: AppType.label,
                       fontWeight: AppType.medium,
@@ -715,7 +715,7 @@ class _CountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (count == 0) {
-      return const Icon(
+      return Icon(
         Icons.chevron_right_rounded,
         color: AppColors.textTertiary,
         size: AppIconSize.md,
@@ -732,7 +732,7 @@ class _CountBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.primary,
           fontSize: AppType.label,
           fontWeight: AppType.bold,
@@ -769,7 +769,7 @@ Future<String?> _showAltTextDialog(
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.title,
                 fontWeight: AppType.bold,
@@ -837,7 +837,7 @@ class _DraftStatus extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textTertiary,
               fontSize: AppType.label,
             ),

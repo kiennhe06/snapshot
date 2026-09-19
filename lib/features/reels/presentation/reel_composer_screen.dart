@@ -92,7 +92,7 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: Text(
                 tr('Bạn đang remix một reel.', 'You are remixing a reel.'),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: AppType.bold,
                 ),
@@ -106,7 +106,7 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
                 color: AppColors.layer3,
                 borderRadius: AppRadius.brLg,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.videocam_rounded,
                 size: 48,
                 color: AppColors.primary,

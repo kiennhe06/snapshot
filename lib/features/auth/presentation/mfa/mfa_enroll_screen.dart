@@ -118,7 +118,7 @@ class _MfaEnrollScreenState extends ConsumerState<MfaEnrollScreen> {
                 'Add a phone number as a second security layer. Each time you '
                     'sign in you will need to enter an extra OTP code.',
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.subhead,
                 height: 1.4,

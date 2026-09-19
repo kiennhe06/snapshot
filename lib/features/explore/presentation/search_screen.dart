@@ -69,7 +69,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.search_rounded,
             size: AppIconSize.md,
             color: AppColors.textSecondary,
@@ -81,14 +81,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               autofocus: true,
               textInputAction: TextInputAction.search,
               cursorColor: AppColors.primary,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: AppType.subhead,
               ),
               decoration: InputDecoration(
                 isDense: true,
                 hintText: tr('Tìm kiếm...', 'Search...'),
-                hintStyle: const TextStyle(color: AppColors.textTertiary),
+                hintStyle: TextStyle(color: AppColors.textTertiary),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -183,7 +183,7 @@ class _PostResults extends ConsumerWidget {
                   errorWidget: (_, _, _) => Container(
                     color: AppColors.layer3,
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       Icons.broken_image_rounded,
                       color: AppColors.textTertiary,
                     ),
@@ -211,7 +211,7 @@ class _Hint extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textTertiary,
             fontSize: AppType.subhead,
           ),

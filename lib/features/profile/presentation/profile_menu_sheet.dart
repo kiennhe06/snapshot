@@ -85,7 +85,7 @@ class _ProfileMenu extends ConsumerWidget {
             label: tr('Cài đặt & quyền riêng tư', 'Settings & privacy'),
             onTap: () => _go(context, Routes.settings),
           ),
-          const Divider(height: 1, color: AppColors.borderSubtle),
+          Divider(height: 1, color: AppColors.borderSubtle),
           _MenuRow(
             icon: Icons.logout_rounded,
             label: tr('Đăng xuất', 'Log out'),
@@ -128,7 +128,7 @@ class _ActivityCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             count == null ? '—' : '$count',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: AppType.headline,
               fontWeight: AppType.heavy,
@@ -139,7 +139,7 @@ class _ActivityCard extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: AppType.label,
               fontWeight: AppType.medium,
@@ -193,7 +193,7 @@ class _MenuRow extends StatelessWidget {
               ),
             ),
             if (!destructive)
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 color: AppColors.textTertiary,
               ),

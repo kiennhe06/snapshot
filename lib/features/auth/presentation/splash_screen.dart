@@ -16,7 +16,7 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.camera_alt_rounded,
               size: 64,
               color: AppColors.primary,
@@ -28,7 +28,7 @@ class SplashScreen extends StatelessWidget {
               style: brandWordmark(context, size: 40),
             ),
             const SizedBox(height: AppSpacing.xl),
-            const SizedBox(
+            SizedBox(
               width: 26,
               height: 26,
               child: CircularProgressIndicator(

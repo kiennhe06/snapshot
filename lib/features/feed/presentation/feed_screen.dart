@@ -157,7 +157,7 @@ class _FeedListState extends ConsumerState<_FeedList>
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Center(
                 child: state.hasMore
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 26,
                         height: 26,
                         child: CircularProgressIndicator(

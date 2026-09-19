@@ -75,7 +75,7 @@ class AppButton extends StatelessWidget {
               : const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
           decoration: BoxDecoration(
             gradient: isPrimary
-                ? const LinearGradient(
+                ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [AppColors.primaryBright, AppColors.primary],

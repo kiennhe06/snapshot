@@ -78,7 +78,7 @@ class _MediaEditorScreenState extends State<MediaEditorScreen> {
   Widget build(BuildContext context) {
     final shown = _preview ?? _working;
     // Near-black editor panel/canvas (acceptable dark surface for a photo editor).
-    const panelBg = AppColors.textPrimary;
+    final panelBg = AppColors.textPrimary;
     return AppScaffold(
       topBar: AppTopBar(
         title: tr('Chỉnh sửa', 'Edit'),

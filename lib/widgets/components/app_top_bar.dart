@@ -47,7 +47,7 @@ class AppTopBar extends StatelessWidget {
                     titleWidget ??
                     Text(
                       title ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: AppType.title,
                         fontWeight: AppType.bold,

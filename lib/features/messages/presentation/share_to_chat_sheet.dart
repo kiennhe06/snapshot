@@ -60,7 +60,7 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: Text(
                 tr('Chưa có cuộc trò chuyện nào.', 'No conversations yet.'),
-                style: const TextStyle(color: AppColors.textTertiary),
+                style: TextStyle(color: AppColors.textTertiary),
               ),
             )
           : ListView.builder(
@@ -118,7 +118,7 @@ class _ChatSendRow extends ConsumerWidget {
       ),
       title: title,
       trailing: sent
-          ? const Icon(Icons.check_circle_rounded, color: AppColors.success)
+          ? Icon(Icons.check_circle_rounded, color: AppColors.success)
           : AppButton(
               label: tr('Gửi', 'Send'),
               fullWidth: false,

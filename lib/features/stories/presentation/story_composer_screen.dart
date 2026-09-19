@@ -229,7 +229,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                 padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                 child: Text(
                   '${tr('Thử thách', 'Challenge')}: ${widget.addYoursPrompt}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: AppType.bold,
                   ),

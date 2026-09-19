@@ -83,7 +83,7 @@ class AppSheetSurface extends StatelessWidget {
                 ),
                 child: Text(
                   title!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.headline,
                     fontWeight: AppType.bold,

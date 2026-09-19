@@ -94,7 +94,7 @@ class _AppVideoState extends State<AppVideo> {
   Widget build(BuildContext context) {
     final c = _controller;
     if (!_ready || c == null) {
-      return const ColoredBox(
+      return ColoredBox(
         color: Colors.black,
         child: Center(
           child: SizedBox(

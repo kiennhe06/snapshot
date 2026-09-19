@@ -75,7 +75,7 @@ class MessageBubble extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 2, right: AppSpacing.xs),
               child: Text(
                 _readLabel(),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textTertiary,
                   fontSize: AppType.caption,
                 ),
@@ -118,7 +118,7 @@ class MessageBubble extends ConsumerWidget {
   Widget _bubble(BuildContext context, WidgetRef ref, bool mine) {
     final bg = mine ? null : AppColors.layer2;
     final gradient = mine
-        ? const LinearGradient(
+        ? LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [AppColors.primaryBright, AppColors.primary],
@@ -345,7 +345,7 @@ class MessageBubble extends ConsumerWidget {
                 color: AppColors.layer3,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.image_outlined,
                 color: AppColors.textTertiary,
               ),
@@ -376,7 +376,7 @@ class _SenderName extends ConsumerWidget {
         : (user?.displayName ?? '');
     return Text(
       name,
-      style: const TextStyle(
+      style: TextStyle(
         color: AppColors.primary,
         fontSize: AppType.label,
         fontWeight: AppType.bold,

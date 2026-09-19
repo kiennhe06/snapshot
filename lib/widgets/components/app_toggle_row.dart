@@ -47,7 +47,7 @@ class AppToggleRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: AppType.subhead,
                       fontWeight: AppType.medium,
@@ -58,7 +58,7 @@ class AppToggleRow extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         subtitle!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textTertiary,
                           fontSize: AppType.label,
                           height: 1.3,

@@ -80,7 +80,7 @@ class _TitleUsername extends ConsumerWidget {
         : (user?.displayName ?? tr('Hồ sơ', 'Profile'));
     return Text(
       name,
-      style: const TextStyle(
+      style: TextStyle(
         color: AppColors.textPrimary,
         fontSize: AppType.title,
         fontWeight: AppType.bold,
@@ -325,7 +325,7 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Text(
                     post.caption,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: AppType.subhead,
                       height: 1.35,
@@ -351,7 +351,7 @@ class _PinnedRow extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.push_pin_rounded,
             size: AppIconSize.sm,
             color: AppColors.textSecondary,
@@ -359,7 +359,7 @@ class _PinnedRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Text(
             tr('Đã ghim', 'Pinned'),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: AppType.body,
               fontWeight: AppType.medium,

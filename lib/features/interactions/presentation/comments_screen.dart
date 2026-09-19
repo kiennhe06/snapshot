@@ -248,7 +248,7 @@ class _ContextHeader extends StatelessWidget {
         AppSpacing.md,
         AppSpacing.md,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
       ),
       child: Row(
@@ -260,7 +260,7 @@ class _ContextHeader extends StatelessWidget {
                     width: 40,
                     height: 40,
                     color: AppColors.layer3,
-                    child: const Icon(
+                    child: Icon(
                       Icons.image_outlined,
                       size: AppIconSize.md,
                       color: AppColors.textTertiary,
@@ -286,7 +286,7 @@ class _ContextHeader extends StatelessWidget {
                           count == 1 ? '1 comment' : '$count comments',
                         )
                       : tr('Bình luận', 'Comments'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.subhead,
                     fontWeight: AppType.bold,
@@ -299,7 +299,7 @@ class _ContextHeader extends StatelessWidget {
                       post.caption,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textTertiary,
                         fontSize: AppType.label,
                       ),
@@ -359,7 +359,7 @@ class _Thread extends StatelessWidget {
                             'Xem ${root.replyCount} trả lời',
                             'View ${root.replyCount} replies',
                           ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: AppType.label,
                       fontWeight: AppType.bold,
@@ -373,7 +373,7 @@ class _Thread extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 34),
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   left: BorderSide(color: AppColors.borderSubtle, width: 1.5),
                 ),
@@ -456,14 +456,14 @@ class _CommentRow extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.sm),
                     Text(
                       _relTime(comment.createdAt),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textTertiary,
                         fontSize: AppType.small,
                       ),
                     ),
                     if (comment.pinned) ...[
                       const SizedBox(width: AppSpacing.sm),
-                      const Icon(
+                      Icon(
                         Icons.push_pin,
                         size: AppIconSize.xs,
                         color: AppColors.primary,
@@ -474,7 +474,7 @@ class _CommentRow extends ConsumerWidget {
                 const SizedBox(height: 3),
                 Text(
                   comment.text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: AppType.subhead,
                     height: 1.32,
@@ -487,7 +487,7 @@ class _CommentRow extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 1),
                     child: Text(
                       tr('Trả lời', 'Reply'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: AppType.small,
                         fontWeight: AppType.bold,
@@ -624,7 +624,7 @@ class _Composer extends ConsumerWidget {
     return SafeArea(
       top: false,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.layer1,
           border: Border(top: BorderSide(color: AppColors.borderSubtle)),
         ),
@@ -665,7 +665,7 @@ class _Composer extends ConsumerWidget {
                       maxLines: 4,
                       textCapitalization: TextCapitalization.sentences,
                       cursorColor: AppColors.primary,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: AppType.subhead,
                       ),
@@ -673,7 +673,7 @@ class _Composer extends ConsumerWidget {
                         hintText: replyingTo != null
                             ? tr('Viết trả lời...', 'Write a reply...')
                             : tr('Thêm bình luận...', 'Add a comment...'),
-                        hintStyle: const TextStyle(
+                        hintStyle: TextStyle(
                           color: AppColors.textTertiary,
                         ),
                         border: InputBorder.none,
@@ -728,7 +728,7 @@ class _SendButton extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: visible
-                  ? const LinearGradient(
+                  ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [AppColors.primaryBright, AppColors.primary],
@@ -784,7 +784,7 @@ class _ReplyingChip extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.reply_rounded,
               size: AppIconSize.sm,
               color: AppColors.primary,
@@ -795,7 +795,7 @@ class _ReplyingChip extends ConsumerWidget {
                 tr('Đang trả lời $name', 'Replying to $name'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.label,
                   fontWeight: AppType.medium,
@@ -804,7 +804,7 @@ class _ReplyingChip extends ConsumerWidget {
             ),
             PressScale(
               onTap: onCancel,
-              child: const Icon(
+              child: Icon(
                 Icons.close_rounded,
                 size: AppIconSize.sm,
                 color: AppColors.textSecondary,

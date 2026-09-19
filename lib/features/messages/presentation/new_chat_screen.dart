@@ -230,7 +230,7 @@ class _UserRow extends StatelessWidget {
                   : Icons.radio_button_unchecked_rounded,
               color: selected ? AppColors.primary : AppColors.textTertiary,
             )
-          : const Icon(
+          : Icon(
               Icons.chevron_right_rounded,
               color: AppColors.textTertiary,
             ),

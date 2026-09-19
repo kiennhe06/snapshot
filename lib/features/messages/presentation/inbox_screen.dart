@@ -252,7 +252,7 @@ class _NoteColumn extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppType.caption,
                       color: AppColors.textPrimary,
                     ),
@@ -265,7 +265,7 @@ class _NoteColumn extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppType.small,
                 color: AppColors.textSecondary,
               ),

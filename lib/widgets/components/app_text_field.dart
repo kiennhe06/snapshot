@@ -51,7 +51,7 @@ class AppTextField extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: AppType.label,
               fontWeight: AppType.medium,
@@ -69,7 +69,7 @@ class AppTextField extends StatelessWidget {
           autofillHints: autofillHints,
           onChanged: onChanged,
           cursorColor: AppColors.primary,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: AppType.subhead,
           ),
@@ -78,7 +78,7 @@ class AppTextField extends StatelessWidget {
             filled: true,
             fillColor: AppColors.layer3,
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.textTertiary),
+            hintStyle: TextStyle(color: AppColors.textTertiary),
             prefixIcon: icon == null
                 ? null
                 : Icon(

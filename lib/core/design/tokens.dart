@@ -1,41 +1,173 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens — "Moment" light aesthetic: soft, airy, pink-tinted, content
-/// first. Single source of truth. Custom components + screens reference ONLY
-/// these (never raw hex / literal sizes).
+/// Design tokens. Colours resolve through a swappable [AppPalette] so the app
+/// can switch skins at runtime (Display setting) — every screen reads the same
+/// tokens and re-colours together. Non-colour tokens (spacing, radius, type,
+/// motion) stay compile-time const.
 
-/// Surfaces are light; "layer" naming kept so components need no changes.
-abstract class AppColors {
-  // Surfaces (light, faint pink)
-  static const Color scaffold = Color(0xFFFBF4F7); // page background
-  static const Color layer1 = Color(0xFFFFFFFF); // nav / section / filter
-  static const Color layer2 = Color(0xFFFFFFFF); // card
-  static const Color layer3 = Color(0xFFFDECF2); // active chip / raised
-  static const Color layer5 = Color(0xFFFFFFFF); // modal / sheet / menu
+/// The full colour set for one skin.
+class AppPalette {
+  const AppPalette({
+    required this.scaffold,
+    required this.layer1,
+    required this.layer2,
+    required this.layer3,
+    required this.layer5,
+    required this.primary,
+    required this.primaryBright,
+    required this.primaryDeep,
+    required this.accent,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textTertiary,
+    required this.success,
+    required this.liveDot,
+    required this.warn,
+    required this.danger,
+    required this.borderSubtle,
+    required this.borderStrong,
+    // gradients (top→bottom) + glow + shadow tints
+    required this.cardTop,
+    required this.cardBottom,
+    required this.elevatedTop,
+    required this.elevatedBottom,
+    required this.sectionTop,
+    required this.sectionBottom,
+    required this.glowInner,
+    required this.glowOuter,
+    required this.shadowSoft,
+    required this.shadowSoftLow,
+    required this.shadowMedium,
+    required this.shadowMediumLow,
+    required this.shadowOverlay,
+    required this.brandGlowColor,
+    required this.topHighlight,
+  });
 
-  // Brand (soft rose-pink)
-  static const Color primary = Color(0xFFEC4A73);
-  static const Color primaryBright = Color(0xFFFF7BA3); // hover / gradient top
-  static const Color primaryDeep = Color(0xFFC42A54); // pressed
-  static const Color accent = Color(0xFF8B5CF6); // soft violet, sparing
-
-  // Text (on light)
-  static const Color textPrimary = Color(0xFF201A22); // near-black, 15:1
-  static const Color textSecondary = Color(0xFF6E5F69); // ~5:1
-  static const Color textTertiary = Color(0xFFA99BA4); // decorative labels
-
-  // Semantic
-  static const Color success = Color(0xFF16A34A);
-  static const Color liveDot = Color(0xFFEC4A73);
-  static const Color warn = Color(0xFFD97706);
-  static const Color danger = Color(0xFFE11D48);
-
-  // Borders (soft pink-gray, opaque)
-  static const Color borderSubtle = Color(0xFFF1E4EB);
-  static const Color borderStrong = Color(0xFFE7D2DD);
+  final Color scaffold, layer1, layer2, layer3, layer5;
+  final Color primary, primaryBright, primaryDeep, accent;
+  final Color textPrimary, textSecondary, textTertiary;
+  final Color success, liveDot, warn, danger;
+  final Color borderSubtle, borderStrong;
+  final Color cardTop, cardBottom, elevatedTop, elevatedBottom;
+  final Color sectionTop, sectionBottom;
+  final Color glowInner, glowOuter;
+  final Color shadowSoft, shadowSoftLow, shadowMedium, shadowMediumLow;
+  final Color shadowOverlay, brandGlowColor, topHighlight;
 }
 
-/// 4-based spacing rhythm (airy — Moment uses generous spacing).
+/// "Moment" — the original soft, airy, pink-tinted light skin.
+const AppPalette kLightPalette = AppPalette(
+  scaffold: Color(0xFFFBF4F7),
+  layer1: Color(0xFFFFFFFF),
+  layer2: Color(0xFFFFFFFF),
+  layer3: Color(0xFFFDECF2),
+  layer5: Color(0xFFFFFFFF),
+  primary: Color(0xFFEC4A73),
+  primaryBright: Color(0xFFFF7BA3),
+  primaryDeep: Color(0xFFC42A54),
+  accent: Color(0xFF8B5CF6),
+  textPrimary: Color(0xFF201A22),
+  textSecondary: Color(0xFF6E5F69),
+  textTertiary: Color(0xFFA99BA4),
+  success: Color(0xFF16A34A),
+  liveDot: Color(0xFFEC4A73),
+  warn: Color(0xFFD97706),
+  danger: Color(0xFFE11D48),
+  borderSubtle: Color(0xFFF1E4EB),
+  borderStrong: Color(0xFFE7D2DD),
+  cardTop: Color(0xFFFFFFFF),
+  cardBottom: Color(0xFFFFF8FB),
+  elevatedTop: Color(0xFFFFFFFF),
+  elevatedBottom: Color(0xFFFDECF2),
+  sectionTop: Color(0xFFFFFFFF),
+  sectionBottom: Color(0xFFFFF7FA),
+  glowInner: Color(0xFFFCE0EC),
+  glowOuter: Color(0xFFFBF4F7),
+  shadowSoft: Color(0x14C4335C),
+  shadowSoftLow: Color(0x0D000000),
+  shadowMedium: Color(0x1FC4335C),
+  shadowMediumLow: Color(0x12000000),
+  shadowOverlay: Color(0x1F000000),
+  brandGlowColor: Color(0x4DEC4A73),
+  topHighlight: Color(0x99FFFFFF),
+);
+
+/// "Nova" — a creative dark skin (VibeFeed direction): near-black surfaces with
+/// a violet→magenta accent. Photos stay the brightest thing on screen.
+const AppPalette kDarkPalette = AppPalette(
+  scaffold: Color(0xFF0C0C0F),
+  layer1: Color(0xFF141418),
+  layer2: Color(0xFF17171C),
+  layer3: Color(0xFF242430),
+  layer5: Color(0xFF1C1C22),
+  primary: Color(0xFFB06BFF),
+  primaryBright: Color(0xFFF45BB0),
+  primaryDeep: Color(0xFF7A3FD0),
+  accent: Color(0xFF4EA8FF),
+  textPrimary: Color(0xFFF3F2F6),
+  textSecondary: Color(0xFFA6A4B0),
+  textTertiary: Color(0xFF6E6C78),
+  success: Color(0xFF35D07F),
+  liveDot: Color(0xFFF45BB0),
+  warn: Color(0xFFF0A93A),
+  danger: Color(0xFFFF5A78),
+  borderSubtle: Color(0xFF262630),
+  borderStrong: Color(0xFF34343F),
+  cardTop: Color(0xFF17171C),
+  cardBottom: Color(0xFF141419),
+  elevatedTop: Color(0xFF1E1E26),
+  elevatedBottom: Color(0xFF17171C),
+  sectionTop: Color(0xFF161620),
+  sectionBottom: Color(0xFF121218),
+  glowInner: Color(0xFF241633),
+  glowOuter: Color(0xFF0C0C0F),
+  shadowSoft: Color(0x66000000),
+  shadowSoftLow: Color(0x33000000),
+  shadowMedium: Color(0x80000000),
+  shadowMediumLow: Color(0x40000000),
+  shadowOverlay: Color(0x99000000),
+  brandGlowColor: Color(0x66B06BFF),
+  topHighlight: Color(0x14FFFFFF),
+);
+
+/// The live palette. Swapped by [applyDisplayTheme]; the app re-keys its widget
+/// tree on change so every token re-reads.
+AppPalette _p = kLightPalette;
+
+/// Whether the dark ("Nova") skin is active.
+bool get isDarkDisplay => _p == kDarkPalette;
+
+/// Switch the active skin. Call before rebuilding the app tree.
+void applyDisplayTheme(bool dark) => _p = dark ? kDarkPalette : kLightPalette;
+
+/// Surfaces + brand + text + semantic colours. All read from the live palette.
+abstract class AppColors {
+  static Color get scaffold => _p.scaffold;
+  static Color get layer1 => _p.layer1;
+  static Color get layer2 => _p.layer2;
+  static Color get layer3 => _p.layer3;
+  static Color get layer5 => _p.layer5;
+
+  static Color get primary => _p.primary;
+  static Color get primaryBright => _p.primaryBright;
+  static Color get primaryDeep => _p.primaryDeep;
+  static Color get accent => _p.accent;
+
+  static Color get textPrimary => _p.textPrimary;
+  static Color get textSecondary => _p.textSecondary;
+  static Color get textTertiary => _p.textTertiary;
+
+  static Color get success => _p.success;
+  static Color get liveDot => _p.liveDot;
+  static Color get warn => _p.warn;
+  static Color get danger => _p.danger;
+
+  static Color get borderSubtle => _p.borderSubtle;
+  static Color get borderStrong => _p.borderStrong;
+}
+
+/// 4-based spacing rhythm (airy — generous spacing).
 abstract class AppSpacing {
   static const double xs = 4;
   static const double sm = 8;
@@ -94,68 +226,75 @@ abstract class AppMotion {
   static const Curve emphasized = Curves.easeOutBack;
 }
 
-/// Soft, light, faintly pink shadows (not the heavy dark ones).
+/// Depth shadows, tinted per skin.
 abstract class AppShadows {
-  static const List<BoxShadow> soft = [
+  static List<BoxShadow> get soft => [
     BoxShadow(
-      color: Color(0x14C4335C),
+      color: _p.shadowSoft,
       blurRadius: 24,
-      offset: Offset(0, 10),
+      offset: const Offset(0, 10),
       spreadRadius: -10,
     ),
-    BoxShadow(color: Color(0x0D000000), blurRadius: 6, offset: Offset(0, 2)),
+    BoxShadow(color: _p.shadowSoftLow, blurRadius: 6, offset: const Offset(0, 2)),
   ];
-  static const List<BoxShadow> medium = [
+  static List<BoxShadow> get medium => [
     BoxShadow(
-      color: Color(0x1FC4335C),
+      color: _p.shadowMedium,
       blurRadius: 40,
-      offset: Offset(0, 18),
+      offset: const Offset(0, 18),
       spreadRadius: -12,
     ),
-    BoxShadow(color: Color(0x12000000), blurRadius: 10, offset: Offset(0, 4)),
-  ];
-  static const List<BoxShadow> overlay = [
     BoxShadow(
-      color: Color(0x1F000000),
-      blurRadius: 44,
-      offset: Offset(0, -6),
-      spreadRadius: 0,
+      color: _p.shadowMediumLow,
+      blurRadius: 10,
+      offset: const Offset(0, 4),
     ),
   ];
-  static const List<BoxShadow> brandGlow = [
-    BoxShadow(color: Color(0x4DEC4A73), blurRadius: 22, offset: Offset(0, 10)),
+  static List<BoxShadow> get overlay => [
+    BoxShadow(
+      color: _p.shadowOverlay,
+      blurRadius: 44,
+      offset: const Offset(0, -6),
+    ),
+  ];
+  static List<BoxShadow> get brandGlow => [
+    BoxShadow(
+      color: _p.brandGlowColor,
+      blurRadius: 22,
+      offset: const Offset(0, 10),
+    ),
   ];
 }
 
-/// Subtle light surface gradients (white → barely pink).
+/// Surface gradients, per skin.
 abstract class AppGradients {
-  static const LinearGradient card = LinearGradient(
+  static LinearGradient get card => LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFFFFF), Color(0xFFFFF8FB)],
+    colors: [_p.cardTop, _p.cardBottom],
   );
-  static const LinearGradient elevated = LinearGradient(
+  static LinearGradient get elevated => LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFFFFF), Color(0xFFFDECF2)],
+    colors: [_p.elevatedTop, _p.elevatedBottom],
   );
-  static const LinearGradient section = LinearGradient(
+  static LinearGradient get section => LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFFFFF), Color(0xFFFFF7FA)],
+    colors: [_p.sectionTop, _p.sectionBottom],
   );
 }
 
-/// Soft pink glow from the top behind every route.
+/// The soft glow behind every route, per skin.
 abstract class AppBackground {
-  static const RadialGradient glow = RadialGradient(
-    center: Alignment(0, -0.85),
+  static RadialGradient get glow => RadialGradient(
+    center: const Alignment(0, -0.85),
     radius: 1.2,
-    colors: [Color(0xFFFCE0EC), Color(0xFFFBF4F7)],
-    stops: [0, 0.6],
+    colors: [_p.glowInner, _p.glowOuter],
+    stops: const [0, 0.6],
   );
 }
 
 abstract class AppDepth {
-  static const Color topHighlight = Color(0x99FFFFFF);
+  static Color get topHighlight => _p.topHighlight;
 }

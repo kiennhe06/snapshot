@@ -97,7 +97,7 @@ class _YourStory extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               tr('Tin của bạn', 'Your story'),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: AppType.small,
               ),
@@ -134,7 +134,7 @@ class _TrayBubble extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: AppType.small,
                 ),
@@ -153,7 +153,7 @@ Widget _ringAvatar(String? photoUrl, {required bool active}) {
     decoration: BoxDecoration(
       shape: BoxShape.circle,
       gradient: active
-          ? const LinearGradient(
+          ? LinearGradient(
               colors: [AppColors.primaryBright, AppColors.primary],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -163,7 +163,7 @@ Widget _ringAvatar(String? photoUrl, {required bool active}) {
     ),
     child: Container(
       padding: const EdgeInsets.all(2),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.scaffold,
       ),
@@ -174,7 +174,7 @@ Widget _ringAvatar(String? photoUrl, {required bool active}) {
             ? CachedNetworkImageProvider(photoUrl)
             : null,
         child: photoUrl == null
-            ? const Icon(Icons.person_rounded, color: AppColors.textSecondary)
+            ? Icon(Icons.person_rounded, color: AppColors.textSecondary)
             : null,
       ),
     ),
