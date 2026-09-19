@@ -58,3 +58,6 @@ android/key.properties
 
 # Third-party skill tooling (large; installed locally, not needed in repo)
 .claude/skills/
+
+# Spotify app credentials (client secret) — PUBLIC repo, never commit.
+lib/core/spotify_config.dart

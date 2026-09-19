@@ -1,8 +1,10 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:share_plus/share_plus.dart';
 
@@ -369,6 +371,9 @@ class _PostCardState extends ConsumerState<PostCard> {
             ),
           ),
 
+          // Spotify music chip
+          if (post.hasMusic) _MusicChip(post: post),
+
           // Inline quick-comment prompt + emoji reactions
           if (!post.commentsDisabled)
             _QuickComment(post: post, authorName: name),
@@ -632,6 +637,122 @@ class _QuickComment extends ConsumerWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// A Spotify music chip on a post: album art + title/artist. Plays the 30s
+/// preview when Spotify provides one, otherwise opens the track in Spotify.
+class _MusicChip extends StatefulWidget {
+  const _MusicChip({required this.post});
+  final Post post;
+
+  @override
+  State<_MusicChip> createState() => _MusicChipState();
+}
+
+class _MusicChipState extends State<_MusicChip> {
+  AudioPlayer? _player;
+  bool _playing = false;
+
+  @override
+  void dispose() {
+    _player?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onTap() async {
+    final p = widget.post;
+    final preview = p.musicPreviewUrl;
+    if (preview != null && preview.isNotEmpty) {
+      _player ??= AudioPlayer()
+        ..onPlayerComplete.listen((_) {
+          if (mounted) setState(() => _playing = false);
+        });
+      if (_playing) {
+        await _player!.pause();
+        if (mounted) setState(() => _playing = false);
+      } else {
+        await _player!.play(UrlSource(preview));
+        if (mounted) setState(() => _playing = true);
+      }
+    } else if (p.musicUrl != null && p.musicUrl!.isNotEmpty) {
+      final uri = Uri.tryParse(p.musicUrl!);
+      if (uri != null) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.post;
+    final hasPreview = (p.musicPreviewUrl ?? '').isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        0,
+      ),
+      child: PressScale(
+        onTap: _onTap,
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: AppColors.layer3,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: (p.musicCoverUrl ?? '').isEmpty
+                    ? Container(
+                        width: 30,
+                        height: 30,
+                        color: AppColors.layer1,
+                        child: Icon(
+                          Icons.music_note_rounded,
+                          size: AppIconSize.sm,
+                          color: AppColors.textSecondary,
+                        ),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: p.musicCoverUrl!,
+                        width: 30,
+                        height: 30,
+                        fit: BoxFit.cover,
+                      ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(
+                child: Text(
+                  '${p.musicTitle} · ${p.musicArtist ?? ''}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppType.label,
+                    fontWeight: AppType.medium,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Icon(
+                hasPreview
+                    ? (_playing
+                          ? Icons.pause_circle_filled_rounded
+                          : Icons.play_circle_fill_rounded)
+                    : Icons.open_in_new_rounded,
+                size: AppIconSize.md,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+        ),
       ),
     );
   }

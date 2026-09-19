@@ -70,6 +70,10 @@ class PostRepository {
     List<String> coAuthorIds = const [],
     String? location,
     String? musicTitle,
+    String? musicArtist,
+    String? musicCoverUrl,
+    String? musicPreviewUrl,
+    String? musicUrl,
     String? remixOfPostId,
     bool commentsDisabled = false,
     bool likesHidden = false,
@@ -117,6 +121,10 @@ class PostRepository {
       musicTitle: musicTitle?.trim().isEmpty == true
           ? null
           : musicTitle?.trim(),
+      musicArtist: musicArtist,
+      musicCoverUrl: musicCoverUrl,
+      musicPreviewUrl: musicPreviewUrl,
+      musicUrl: musicUrl,
       remixOfPostId: remixOfPostId,
       commentsDisabled: commentsDisabled,
       likesHidden: likesHidden,

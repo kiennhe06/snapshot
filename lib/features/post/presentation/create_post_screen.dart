@@ -13,6 +13,8 @@ import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../models/app_user.dart';
 import '../../../models/post_draft.dart';
+import '../../../models/spotify_track.dart';
+import 'spotify_picker_sheet.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../explore/providers/search_providers.dart';
 import '../../feed/providers/feed_providers.dart';
@@ -45,6 +47,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _loading = false;
   int _preview = 0; // index of the large media preview
   String _visibility = 'public'; // 'public' | 'followers'
+  SpotifyTrack? _music; // attached Spotify track
   String? _mentionQuery; // active @mention token being typed
   String _draftId = const Uuid().v4();
 
@@ -350,6 +353,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             taggedUserIds: _tagged.toList(),
             coAuthorIds: _coAuthors.toList(),
             location: _location.text,
+            musicTitle: _music?.name,
+            musicArtist: _music?.artist,
+            musicCoverUrl: _music?.coverUrl,
+            musicPreviewUrl: _music?.previewUrl,
+            musicUrl: _music?.spotifyUrl,
             commentsDisabled: _commentsDisabled,
             likesHidden: _likesHidden,
             visibility: _visibility,
@@ -546,6 +554,42 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                             ..clear()
                             ..addAll(r),
                         );
+                        _markChanged();
+                      }
+                    },
+                  ),
+                  AppTile(
+                    leading: Icon(
+                      Icons.music_note_rounded,
+                      color: _music != null
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                      size: AppIconSize.md,
+                    ),
+                    title: tr('Thêm nhạc', 'Add music'),
+                    subtitle: _music != null
+                        ? '${_music!.name} · ${_music!.artist}'
+                        : tr('Bài hát từ Spotify', 'A track from Spotify'),
+                    trailing: _music != null
+                        ? PressScale(
+                            onTap: () {
+                              setState(() => _music = null);
+                              _markChanged();
+                            },
+                            child: Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textTertiary,
+                              size: AppIconSize.sm,
+                            ),
+                          )
+                        : Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.textTertiary,
+                          ),
+                    onTap: () async {
+                      final t = await showSpotifyPicker(context);
+                      if (t != null) {
+                        setState(() => _music = t);
                         _markChanged();
                       }
                     },

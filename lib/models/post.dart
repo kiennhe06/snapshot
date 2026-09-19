@@ -70,6 +70,10 @@ class Post {
     this.hashtags = const [],
     this.location,
     this.musicTitle,
+    this.musicArtist,
+    this.musicCoverUrl,
+    this.musicPreviewUrl,
+    this.musicUrl,
     this.remixOfPostId,
     this.commentsDisabled = false,
     this.likesHidden = false,
@@ -95,8 +99,16 @@ class Post {
   final List<String> taggedUserIds;
   final List<String> hashtags;
   final String? location;
+
+  /// Attached Spotify track (metadata + album art; preview may be null).
   final String? musicTitle;
+  final String? musicArtist;
+  final String? musicCoverUrl;
+  final String? musicPreviewUrl;
+  final String? musicUrl;
   final String? remixOfPostId;
+
+  bool get hasMusic => musicTitle != null && musicTitle!.isNotEmpty;
   final bool commentsDisabled;
   final bool likesHidden;
 
@@ -144,6 +156,10 @@ class Post {
           (json['hashtags'] as List<dynamic>?)?.cast<String>() ?? const [],
       location: json['location'] as String?,
       musicTitle: json['musicTitle'] as String?,
+      musicArtist: json['musicArtist'] as String?,
+      musicCoverUrl: json['musicCoverUrl'] as String?,
+      musicPreviewUrl: json['musicPreviewUrl'] as String?,
+      musicUrl: json['musicUrl'] as String?,
       remixOfPostId: json['remixOfPostId'] as String?,
       commentsDisabled: json['commentsDisabled'] as bool? ?? false,
       likesHidden: json['likesHidden'] as bool? ?? false,
@@ -168,6 +184,10 @@ class Post {
     'hashtags': hashtags,
     'location': location,
     'musicTitle': musicTitle,
+    'musicArtist': musicArtist,
+    'musicCoverUrl': musicCoverUrl,
+    'musicPreviewUrl': musicPreviewUrl,
+    'musicUrl': musicUrl,
     'remixOfPostId': remixOfPostId,
     'commentsDisabled': commentsDisabled,
     'likesHidden': likesHidden,

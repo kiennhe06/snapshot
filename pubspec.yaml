@@ -50,6 +50,7 @@ dependencies:
   # Voice messages (record + playback)
   record: ^7.1.1
   audioplayers: ^6.1.0
+  url_launcher: ^6.3.1
 
   # Google Sign-In (v7 API mới: singleton + initialize + authenticate)
   google_sign_in: ^7.2.0
