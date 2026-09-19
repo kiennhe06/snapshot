@@ -12,6 +12,7 @@ import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../stories/presentation/widgets/highlights_row.dart';
 import '../providers/profile_providers.dart';
 import 'widgets/post_grid.dart';
 import 'widgets/profile_header.dart';
@@ -116,6 +117,7 @@ class _ProfileBody extends ConsumerWidget {
           onToggleFollow: () => _toggleFollow(ref, isFollowing),
           onShowQr: () => context.push('${Routes.qrNametag}?uid=${user.uid}'),
         ),
+        HighlightsRow(uid: user.uid, isMe: isMe),
         if (locked)
           Expanded(
             child: EmptyView(

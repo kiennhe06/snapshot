@@ -52,6 +52,12 @@ service cloud.firestore {
       match /restricted/{targetUid} {
         allow read, write: if signedIn() && request.auth.uid == uid;
       }
+
+      // Story highlights — owner writes, anyone signed in can view.
+      match /highlights/{id} {
+        allow read: if signedIn();
+        allow write: if signedIn() && request.auth.uid == uid;
+      }
     }
 
     // Username uniqueness index.
@@ -106,6 +112,34 @@ service cloud.firestore {
           allow read: if signedIn();
           allow write: if signedIn() && request.auth.uid == uid;
         }
+      }
+    }
+
+    // Stories (24h). Audience is filtered client-side.
+    match /stories/{storyId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid;
+      allow delete: if signedIn()
+        && resource.data.authorId == request.auth.uid;
+      // Author edits anything; anyone signed in may bump only viewsCount.
+      allow update: if signedIn() && (
+        resource.data.authorId == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['viewsCount'])
+      );
+
+      // Who viewed (each viewer writes their own doc).
+      match /views/{uid} {
+        allow read: if signedIn();
+        allow write: if signedIn() && request.auth.uid == uid;
+      }
+      // Sticker aggregates + responses (poll/slider/question).
+      match /aggregates/{stickerId} {
+        allow read, write: if signedIn();
+      }
+      match /responses/{responseId} {
+        allow read, write: if signedIn();
       }
     }
 

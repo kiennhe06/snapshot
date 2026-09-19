@@ -9,6 +9,7 @@ import '../../../core/design/tokens.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
+import '../../stories/presentation/widgets/story_ring.dart';
 import '../providers/feed_providers.dart';
 import 'widgets/post_card.dart';
 
@@ -48,7 +49,13 @@ class _FeedScreenState extends State<FeedScreen> {
       body: IndexedStack(
         index: _tab,
         children: const [
-          _FeedList(kind: FeedKind.following),
+          Column(
+            children: [
+              StoryRing(),
+              Divider(height: 1),
+              Expanded(child: _FeedList(kind: FeedKind.following)),
+            ],
+          ),
           _FeedList(kind: FeedKind.favorites),
         ],
       ),
