@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
     this.validator,
     this.maxLines = 1,
     this.autofillHints,
+    this.onChanged,
   });
 
   final TextEditingController controller;
@@ -31,6 +32,7 @@ class AppTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final int maxLines;
   final Iterable<String>? autofillHints;
+  final ValueChanged<String>? onChanged;
 
   OutlineInputBorder _border(Color c, double w) => OutlineInputBorder(
     borderRadius: AppRadius.brLg,
@@ -65,6 +67,7 @@ class AppTextField extends StatelessWidget {
           validator: validator,
           maxLines: maxLines,
           autofillHints: autofillHints,
+          onChanged: onChanged,
           cursorColor: AppColors.primary,
           style: const TextStyle(
             color: AppColors.textPrimary,

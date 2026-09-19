@@ -9,6 +9,7 @@ import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../explore/providers/search_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/message_providers.dart';
 import 'chat_screen.dart';
@@ -26,6 +27,8 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
   int _tab = 0; // 0 = DM, 1 = group, 2 = broadcast
   final _selected = <String>{};
   final _name = TextEditingController();
+  final _search = TextEditingController();
+  String _query = '';
   bool _busy = false;
 
   bool get _multi => _tab != 0;
@@ -33,6 +36,7 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
   @override
   void dispose() {
     _name.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -70,7 +74,11 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final following = ref.watch(followingUsersProvider);
+    final me = ref.watch(authStateProvider).valueOrNull?.uid;
+    // When searching, list anyone; otherwise suggest people you follow.
+    final AsyncValue<List<AppUser>> source = _query.trim().isEmpty
+        ? ref.watch(followingUsersProvider)
+        : ref.watch(userSearchProvider(_query.trim()));
 
     return AppScaffold(
       topBar: AppTopBar(
@@ -93,25 +101,39 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
         children: [
           if (_multi)
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
               child: AppTextField(
                 controller: _name,
                 label: _tab == 1 ? tr('Tên nhóm', 'Group name') : tr('Tên kênh', 'Channel name'),
                 hint: tr('Nhập tên...', 'Enter a name...'),
                 icon: _tab == 1 ? Icons.group_rounded : Icons.campaign_rounded,
+                onChanged: (_) => setState(() {}),
               ),
             ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: AppTextField(
+              controller: _search,
+              label: tr('Tìm người dùng', 'Search people'),
+              hint: tr('Nhập tên người dùng...', 'Type a username...'),
+              icon: Icons.search_rounded,
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
           Expanded(
-            child: following.when(
+            child: source.when(
               loading: () => const LoadingView(),
               error: (e, _) => Center(child: Text(tr('Có lỗi xảy ra', 'Something went wrong'))),
-              data: (users) {
+              data: (all) {
+                final users = all.where((u) => u.uid != me).toList();
                 if (users.isEmpty) {
                   return EmptyView(
-                    message: tr(
-                      'Hãy theo dõi ai đó để bắt đầu trò chuyện.',
-                      'Follow someone to start chatting.',
-                    ),
+                    message: _query.trim().isEmpty
+                        ? tr(
+                            'Tìm theo tên người dùng để bắt đầu trò chuyện.',
+                            'Search a username to start chatting.',
+                          )
+                        : tr('Không tìm thấy người dùng.', 'No users found.'),
                     icon: Icons.people_outline_rounded,
                   );
                 }
