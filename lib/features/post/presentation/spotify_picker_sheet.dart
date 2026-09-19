@@ -44,13 +44,10 @@ class _SpotifyPickerState extends ConsumerState<_SpotifyPicker> {
     });
   }
 
+  bool get _isLink => _query.contains('open.spotify.com/track');
+
   @override
   Widget build(BuildContext context) {
-    final configured = ref.read(spotifyServiceProvider).isConfigured;
-    final results = _query.isEmpty
-        ? const AsyncValue<List<SpotifyTrack>>.data([])
-        : ref.watch(spotifySearchProvider(_query));
-
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -63,74 +60,116 @@ class _SpotifyPickerState extends ConsumerState<_SpotifyPicker> {
           children: [
             AppTextField(
               controller: _controller,
-              label: tr('Tìm bài hát trên Spotify', 'Search Spotify'),
-              hint: tr('Tên bài hát hoặc nghệ sĩ...', 'Song or artist...'),
+              label: tr(
+                'Dán link Spotify hoặc tìm',
+                'Paste a Spotify link or search',
+              ),
+              hint: tr(
+                'Tên bài hát / link Spotify...',
+                'Song name / Spotify link...',
+              ),
               icon: Icons.search_rounded,
               onChanged: _onChanged,
             ),
-            const SizedBox(height: AppSpacing.md),
-            if (!configured)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Align(
+                alignment: Alignment.centerLeft,
                 child: Text(
                   tr(
-                    'Chưa cấu hình Spotify (thiếu client secret).',
-                    'Spotify not configured (missing client secret).',
+                    'Mẹo: mở Spotify → Chia sẻ → Sao chép liên kết bài hát, rồi dán vào đây.',
+                    'Tip: in Spotify, Share → Copy song link, then paste here.',
                   ),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textTertiary),
-                ),
-              )
-            else
-              Flexible(
-                child: results.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(AppSpacing.xl),
-                    child: LoadingViewInline(),
+                  style: TextStyle(
+                    color: AppColors.textTertiary,
+                    fontSize: AppType.small,
                   ),
-                  error: (_, _) => Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Text(
-                      tr('Không tìm được. Thử lại.', 'Search failed. Retry.'),
-                      style: TextStyle(color: AppColors.textTertiary),
-                    ),
-                  ),
-                  data: (tracks) {
-                    if (_query.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.all(AppSpacing.xl),
-                        child: Text(
-                          tr(
-                            'Nhập tên bài hát để tìm.',
-                            'Type a song to search.',
-                          ),
-                          style: TextStyle(color: AppColors.textTertiary),
-                        ),
-                      );
-                    }
-                    if (tracks.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.all(AppSpacing.xl),
-                        child: Text(
-                          tr('Không có kết quả.', 'No results.'),
-                          style: TextStyle(color: AppColors.textTertiary),
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: tracks.length,
-                      itemBuilder: (_, i) => _TrackRow(
-                        track: tracks[i],
-                        onTap: () => Navigator.pop(context, tracks[i]),
-                      ),
-                    );
-                  },
                 ),
               ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            if (_isLink)
+              _resolveResult()
+            else
+              Flexible(child: _searchResults()),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _resolveResult() {
+    final resolved = ref.watch(spotifyResolveProvider(_query));
+    return resolved.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: LoadingViewInline(),
+      ),
+      error: (_, _) => _hint(tr('Link không hợp lệ.', 'Invalid link.')),
+      data: (t) => t == null
+          ? _hint(tr('Không đọc được link.', 'Could not read the link.'))
+          : _TrackRow(track: t, onTap: () => Navigator.pop(context, t)),
+    );
+  }
+
+  Widget _hint(String text) => Padding(
+    padding: const EdgeInsets.all(AppSpacing.xl),
+    child: Text(text, style: TextStyle(color: AppColors.textTertiary)),
+  );
+
+  Widget _searchResults() {
+    final configured = ref.read(spotifyServiceProvider).isConfigured;
+    final results = _query.isEmpty
+        ? const AsyncValue<List<SpotifyTrack>>.data([])
+        : ref.watch(spotifySearchProvider(_query));
+    if (!configured) {
+      return _hint(
+        tr(
+          'Dán link bài hát Spotify để thêm (tìm kiếm cần tài khoản Premium).',
+          'Paste a Spotify song link (search needs a Premium account).',
+        ),
+      );
+    }
+    return results.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: LoadingViewInline(),
+      ),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Text(
+          tr('Không tìm được. Thử lại.', 'Search failed. Retry.'),
+          style: TextStyle(color: AppColors.textTertiary),
+        ),
+      ),
+      data: (tracks) {
+        if (_query.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Text(
+              tr('Nhập tên bài hát để tìm.', 'Type a song to search.'),
+              style: TextStyle(color: AppColors.textTertiary),
+            ),
+          );
+        }
+        if (tracks.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Text(
+              tr('Không có kết quả.', 'No results.'),
+              style: TextStyle(color: AppColors.textTertiary),
+            ),
+          );
+        }
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: tracks.length,
+          itemBuilder: (_, i) => _TrackRow(
+            track: tracks[i],
+            onTap: () => Navigator.pop(context, tracks[i]),
+          ),
+        );
+      },
     );
   }
 }
@@ -151,7 +190,10 @@ class _TrackRow extends StatelessWidget {
                 width: 44,
                 height: 44,
                 color: AppColors.layer3,
-                child: Icon(Icons.music_note_rounded, color: AppColors.textTertiary),
+                child: Icon(
+                  Icons.music_note_rounded,
+                  color: AppColors.textTertiary,
+                ),
               )
             : CachedNetworkImage(
                 imageUrl: track.coverUrl,
@@ -164,8 +206,11 @@ class _TrackRow extends StatelessWidget {
       subtitle: track.artist,
       trailing: track.previewUrl != null
           ? Icon(Icons.play_circle_outline_rounded, color: AppColors.primary)
-          : Icon(Icons.open_in_new_rounded, color: AppColors.textTertiary,
-              size: AppIconSize.sm),
+          : Icon(
+              Icons.open_in_new_rounded,
+              color: AppColors.textTertiary,
+              size: AppIconSize.sm,
+            ),
     );
   }
 }
@@ -178,7 +223,10 @@ class LoadingViewInline extends StatelessWidget {
     child: SizedBox(
       width: 28,
       height: 28,
-      child: CircularProgressIndicator(strokeWidth: 2.6, color: AppColors.primary),
+      child: CircularProgressIndicator(
+        strokeWidth: 2.6,
+        color: AppColors.primary,
+      ),
     ),
   );
 }

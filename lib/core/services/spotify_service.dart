@@ -44,16 +44,40 @@ class SpotifyService {
     return _token;
   }
 
+  /// Resolves a pasted Spotify track link via the public oEmbed endpoint —
+  /// no auth, no Premium needed. Returns title + album art (no preview/artist).
+  Future<SpotifyTrack?> resolveTrackUrl(String url) async {
+    final u = url.trim();
+    if (!u.contains('open.spotify.com/track/')) return null;
+    final resp = await _client.get(
+      Uri.parse(
+        'https://open.spotify.com/oembed?url=${Uri.encodeQueryComponent(u)}',
+      ),
+    );
+    if (resp.statusCode != 200) return null;
+    final j = jsonDecode(resp.body) as Map<String, dynamic>;
+    final id = RegExp(r'track/([A-Za-z0-9]+)').firstMatch(u)?.group(1) ?? '';
+    return SpotifyTrack(
+      id: id,
+      name: j['title'] as String? ?? '',
+      artist: '',
+      coverUrl: j['thumbnail_url'] as String? ?? '',
+      spotifyUrl: u.split('?').first,
+    );
+  }
+
   /// Searches tracks; returns [] when not configured or on any error.
   Future<List<SpotifyTrack>> searchTracks(String query) async {
     final q = query.trim();
     if (q.isEmpty) return const [];
     final token = await _token_();
     if (token == null) return const [];
+    // market=VN restricts results to tracks available in Vietnam, biasing the
+    // list toward Vietnamese songs the user actually wants.
     final resp = await _client.get(
       Uri.parse(
         'https://api.spotify.com/v1/search'
-        '?type=track&limit=20&q=${Uri.encodeQueryComponent(q)}',
+        '?type=track&limit=20&market=VN&q=${Uri.encodeQueryComponent(q)}',
       ),
       headers: {'Authorization': 'Bearer $token'},
     );

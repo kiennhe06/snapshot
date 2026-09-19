@@ -12,3 +12,9 @@ final spotifySearchProvider = FutureProvider.autoDispose
     .family<List<SpotifyTrack>, String>((ref, query) {
       return ref.watch(spotifyServiceProvider).searchTracks(query);
     });
+
+/// Resolves a pasted Spotify track link (free, via oEmbed).
+final spotifyResolveProvider = FutureProvider.autoDispose
+    .family<SpotifyTrack?, String>((ref, url) {
+      return ref.watch(spotifyServiceProvider).resolveTrackUrl(url);
+    });
