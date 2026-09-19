@@ -36,6 +36,11 @@ class _FeedScreenState extends State<FeedScreen> {
             tooltip: tr('Đăng bài', 'Post'),
             onTap: () => context.push(Routes.createPost),
           ),
+          AppIconButton(
+            icon: Icons.mail_outline_rounded,
+            tooltip: tr('Tin nhắn', 'Messages'),
+            onTap: () => context.push(Routes.inbox),
+          ),
         ],
         bottom: AppSegmentedTabs(
           index: _tab,

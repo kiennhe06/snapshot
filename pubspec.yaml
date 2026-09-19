@@ -47,6 +47,10 @@ dependencies:
   # Video playback (reels, story/post video)
   video_player: ^2.9.2
 
+  # Voice messages (record + playback)
+  record: ^5.1.2
+  audioplayers: ^6.1.0
+
   # Google Sign-In (v7 API mới: singleton + initialize + authenticate)
   google_sign_in: ^7.2.0
 

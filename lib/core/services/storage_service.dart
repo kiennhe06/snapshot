@@ -37,6 +37,16 @@ class StorageService {
     return _upload(file: file, isVideo: isVideo, folder: 'posts/$uid/$postId');
   }
 
+  /// Uploads a chat attachment (image, video or voice note), returns its URL.
+  /// Voice notes and video both use Cloudinary's `video` resource endpoint.
+  Future<String> uploadChatMedia({
+    required String chatId,
+    required File file,
+    required bool isVideo,
+  }) {
+    return _upload(file: file, isVideo: isVideo, folder: 'chats/$chatId');
+  }
+
   /// Performs the unsigned multipart upload and extracts `secure_url`.
   Future<String> _upload({
     required File file,

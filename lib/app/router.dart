@@ -14,6 +14,7 @@ import '../features/auth/providers/auth_providers.dart';
 import '../features/home/presentation/home_shell.dart';
 import '../features/interactions/presentation/hidden_words_screen.dart';
 import '../features/interactions/presentation/saved_screen.dart';
+import '../features/messages/presentation/inbox_screen.dart';
 import '../features/post/presentation/create_post_screen.dart';
 import '../features/post/presentation/drafts_screen.dart';
 import '../features/post/presentation/edit_post_screen.dart';
@@ -124,6 +125,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.hiddenWords,
         builder: (_, _) => const HiddenWordsScreen(),
       ),
+      GoRoute(path: Routes.inbox, builder: (_, _) => const InboxScreen()),
     ],
   );
 });

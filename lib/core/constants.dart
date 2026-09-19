@@ -52,4 +52,7 @@ class Routes {
   // Phase 5 — Interactions
   static const String saved = '/saved';
   static const String hiddenWords = '/settings/hidden-words';
+
+  // Phase 8 — Messages
+  static const String inbox = '/inbox';
 }
