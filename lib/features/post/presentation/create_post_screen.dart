@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,8 +11,11 @@ import 'package:uuid/uuid.dart';
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
+import '../../../models/app_user.dart';
 import '../../../models/post_draft.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../explore/providers/search_providers.dart';
+import '../../feed/providers/feed_providers.dart';
 import '../../profile/data/post_repository.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/post_providers.dart';
@@ -40,6 +44,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _likesHidden = false;
   bool _loading = false;
   int _preview = 0; // index of the large media preview
+  String? _mentionQuery; // active @mention token being typed
   String _draftId = const Uuid().v4();
 
   // Background autosave state.
@@ -52,6 +57,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   void initState() {
     super.initState();
     _caption.addListener(_scheduleAutosave);
+    _caption.addListener(_updateMention);
     _location.addListener(_scheduleAutosave);
     final d = widget.draft;
     if (d != null) {
@@ -132,6 +138,53 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   /// Marks any change to non-text fields (media/tag/collab/toggles) dirty.
   void _markChanged() => _scheduleAutosave();
+
+  // ---- Caption mentions + hashtag suggestions ---------------------------------
+
+  /// Detects an `@word` being typed just before the caret.
+  void _updateMention() {
+    final sel = _caption.selection;
+    if (!sel.isValid || sel.start < 0) {
+      if (_mentionQuery != null) setState(() => _mentionQuery = null);
+      return;
+    }
+    final before = _caption.text.substring(
+      0,
+      sel.start.clamp(0, _caption.text.length),
+    );
+    final q = RegExp(r'@([\w.]{1,24})$').firstMatch(before)?.group(1);
+    if (q != _mentionQuery) setState(() => _mentionQuery = q);
+  }
+
+  void _insertMention(AppUser user) {
+    final sel = _caption.selection;
+    final start = sel.start.clamp(0, _caption.text.length);
+    final before = _caption.text.substring(0, start);
+    final after = _caption.text.substring(start);
+    final m = RegExp(r'@[\w.]*$').firstMatch(before);
+    if (m == null) return;
+    final newBefore = '${before.substring(0, m.start)}@${user.username} ';
+    final newText = newBefore + after;
+    _caption.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newBefore.length),
+    );
+    setState(() {
+      _mentionQuery = null;
+      _tagged.add(user.uid); // a mention also tags the person
+    });
+    _markChanged();
+  }
+
+  void _insertHashtag(String tag) {
+    final t = _caption.text;
+    final prefix = t.isEmpty || t.endsWith(' ') || t.endsWith('\n') ? '' : ' ';
+    final newText = '$t$prefix#$tag ';
+    _caption.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
+  }
 
   void _snack(String m) {
     if (!mounted) return;
@@ -420,6 +473,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 ),
               ),
             ),
+            _captionSuggestions(),
             const SizedBox(height: AppSpacing.lg),
 
             // SECONDARY — interaction details & place
@@ -573,6 +627,109 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Below the caption: @mention results while typing `@`, otherwise real
+  /// hashtag suggestions counted from recent posts.
+  Widget _captionSuggestions() {
+    final q = _mentionQuery;
+    if (q != null && q.isNotEmpty) {
+      final results = ref.watch(userSearchProvider(q)).valueOrNull ?? const [];
+      if (results.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
+        child: Column(
+          children: [
+            for (final AppUser u in results.take(5))
+              PressScale(
+                onTap: () => _insertMention(u),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      AppAvatar(
+                        radius: 14,
+                        imageProvider: u.photoUrl != null
+                            ? CachedNetworkImageProvider(u.photoUrl!)
+                            : null,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        '@${u.username}',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: AppType.subhead,
+                          fontWeight: AppType.medium,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          u.displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textTertiary,
+                            fontSize: AppType.label,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+    // Hashtag suggestions
+    final tags = ref.watch(trendingHashtagsProvider).valueOrNull ?? const [];
+    if (tags.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tr('Hashtag gợi ý', 'Suggested hashtags'),
+            style: TextStyle(
+              color: AppColors.textTertiary,
+              fontSize: AppType.small,
+              fontWeight: AppType.medium,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final t in tags.take(8))
+                PressScale(
+                  onTap: () => _insertHashtag(t),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.layer3,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      '#$t',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: AppType.label,
+                        fontWeight: AppType.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

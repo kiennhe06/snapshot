@@ -10,6 +10,24 @@ final feedRepositoryProvider = Provider<FeedRepository>(
   (ref) => FeedRepository(),
 );
 
+/// Top hashtags across recent posts (real, counted client-side). Used for the
+/// composer's hashtag suggestions.
+final trendingHashtagsProvider = FutureProvider.autoDispose<List<String>>((
+  ref,
+) async {
+  final page = await ref.watch(feedRepositoryProvider).fetchPage(pageSize: 50);
+  final counts = <String, int>{};
+  for (final p in page.posts) {
+    for (final h in p.hashtags) {
+      if (h.trim().isEmpty) continue;
+      counts[h] = (counts[h] ?? 0) + 1;
+    }
+  }
+  final list = counts.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+  return list.take(12).map((e) => e.key).toList();
+});
+
 /// Uids the current user follows.
 final followingIdsProvider = StreamProvider.autoDispose<List<String>>((ref) {
   final uid = ref.watch(authStateProvider).valueOrNull?.uid;
