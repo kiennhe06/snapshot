@@ -11,8 +11,8 @@ import 'package:record/record.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/chat.dart';
+import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
-import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/message_providers.dart';
@@ -205,12 +205,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         children: [
           _PinnedBar(chatId: widget.chatId, me: _me ?? ''),
           Expanded(
-            child: messages.when(
-              loading: () => const LoadingView(),
-              error: (e, _) => Center(
-                child: Text(tr('Có lỗi xảy ra', 'Something went wrong')),
-              ),
-              data: (list) {
+            child: AsyncValueView<List<Message>>(
+              value: messages,
+              onRetry: () => ref.invalidate(messagesProvider(widget.chatId)),
+              builder: (list) {
                 WidgetsBinding.instance.addPostFrameCallback(
                   (_) => _markRead(),
                 );

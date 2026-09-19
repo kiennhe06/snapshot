@@ -9,6 +9,7 @@ import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/constants.dart';
 import '../../../models/app_user.dart';
 import '../../../models/post.dart';
+import '../../../widgets/loading_view.dart';
 import '../providers/search_providers.dart';
 
 /// Search across users, hashtags and locations.
@@ -116,9 +117,7 @@ class _UserResults extends ConsumerWidget {
     }
     final result = ref.watch(userSearchProvider(query));
     return result.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
+      loading: () => const LoadingView(),
       error: (_, _) => _Hint(tr('Lỗi tìm kiếm.', 'Search error.')),
       data: (users) {
         if (users.isEmpty) {
@@ -157,9 +156,7 @@ class _PostResults extends ConsumerWidget {
     }
     final result = ref.watch(provider);
     return result.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
+      loading: () => const LoadingView(),
       error: (_, _) => _Hint(tr('Lỗi tìm kiếm.', 'Search error.')),
       data: (posts) {
         if (posts.isEmpty) {

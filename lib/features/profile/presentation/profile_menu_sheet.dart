@@ -49,51 +49,51 @@ class _ProfileMenu extends ConsumerWidget {
         children: [
           // My activity — grouped content cards
           Row(
-              children: [
-                Expanded(
-                  child: _ActivityCard(
-                    icon: Icons.bookmark_rounded,
-                    label: tr('Đã lưu', 'Saved'),
-                    count: savedCount,
-                    onTap: () => _go(context, Routes.saved),
-                  ),
+            children: [
+              Expanded(
+                child: _ActivityCard(
+                  icon: Icons.bookmark_rounded,
+                  label: tr('Đã lưu', 'Saved'),
+                  count: savedCount,
+                  onTap: () => _go(context, Routes.saved),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: _ActivityCard(
-                    icon: Icons.archive_rounded,
-                    label: tr('Lưu trữ', 'Archive'),
-                    count: archiveCount,
-                    onTap: () => _go(context, Routes.archive),
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _ActivityCard(
+                  icon: Icons.archive_rounded,
+                  label: tr('Lưu trữ', 'Archive'),
+                  count: archiveCount,
+                  onTap: () => _go(context, Routes.archive),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: _ActivityCard(
-                    icon: Icons.edit_note_rounded,
-                    label: tr('Bản nháp', 'Drafts'),
-                    count: draftCount,
-                    onTap: () => _go(context, Routes.drafts),
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _ActivityCard(
+                  icon: Icons.edit_note_rounded,
+                  label: tr('Bản nháp', 'Drafts'),
+                  count: draftCount,
+                  onTap: () => _go(context, Routes.drafts),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            // One door into everything else
-            _MenuRow(
-              icon: Icons.settings_outlined,
-              label: tr('Cài đặt & quyền riêng tư', 'Settings & privacy'),
-              onTap: () => _go(context, Routes.settings),
-            ),
-            const Divider(height: 1, color: AppColors.borderSubtle),
-            _MenuRow(
-              icon: Icons.logout_rounded,
-              label: tr('Đăng xuất', 'Log out'),
-              destructive: true,
-              onTap: () async {
-                Navigator.pop(context);
-                await ref.read(authServiceProvider).signOut();
-              },
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          // One door into everything else
+          _MenuRow(
+            icon: Icons.settings_outlined,
+            label: tr('Cài đặt & quyền riêng tư', 'Settings & privacy'),
+            onTap: () => _go(context, Routes.settings),
+          ),
+          const Divider(height: 1, color: AppColors.borderSubtle),
+          _MenuRow(
+            icon: Icons.logout_rounded,
+            label: tr('Đăng xuất', 'Log out'),
+            destructive: true,
+            onTap: () async {
+              Navigator.pop(context);
+              await ref.read(authServiceProvider).signOut();
+            },
           ),
         ],
       ),

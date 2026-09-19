@@ -6,9 +6,9 @@ import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/app_user.dart';
 import '../../../models/chat.dart';
+import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
-import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/message_providers.dart';
@@ -38,11 +38,10 @@ class InboxScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: chats.when(
-        loading: () => const LoadingView(),
-        error: (e, _) =>
-            Center(child: Text(tr('Có lỗi xảy ra', 'Something went wrong'))),
-        data: (list) => ListView(
+      body: AsyncValueView<List<Chat>>(
+        value: chats,
+        onRetry: () => ref.invalidate(chatsProvider),
+        builder: (list) => ListView(
           children: [
             if (me != null) _NotesStrip(me: me),
             const Divider(height: 1),

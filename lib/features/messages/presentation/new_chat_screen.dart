@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/app_user.dart';
+import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
-import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../explore/providers/search_providers.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -128,12 +128,14 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
             ),
           ),
           Expanded(
-            child: source.when(
-              loading: () => const LoadingView(),
-              error: (e, _) => Center(
-                child: Text(tr('Có lỗi xảy ra', 'Something went wrong')),
+            child: AsyncValueView<List<AppUser>>(
+              value: source,
+              onRetry: () => ref.invalidate(
+                _query.trim().isEmpty
+                    ? followingUsersProvider
+                    : userSearchProvider(_query.trim()),
               ),
-              data: (all) {
+              builder: (all) {
                 final users = all.where((u) => u.uid != me).toList();
                 if (users.isEmpty) {
                   return EmptyView(

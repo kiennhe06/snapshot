@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/post.dart';
+import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
-import '../../../widgets/loading_view.dart';
 import '../providers/reels_providers.dart';
 
 /// All reels that use a given music track.
@@ -66,13 +66,10 @@ class MusicPageScreen extends ConsumerWidget {
           ],
         ),
       ),
-      body: reelsAsync.when(
-        loading: () => const LoadingView(),
-        error: (_, _) => EmptyView(
-          message: tr('Không tải được.', 'Could not load.'),
-          icon: Icons.error_outline_rounded,
-        ),
-        data: (reels) {
+      body: AsyncValueView<List<Post>>(
+        value: reelsAsync,
+        onRetry: () => ref.invalidate(musicReelsProvider(musicTitle)),
+        builder: (reels) {
           if (reels.isEmpty) {
             return EmptyView(
               message: tr(

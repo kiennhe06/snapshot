@@ -7,9 +7,9 @@ import '../../../core/constants.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/post.dart';
+import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
-import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../data/save_repository.dart';
 import '../providers/interaction_providers.dart';
@@ -46,16 +46,10 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
         children: [
           if (collections.isNotEmpty) _collectionChips(collections),
           Expanded(
-            child: savedAsync.when(
-              loading: () => const LoadingView(),
-              error: (_, _) => EmptyView(
-                message: tr(
-                  'Không tải được mục đã lưu.',
-                  'Could not load saved items.',
-                ),
-                icon: Icons.error_outline_rounded,
-              ),
-              data: (posts) {
+            child: AsyncValueView<List<Post>>(
+              value: savedAsync,
+              onRetry: () => ref.invalidate(savedPostsProvider(_collectionId)),
+              builder: (posts) {
                 if (posts.isEmpty) {
                   return EmptyView(
                     message: tr(

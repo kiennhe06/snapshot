@@ -7,9 +7,9 @@ import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/comment.dart';
 import '../../../models/post.dart';
+import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
-import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/interaction_providers.dart';
@@ -81,16 +81,10 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
       body: Column(
         children: [
           Expanded(
-            child: commentsAsync.when(
-              loading: () => const LoadingView(),
-              error: (_, _) => EmptyView(
-                message: tr(
-                  'Không tải được bình luận.',
-                  'Could not load comments.',
-                ),
-                icon: Icons.error_outline_rounded,
-              ),
-              data: (all) {
+            child: AsyncValueView<List<Comment>>(
+              value: commentsAsync,
+              onRetry: () => ref.invalidate(commentsProvider(_postId)),
+              builder: (all) {
                 final visible = all.where((c) => !_hidden(c, hiddenWords));
                 final roots = visible.where((c) => !c.isReply).toList()
                   ..sort((a, b) {
