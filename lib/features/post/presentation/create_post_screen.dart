@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -40,9 +41,17 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _loading = false;
   String _draftId = const Uuid().v4();
 
+  // Background autosave state.
+  Timer? _autosave;
+  bool _saving = false;
+  DateTime? _savedAt;
+  bool _published = false;
+
   @override
   void initState() {
     super.initState();
+    _caption.addListener(_scheduleAutosave);
+    _location.addListener(_scheduleAutosave);
     final d = widget.draft;
     if (d != null) {
       _draftId = d.id;
@@ -68,10 +77,60 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   @override
   void dispose() {
+    _autosave?.cancel();
     _caption.dispose();
     _location.dispose();
     super.dispose();
   }
+
+  // ---- Autosave draft ---------------------------------------------------------
+
+  bool get _hasContent =>
+      _items.isNotEmpty || _caption.text.trim().isNotEmpty;
+
+  PostDraft _buildDraft() => PostDraft(
+    id: _draftId,
+    caption: _caption.text,
+    items: _items
+        .map(
+          (m) => DraftItem(
+            path: m.file.path,
+            isVideo: m.isVideo,
+            altText: m.altText,
+          ),
+        )
+        .toList(),
+    location: _location.text,
+    taggedUserIds: _tagged.toList(),
+    coAuthorIds: _coAuthors.toList(),
+    commentsDisabled: _commentsDisabled,
+    likesHidden: _likesHidden,
+    updatedAt: DateTime.now(),
+  );
+
+  /// Debounced background save — no navigation, no toast.
+  void _scheduleAutosave() {
+    _autosave?.cancel();
+    if (!_hasContent || _published) return;
+    if (mounted) setState(() => _saving = true);
+    _autosave = Timer(const Duration(milliseconds: 800), _autosaveNow);
+  }
+
+  Future<void> _autosaveNow() async {
+    _autosave?.cancel();
+    if (!_hasContent || _published) return;
+    await ref.read(draftRepositoryProvider).saveDraft(_buildDraft());
+    ref.invalidate(draftsProvider);
+    if (mounted) {
+      setState(() {
+        _saving = false;
+        _savedAt = DateTime.now();
+      });
+    }
+  }
+
+  /// Marks any change to non-text fields (media/tag/collab/toggles) dirty.
+  void _markChanged() => _scheduleAutosave();
 
   void _snack(String m) {
     if (!mounted) return;
@@ -119,6 +178,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         picked.map((x) => DraftMedia(file: File(x.path), isVideo: false)),
       );
     });
+    _markChanged();
   }
 
   Future<void> _pickVideo() async {
@@ -127,6 +187,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     setState(
       () => _items.add(DraftMedia(file: File(picked.path), isVideo: true)),
     );
+    _markChanged();
   }
 
   Future<void> _capture({required bool isVideo}) async {
@@ -138,6 +199,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     setState(
       () => _items.add(DraftMedia(file: File(picked.path), isVideo: isVideo)),
     );
+    _markChanged();
   }
 
   // ---- Per-item actions -------------------------------------------------------
@@ -166,6 +228,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   altText: item.altText,
                 ),
               );
+              _markChanged();
             }
           },
         ),
@@ -178,7 +241,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         icon: Icons.delete_outline,
         label: tr('Xoá khỏi bài', 'Remove from post'),
         destructive: true,
-        onTap: () => setState(() => _items.removeAt(index)),
+        onTap: () {
+          setState(() => _items.removeAt(index));
+          _markChanged();
+        },
       ),
     ]);
   }
@@ -194,7 +260,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         'Describe the image for visually impaired users',
       ),
     );
-    if (result != null) setState(() => _items[index].altText = result);
+    if (result != null) {
+      setState(() => _items[index].altText = result);
+      _markChanged();
+    }
   }
 
   // ---- Publish / draft --------------------------------------------------------
@@ -211,6 +280,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       );
       return;
     }
+    _published = true;
+    _autosave?.cancel();
     setState(() => _loading = true);
     try {
       await ref
@@ -227,11 +298,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           );
       // Publishing consumes the draft, if any.
       await ref.read(draftRepositoryProvider).deleteDraft(_draftId);
+      ref.invalidate(draftsProvider);
       if (mounted) {
         _snack(tr('Đã đăng bài.', 'Post published.'));
         context.pop();
       }
     } catch (e) {
+      _published = false;
       _snack(
         tr(
           'Đăng bài thất bại. Kiểm tra kết nối.',
@@ -243,158 +316,298 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     }
   }
 
-  Future<void> _saveDraft() async {
-    final draft = PostDraft(
-      id: _draftId,
-      caption: _caption.text,
-      items: _items
-          .map(
-            (m) => DraftItem(
-              path: m.file.path,
-              isVideo: m.isVideo,
-              altText: m.altText,
-            ),
-          )
-          .toList(),
-      location: _location.text,
-      taggedUserIds: _tagged.toList(),
-      coAuthorIds: _coAuthors.toList(),
-      commentsDisabled: _commentsDisabled,
-      likesHidden: _likesHidden,
-      updatedAt: DateTime.now(),
-    );
-    await ref.read(draftRepositoryProvider).saveDraft(draft);
-    ref.invalidate(draftsProvider);
-    if (mounted) {
-      _snack(tr('Đã lưu bản nháp.', 'Draft saved.'));
-      context.pop();
+  /// Back handling: an in-progress post is autosaved, so on exit we ask whether
+  /// to keep the draft or discard it.
+  Future<void> _handleBack() async {
+    if (_published || !_hasContent) {
+      if (mounted) context.pop();
+      return;
     }
+    final keep = await _confirmExit();
+    if (keep == null) return; // cancelled
+    if (keep) {
+      await _autosaveNow();
+    } else {
+      _autosave?.cancel();
+      await ref.read(draftRepositoryProvider).deleteDraft(_draftId);
+      ref.invalidate(draftsProvider);
+    }
+    if (mounted) context.pop();
+  }
+
+  /// Returns true = keep draft, false = discard, null = cancel.
+  Future<bool?> _confirmExit() {
+    return showAppSheet<bool>(
+      context,
+      builder: (sheetCtx) => AppSheetSurface(
+        title: tr('Lưu bản nháp này?', 'Save this draft?'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+              child: Text(
+                tr(
+                  'Bạn có thể tiếp tục sau từ mục Bản nháp.',
+                  'You can finish it later from Drafts.',
+                ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: AppType.subhead,
+                ),
+              ),
+            ),
+            AppButton(
+              label: tr('Lưu nháp', 'Save draft'),
+              onPressed: () => Navigator.pop(sheetCtx, true),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: tr('Bỏ bài', 'Discard'),
+              variant: AppButtonVariant.ghost,
+              onPressed: () => Navigator.pop(sheetCtx, false),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ---- UI ---------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      topBar: AppTopBar(
-        title: tr('Đăng bài', 'New post'),
-        showBack: true,
-        actions: [
-          AppButton(
-            label: tr('Lưu nháp', 'Save draft'),
-            variant: AppButtonVariant.ghost,
-            fullWidth: false,
-            height: 40,
-            onPressed: _loading ? null : _saveDraft,
-          ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: AppScaffold(
+        topBar: AppTopBar(
+          title: tr('Bài viết mới', 'New post'),
+          showBack: true,
+          onBack: _handleBack,
+          actions: [_DraftStatus(saving: _saving, savedAt: _savedAt)],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            // PRIMARY — media + caption
+            _mediaSection(),
+            const SizedBox(height: AppSpacing.xl),
+            AppTextField(
+              controller: _caption,
+              label: tr('Chú thích', 'Caption'),
+              hint: tr(
+                'Viết chú thích... (dùng #hashtag)',
+                'Write a caption... (use #hashtag)',
+              ),
+              maxLines: 4,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            // SECONDARY — add to your post
+            _sectionLabel(tr('Thêm vào bài viết', 'Add to your post')),
+            AppCard(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Column(
+                children: [
+                  AppTile(
+                    leading: const Icon(
+                      Icons.location_on_outlined,
+                      color: AppColors.textSecondary,
+                      size: AppIconSize.md,
+                    ),
+                    title: tr('Địa điểm', 'Location'),
+                    subtitle: _location.text.isEmpty
+                        ? tr('Thêm địa điểm', 'Add a place')
+                        : _location.text,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textTertiary,
+                    ),
+                    onTap: _editLocation,
+                  ),
+                  AppTile(
+                    leading: const Icon(
+                      Icons.person_add_alt,
+                      color: AppColors.textSecondary,
+                      size: AppIconSize.md,
+                    ),
+                    title: tr('Gắn thẻ người khác', 'Tag people'),
+                    trailing: _CountBadge(count: _tagged.length),
+                    onTap: () async {
+                      final r = await showUserMultiPicker(
+                        context,
+                        title: tr('Gắn thẻ người khác', 'Tag people'),
+                        initial: _tagged,
+                      );
+                      if (r != null) {
+                        setState(
+                          () => _tagged
+                            ..clear()
+                            ..addAll(r),
+                        );
+                        _markChanged();
+                      }
+                    },
+                  ),
+                  AppTile(
+                    leading: const Icon(
+                      Icons.group_add_outlined,
+                      color: AppColors.textSecondary,
+                      size: AppIconSize.md,
+                    ),
+                    title: tr('Mời đồng tác giả', 'Invite collaborators'),
+                    trailing: _CountBadge(count: _coAuthors.length),
+                    onTap: () async {
+                      final r = await showUserMultiPicker(
+                        context,
+                        title: tr('Chọn đồng tác giả', 'Choose collaborators'),
+                        initial: _coAuthors,
+                      );
+                      if (r != null) {
+                        setState(
+                          () => _coAuthors
+                            ..clear()
+                            ..addAll(r),
+                        );
+                        _markChanged();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            // ADVANCED — folded into a sheet
+            AppCard(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: AppTile(
+                leading: const Icon(
+                  Icons.tune_rounded,
+                  color: AppColors.textSecondary,
+                  size: AppIconSize.md,
+                ),
+                title: tr('Cài đặt nâng cao', 'Advanced settings'),
+                subtitle: _advancedSummary(),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textTertiary,
+                ),
+                onTap: _openAdvanced,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            AppButton(
+              label: tr('Chia sẻ', 'Share'),
+              isLoading: _loading,
+              onPressed: _publish,
+            ),
+          ],
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        children: [
-          _mediaSection(),
-          const SizedBox(height: AppSpacing.xl),
-          AppTextField(
-            controller: _caption,
-            label: tr('Chú thích', 'Caption'),
-            hint: tr(
-              'Viết chú thích... (dùng #hashtag)',
-              'Write a caption... (use #hashtag)',
-            ),
-            maxLines: 4,
+    );
+  }
+
+  Widget _sectionLabel(String text) => Padding(
+    padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: AppSpacing.sm),
+    child: Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: AppType.label,
+        fontWeight: AppType.bold,
+        letterSpacing: 0.8,
+      ),
+    ),
+  );
+
+  String _advancedSummary() {
+    final parts = <String>[
+      _commentsDisabled
+          ? tr('Tắt bình luận', 'Comments off')
+          : tr('Cho phép bình luận', 'Comments on'),
+      _likesHidden
+          ? tr('Ẩn lượt thích', 'Likes hidden')
+          : tr('Hiện lượt thích', 'Likes shown'),
+    ];
+    return parts.join(' · ');
+  }
+
+  Future<void> _editLocation() async {
+    final controller = TextEditingController(text: _location.text);
+    final result = await showAppSheet<String>(
+      context,
+      builder: (sheetCtx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
+        ),
+        child: AppSheetSurface(
+          title: tr('Địa điểm', 'Location'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                controller: controller,
+                label: tr('Địa điểm', 'Location'),
+                hint: tr('Thêm địa điểm', 'Add a place'),
+                icon: Icons.location_on_outlined,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppButton(
+                label: tr('Xong', 'Done'),
+                onPressed: () => Navigator.pop(sheetCtx, controller.text),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.lg),
-          AppTextField(
-            controller: _location,
-            label: tr('Vị trí', 'Location'),
-            hint: tr('Thêm địa điểm', 'Add a place'),
-            icon: Icons.location_on_outlined,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AppCard(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-            child: Column(
-              children: [
-                AppTile(
-                  leading: const Icon(
-                    Icons.person_add_alt,
-                    color: AppColors.textSecondary,
-                    size: AppIconSize.md,
-                  ),
-                  title: tr('Gắn thẻ người khác', 'Tag people'),
-                  trailing: _CountBadge(count: _tagged.length),
-                  onTap: () async {
-                    final r = await showUserMultiPicker(
-                      context,
-                      title: tr('Gắn thẻ người khác', 'Tag people'),
-                      initial: _tagged,
-                    );
-                    if (r != null) {
-                      setState(
-                        () => _tagged
-                          ..clear()
-                          ..addAll(r),
-                      );
-                    }
-                  },
+        ),
+      ),
+    );
+    if (result != null) setState(() => _location.text = result);
+  }
+
+  Future<void> _openAdvanced() async {
+    await showAppSheet<void>(
+      context,
+      builder: (sheetCtx) => AppSheetSurface(
+        title: tr('Cài đặt nâng cao', 'Advanced settings'),
+        child: StatefulBuilder(
+          builder: (_, setSheet) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppToggleRow(
+                label: tr('Cho phép bình luận', 'Allow comments'),
+                subtitle: tr(
+                  'Người khác có thể bình luận bài này.',
+                  'Others can comment on this post.',
                 ),
-                AppTile(
-                  leading: const Icon(
-                    Icons.group_add_outlined,
-                    color: AppColors.textSecondary,
-                    size: AppIconSize.md,
-                  ),
-                  title: tr(
-                    'Mời đồng tác giả (collab)',
-                    'Invite collaborators (collab)',
-                  ),
-                  trailing: _CountBadge(count: _coAuthors.length),
-                  onTap: () async {
-                    final r = await showUserMultiPicker(
-                      context,
-                      title: tr('Chọn đồng tác giả', 'Choose collaborators'),
-                      initial: _coAuthors,
-                    );
-                    if (r != null) {
-                      setState(
-                        () => _coAuthors
-                          ..clear()
-                          ..addAll(r),
-                      );
-                    }
-                  },
+                value: !_commentsDisabled,
+                onChanged: (v) {
+                  setSheet(() {});
+                  setState(() => _commentsDisabled = !v);
+                  _markChanged();
+                },
+              ),
+              AppToggleRow(
+                label: tr('Hiện lượt thích', 'Show like count'),
+                subtitle: tr(
+                  'Mọi người thấy tổng lượt thích.',
+                  'Everyone can see the like count.',
                 ),
-              ],
-            ),
+                value: !_likesHidden,
+                onChanged: (v) {
+                  setSheet(() {});
+                  setState(() => _likesHidden = !v);
+                  _markChanged();
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.lg),
-          AppCard(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.xs,
-            ),
-            child: Column(
-              children: [
-                AppToggleRow(
-                  label: tr('Cho phép bình luận', 'Allow comments'),
-                  value: !_commentsDisabled,
-                  onChanged: (v) => setState(() => _commentsDisabled = !v),
-                ),
-                AppToggleRow(
-                  label: tr('Hiện lượt thích', 'Show like count'),
-                  value: !_likesHidden,
-                  onChanged: (v) => setState(() => _likesHidden = !v),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AppButton(
-            label: tr('Đăng', 'Share'),
-            isLoading: _loading,
-            onPressed: _publish,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -595,4 +808,42 @@ Future<String?> _showAltTextDialog(
       ),
     ),
   );
+}
+
+/// Top-bar autosave indicator: "Saving…" while a draft write is pending,
+/// "Draft saved" once it lands. Invisible until there is something to report.
+class _DraftStatus extends StatelessWidget {
+  const _DraftStatus({required this.saving, required this.savedAt});
+
+  final bool saving;
+  final DateTime? savedAt;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!saving && savedAt == null) return const SizedBox.shrink();
+    final label = saving
+        ? tr('Đang lưu…', 'Saving…')
+        : tr('Đã lưu nháp', 'Draft saved');
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.sm),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            saving ? Icons.cloud_sync_rounded : Icons.cloud_done_rounded,
+            size: AppIconSize.sm,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textTertiary,
+              fontSize: AppType.label,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
