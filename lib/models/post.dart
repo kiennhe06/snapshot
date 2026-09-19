@@ -73,6 +73,7 @@ class Post {
     this.remixOfPostId,
     this.commentsDisabled = false,
     this.likesHidden = false,
+    this.visibility = 'public',
     this.isArchived = false,
     this.isPinned = false,
     this.pinnedOrder,
@@ -98,8 +99,14 @@ class Post {
   final String? remixOfPostId;
   final bool commentsDisabled;
   final bool likesHidden;
+
+  /// Who can see this post: `public` (everyone) or `followers` (author's
+  /// followers only). Enforced client-side in feeds and on profiles.
+  final String visibility;
   final bool isArchived;
   final bool isPinned;
+
+  bool get isFollowersOnly => visibility == 'followers';
 
   /// 0..2 when pinned (position among the max 3 pinned posts).
   final int? pinnedOrder;
@@ -140,6 +147,7 @@ class Post {
       remixOfPostId: json['remixOfPostId'] as String?,
       commentsDisabled: json['commentsDisabled'] as bool? ?? false,
       likesHidden: json['likesHidden'] as bool? ?? false,
+      visibility: json['visibility'] as String? ?? 'public',
       isArchived: json['isArchived'] as bool? ?? false,
       isPinned: json['isPinned'] as bool? ?? false,
       pinnedOrder: (json['pinnedOrder'] as num?)?.toInt(),
@@ -163,6 +171,7 @@ class Post {
     'remixOfPostId': remixOfPostId,
     'commentsDisabled': commentsDisabled,
     'likesHidden': likesHidden,
+    'visibility': visibility,
     'isArchived': isArchived,
     'isPinned': isPinned,
     'pinnedOrder': pinnedOrder,

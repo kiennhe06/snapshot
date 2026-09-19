@@ -44,6 +44,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _likesHidden = false;
   bool _loading = false;
   int _preview = 0; // index of the large media preview
+  String _visibility = 'public'; // 'public' | 'followers'
   String? _mentionQuery; // active @mention token being typed
   String _draftId = const Uuid().v4();
 
@@ -68,6 +69,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       _coAuthors.addAll(d.coAuthorIds);
       _commentsDisabled = d.commentsDisabled;
       _likesHidden = d.likesHidden;
+      _visibility = d.visibility;
       for (final it in d.items) {
         if (File(it.path).existsSync()) {
           _items.add(
@@ -112,6 +114,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     coAuthorIds: _coAuthors.toList(),
     commentsDisabled: _commentsDisabled,
     likesHidden: _likesHidden,
+    visibility: _visibility,
     updatedAt: DateTime.now(),
   );
 
@@ -349,6 +352,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             location: _location.text,
             commentsDisabled: _commentsDisabled,
             likesHidden: _likesHidden,
+            visibility: _visibility,
           );
       // Publishing consumes the draft, if any.
       await ref.read(draftRepositoryProvider).deleteDraft(_draftId);
@@ -561,6 +565,29 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 children: [
                   AppTile(
                     leading: Icon(
+                      _visibility == 'followers'
+                          ? Icons.lock_outline_rounded
+                          : Icons.public_rounded,
+                      color: AppColors.textSecondary,
+                      size: AppIconSize.md,
+                    ),
+                    title: tr('Ai có thể xem', 'Who can see this'),
+                    subtitle: _visibility == 'followers'
+                        ? tr('Chỉ người theo dõi', 'Followers only')
+                        : tr('Công khai', 'Public'),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textTertiary,
+                    ),
+                    onTap: _pickVisibility,
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 52,
+                    color: AppColors.borderSubtle,
+                  ),
+                  AppTile(
+                    leading: Icon(
                       Icons.accessibility_new_rounded,
                       color: AppColors.textSecondary,
                       size: AppIconSize.md,
@@ -746,6 +773,27 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       ),
     ),
   );
+
+  void _pickVisibility() {
+    showAppMenu(context, [
+      AppMenuAction(
+        icon: Icons.public_rounded,
+        label: tr('Công khai', 'Public'),
+        onTap: () {
+          setState(() => _visibility = 'public');
+          _markChanged();
+        },
+      ),
+      AppMenuAction(
+        icon: Icons.lock_outline_rounded,
+        label: tr('Chỉ người theo dõi', 'Followers only'),
+        onTap: () {
+          setState(() => _visibility = 'followers');
+          _markChanged();
+        },
+      ),
+    ]);
+  }
 
   Future<void> _editLocation() async {
     final controller = TextEditingController(text: _location.text);

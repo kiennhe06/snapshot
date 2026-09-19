@@ -33,6 +33,7 @@ class PostDraft {
     this.coAuthorIds = const [],
     this.commentsDisabled = false,
     this.likesHidden = false,
+    this.visibility = 'public',
     required this.updatedAt,
   });
 
@@ -44,6 +45,7 @@ class PostDraft {
   final List<String> coAuthorIds;
   final bool commentsDisabled;
   final bool likesHidden;
+  final String visibility;
   final DateTime updatedAt;
 
   factory PostDraft.fromMap(Map<String, dynamic> j) => PostDraft(
@@ -59,6 +61,7 @@ class PostDraft {
         (j['coAuthorIds'] as List<dynamic>?)?.cast<String>() ?? const [],
     commentsDisabled: j['commentsDisabled'] as bool? ?? false,
     likesHidden: j['likesHidden'] as bool? ?? false,
+    visibility: j['visibility'] as String? ?? 'public',
     updatedAt:
         DateTime.tryParse(j['updatedAt'] as String? ?? '') ?? DateTime.now(),
   );
@@ -72,6 +75,7 @@ class PostDraft {
     'coAuthorIds': coAuthorIds,
     'commentsDisabled': commentsDisabled,
     'likesHidden': likesHidden,
+    'visibility': visibility,
     'updatedAt': updatedAt.toIso8601String(),
   };
 }

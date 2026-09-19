@@ -148,23 +148,31 @@ class FeedController extends FamilyNotifier<FeedState, FeedKind> {
     // home feeds (but still reachable via their profile).
     bool allowed(Post p) => !blocked.contains(p.authorId);
     bool notMuted(Post p) => !muted.contains(p.authorId);
+    // Followers-only posts are visible only to the author and their followers.
+    bool visible(Post p) =>
+        !p.isFollowersOnly ||
+        p.authorId == uid ||
+        following.contains(p.authorId);
     return switch (_kind) {
       FeedKind.following =>
         posts
             .where((p) => p.authorId == uid || following.contains(p.authorId))
             .where(allowed)
             .where(notMuted)
+            .where(visible)
             .toList(),
       FeedKind.favorites =>
         posts
             .where((p) => favorites.contains(p.authorId))
             .where(allowed)
+            .where(visible)
             .toList(),
       FeedKind.explore =>
         posts
             .where((p) => p.authorId != uid && !following.contains(p.authorId))
             .where(allowed)
             .where(notMuted)
+            .where(visible)
             .toList(),
     };
   }

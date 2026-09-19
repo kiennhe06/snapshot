@@ -134,8 +134,18 @@ class _ProfileBody extends ConsumerWidget {
             child: AsyncValueView<List<Post>>(
               value: postsAsync,
               onRetry: () => ref.invalidate(authoredPostsProvider(user.uid)),
-              builder: (posts) =>
-                  _ProfileTabs(authorUid: user.uid, isMe: isMe, posts: posts),
+              builder: (posts) {
+                // Followers-only posts are hidden from non-followers.
+                final canSeeFollowersOnly = isMe || isFollowing;
+                final vis = canSeeFollowersOnly
+                    ? posts
+                    : posts.where((p) => !p.isFollowersOnly).toList();
+                return _ProfileTabs(
+                  authorUid: user.uid,
+                  isMe: isMe,
+                  posts: vis,
+                );
+              },
             ),
           ),
       ],

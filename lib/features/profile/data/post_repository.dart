@@ -73,6 +73,7 @@ class PostRepository {
     String? remixOfPostId,
     bool commentsDisabled = false,
     bool likesHidden = false,
+    String visibility = 'public',
   }) async {
     if (media.isEmpty) {
       throw ArgumentError('Bài đăng cần ít nhất một ảnh hoặc video.');
@@ -119,6 +120,7 @@ class PostRepository {
       remixOfPostId: remixOfPostId,
       commentsDisabled: commentsDisabled,
       likesHidden: likesHidden,
+      visibility: visibility,
       createdAt: DateTime.now(),
     );
 
