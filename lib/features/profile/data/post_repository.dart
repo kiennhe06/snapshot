@@ -69,6 +69,8 @@ class PostRepository {
     List<String> taggedUserIds = const [],
     List<String> coAuthorIds = const [],
     String? location,
+    String? musicTitle,
+    String? remixOfPostId,
     bool commentsDisabled = false,
     bool likesHidden = false,
   }) async {
@@ -111,6 +113,10 @@ class PostRepository {
       taggedUserIds: taggedUserIds,
       hashtags: _extractHashtags(caption),
       location: location?.trim().isEmpty == true ? null : location?.trim(),
+      musicTitle: musicTitle?.trim().isEmpty == true
+          ? null
+          : musicTitle?.trim(),
+      remixOfPostId: remixOfPostId,
       commentsDisabled: commentsDisabled,
       likesHidden: likesHidden,
       createdAt: DateTime.now(),

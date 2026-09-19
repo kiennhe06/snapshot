@@ -54,6 +54,20 @@ class FeedRepository {
     );
   }
 
+  /// Video posts using a given music title (equality-only; no composite index).
+  Stream<List<Post>> watchPostsByMusic(String musicTitle) {
+    return _posts.where('musicTitle', isEqualTo: musicTitle).snapshots().map((
+      snap,
+    ) {
+      final list = snap.docs
+          .map((d) => Post.fromMap(d.data()))
+          .where((p) => !p.isArchived)
+          .toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
+  }
+
   // ---- Favorites (close friends) ---------------------------------------------
 
   DocumentReference<Map<String, dynamic>> _favDoc(

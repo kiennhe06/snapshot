@@ -7,6 +7,7 @@ import '../../../widgets/components/app_bottom_nav.dart';
 import '../../explore/presentation/explore_screen.dart';
 import '../../feed/presentation/feed_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
+import '../../reels/presentation/reels_feed_screen.dart';
 
 /// Main shell with the custom bottom navigation (no Material NavigationBar).
 class HomeShell extends ConsumerStatefulWidget {
@@ -24,6 +25,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
       label: tr('Trang chủ', 'Home'),
+    ),
+    AppNavItem(
+      icon: Icons.movie_outlined,
+      activeIcon: Icons.movie_rounded,
+      label: 'Reels',
     ),
     AppNavItem(
       icon: Icons.explore_outlined,
@@ -44,7 +50,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       // IndexedStack keeps each tab's state; the custom bottom nav animates.
       body: IndexedStack(
         index: _index,
-        children: const [FeedScreen(), ExploreScreen(), ProfileScreen()],
+        children: const [
+          FeedScreen(),
+          ReelsFeedScreen(),
+          ExploreScreen(),
+          ProfileScreen(),
+        ],
       ),
       bottomNavigationBar: AppBottomNav(
         items: _items,

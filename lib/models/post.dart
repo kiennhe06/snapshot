@@ -69,6 +69,8 @@ class Post {
     this.taggedUserIds = const [],
     this.hashtags = const [],
     this.location,
+    this.musicTitle,
+    this.remixOfPostId,
     this.commentsDisabled = false,
     this.likesHidden = false,
     this.isArchived = false,
@@ -92,6 +94,8 @@ class Post {
   final List<String> taggedUserIds;
   final List<String> hashtags;
   final String? location;
+  final String? musicTitle;
+  final String? remixOfPostId;
   final bool commentsDisabled;
   final bool likesHidden;
   final bool isArchived;
@@ -132,6 +136,8 @@ class Post {
       hashtags:
           (json['hashtags'] as List<dynamic>?)?.cast<String>() ?? const [],
       location: json['location'] as String?,
+      musicTitle: json['musicTitle'] as String?,
+      remixOfPostId: json['remixOfPostId'] as String?,
       commentsDisabled: json['commentsDisabled'] as bool? ?? false,
       likesHidden: json['likesHidden'] as bool? ?? false,
       isArchived: json['isArchived'] as bool? ?? false,
@@ -153,6 +159,8 @@ class Post {
     'taggedUserIds': taggedUserIds,
     'hashtags': hashtags,
     'location': location,
+    'musicTitle': musicTitle,
+    'remixOfPostId': remixOfPostId,
     'commentsDisabled': commentsDisabled,
     'likesHidden': likesHidden,
     'isArchived': isArchived,

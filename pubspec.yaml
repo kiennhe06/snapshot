@@ -44,6 +44,9 @@ dependencies:
   # Native share sheet
   share_plus: ^10.1.4
 
+  # Video playback (reels, story/post video)
+  video_player: ^2.9.2
+
   # Google Sign-In (v7 API mới: singleton + initialize + authenticate)
   google_sign_in: ^7.2.0
 

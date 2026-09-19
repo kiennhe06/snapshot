@@ -114,16 +114,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                   itemBuilder: (_, i) {
                     final m = post.media[i];
                     if (m.type == 'video') {
-                      return Container(
-                        color: AppColors.layer3,
-                        child: const Center(
-                          child: Icon(
-                            Icons.play_circle_outline_rounded,
-                            color: AppColors.primary,
-                            size: 56,
-                          ),
-                        ),
-                      );
+                      return AppVideo(url: m.url, active: false, muted: true);
                     }
                     return Semantics(
                       label: m.altText.isEmpty ? null : m.altText,

@@ -140,15 +140,11 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
           children: [
             // Media
             if (_current.isVideo)
-              Container(
-                color: Colors.black,
-                child: const Center(
-                  child: Icon(
-                    Icons.play_circle_outline_rounded,
-                    color: Colors.white,
-                    size: 72,
-                  ),
-                ),
+              AppVideo(
+                url: _current.mediaUrl,
+                active: true,
+                fit: BoxFit.contain,
+                showControls: false,
               )
             else
               CachedNetworkImage(
