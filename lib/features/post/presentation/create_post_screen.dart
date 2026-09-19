@@ -375,15 +375,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ),
             child: Column(
               children: [
-                _SwitchRow(
-                  label: tr('Tắt bình luận', 'Turn off commenting'),
-                  value: _commentsDisabled,
-                  onChanged: (v) => setState(() => _commentsDisabled = v),
+                AppToggleRow(
+                  label: tr('Cho phép bình luận', 'Allow comments'),
+                  value: !_commentsDisabled,
+                  onChanged: (v) => setState(() => _commentsDisabled = !v),
                 ),
-                _SwitchRow(
-                  label: tr('Ẩn lượt thích', 'Hide like count'),
-                  value: _likesHidden,
-                  onChanged: (v) => setState(() => _likesHidden = v),
+                AppToggleRow(
+                  label: tr('Hiện lượt thích', 'Show like count'),
+                  value: !_likesHidden,
+                  onChanged: (v) => setState(() => _likesHidden = !v),
                 ),
               ],
             ),
@@ -531,49 +531,7 @@ class _CountBadge extends StatelessWidget {
 
 /// Custom labelled toggle row (replaces Material SwitchListTile). Keeps the
 /// Material [Switch] primitive but tinted with brand tokens.
-class _SwitchRow extends StatelessWidget {
-  const _SwitchRow({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
 
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.subhead,
-                fontWeight: AppType.medium,
-              ),
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: AppColors.primary,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: AppColors.borderStrong,
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Token-styled alt-text editor dialog (rounded container + [AppTextField]).
 Future<String?> _showAltTextDialog(
   BuildContext context, {
   required String title,

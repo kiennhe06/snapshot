@@ -16,6 +16,8 @@ class AsyncValueView<T> extends StatelessWidget {
     required this.builder,
     required this.onRetry,
     this.errorMessage,
+    this.isEmpty,
+    this.empty,
   });
 
   final AsyncValue<T> value;
@@ -23,12 +25,21 @@ class AsyncValueView<T> extends StatelessWidget {
   final VoidCallback onRetry;
   final String? errorMessage;
 
+  /// Optional: treat this data as "empty" and render [empty] instead of
+  /// [builder]. Keeps empty-state handling consistent across screens.
+  final bool Function(T data)? isEmpty;
+  final Widget Function(T data)? empty;
+
   @override
   Widget build(BuildContext context) {
     if (value.hasValue) {
+      final data = value.requireValue;
+      if (isEmpty != null && empty != null && isEmpty!(data)) {
+        return empty!(data);
+      }
       return Stack(
         children: [
-          builder(value.requireValue),
+          builder(data),
           if (value.isLoading)
             const Positioned(
               top: 0,
