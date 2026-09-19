@@ -59,18 +59,20 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
             remixOfPostId: widget.remixOfPostId,
           );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('Đã đăng reel.', 'Reel posted.'))),
+        showAppToast(
+          context,
+          tr('Đã đăng reel.', 'Reel posted.'),
+          type: AppToastType.success,
         );
         ref.read(reelsControllerProvider.notifier).refresh();
         Navigator.of(context).pop();
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(tr('Đăng reel thất bại.', 'Failed to post reel.')),
-          ),
+        showAppToast(
+          context,
+          tr('Đăng reel thất bại.', 'Failed to post reel.'),
+          type: AppToastType.error,
         );
       }
     } finally {

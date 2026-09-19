@@ -118,14 +118,11 @@ class HighlightsRow extends ConsumerWidget {
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final stories = ref.read(myStoriesProvider).valueOrNull ?? const [];
     if (stories.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            tr(
-              'Bạn chưa có tin đang hoạt động để ghim.',
-              'You have no active stories to highlight.',
-            ),
-          ),
+      showAppToast(
+        context,
+        tr(
+          'Bạn chưa có tin đang hoạt động để ghim.',
+          'You have no active stories to highlight.',
         ),
       );
       return;

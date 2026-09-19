@@ -34,9 +34,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   void _snack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppToast(context, message);
   }
 
   Future<void> _submit() async {

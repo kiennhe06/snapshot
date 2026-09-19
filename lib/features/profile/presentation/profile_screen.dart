@@ -264,12 +264,10 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
             }
           } catch (e) {
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    e is StateError ? e.message : tr('Lỗi', 'Error'),
-                  ),
-                ),
+              showAppToast(
+                context,
+                e is StateError ? e.message : tr('Lỗi', 'Error'),
+                type: AppToastType.error,
               );
             }
           }

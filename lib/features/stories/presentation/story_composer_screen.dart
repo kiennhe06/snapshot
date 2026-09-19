@@ -76,17 +76,19 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
             addYoursSourceId: widget.addYoursSourceId,
           );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('Đã đăng tin.', 'Story posted.'))),
+        showAppToast(
+          context,
+          tr('Đã đăng tin.', 'Story posted.'),
+          type: AppToastType.success,
         );
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(tr('Đăng tin thất bại.', 'Failed to post story.')),
-          ),
+        showAppToast(
+          context,
+          tr('Đăng tin thất bại.', 'Failed to post story.'),
+          type: AppToastType.error,
         );
       }
     } finally {

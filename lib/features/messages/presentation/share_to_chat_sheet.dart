@@ -39,7 +39,9 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
 
   Future<void> _send(Chat chat, String me) async {
     setState(() => _sent.add(chat.chatId));
-    await ref.read(chatRepositoryProvider).sendShare(
+    await ref
+        .read(chatRepositoryProvider)
+        .sendShare(
           chatId: chat.chatId,
           senderId: me,
           type: widget.type,
@@ -91,8 +93,12 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: chats.length,
-                  itemBuilder: (_, i) =>
-                      _ChatSendRow(chat: chats[i], me: me, sent: _sent.contains(chats[i].chatId), onSend: () => _send(chats[i], me)),
+                  itemBuilder: (_, i) => _ChatSendRow(
+                    chat: chats[i],
+                    me: me,
+                    sent: _sent.contains(chats[i].chatId),
+                    onSend: () => _send(chats[i], me),
+                  ),
                 ),
               ),
           ],
@@ -119,8 +125,12 @@ class _ChatSendRow extends ConsumerWidget {
     String title;
     String? photoUrl;
     if (chat.isDm) {
-      final other = ref.watch(userProfileProvider(chat.otherMember(me))).valueOrNull;
-      title = other?.username.isNotEmpty == true ? other!.username : (other?.displayName ?? '');
+      final other = ref
+          .watch(userProfileProvider(chat.otherMember(me)))
+          .valueOrNull;
+      title = other?.username.isNotEmpty == true
+          ? other!.username
+          : (other?.displayName ?? '');
       photoUrl = other?.photoUrl;
     } else {
       title = chat.name ?? tr('Nhóm', 'Group');
@@ -133,7 +143,9 @@ class _ChatSendRow extends ConsumerWidget {
         icon: chat.isBroadcast
             ? Icons.campaign_rounded
             : (chat.isGroup ? Icons.group_rounded : Icons.person_rounded),
-        imageProvider: photoUrl != null ? CachedNetworkImageProvider(photoUrl) : null,
+        imageProvider: photoUrl != null
+            ? CachedNetworkImageProvider(photoUrl)
+            : null,
       ),
       title: title,
       trailing: sent

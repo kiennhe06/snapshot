@@ -272,15 +272,13 @@ class _SuggestionCard extends ConsumerWidget {
                   ref
                       .read(followRepositoryProvider)
                       .follow(currentUid: uid, targetUid: user.uid);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        tr(
-                          'Đã theo dõi @${user.username}',
-                          'Followed @${user.username}',
-                        ),
-                      ),
+                  showAppToast(
+                    context,
+                    tr(
+                      'Đã theo dõi @${user.username}',
+                      'Followed @${user.username}',
                     ),
+                    type: AppToastType.success,
                   );
                 }
               },

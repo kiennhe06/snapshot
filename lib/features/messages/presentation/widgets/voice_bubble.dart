@@ -107,9 +107,9 @@ class _VoiceBubbleState extends State<VoiceBubble> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _fmt(_playing || _position > Duration.zero
-                      ? _position
-                      : _total),
+                  _fmt(
+                    _playing || _position > Duration.zero ? _position : _total,
+                  ),
                   style: TextStyle(
                     color: fg.withValues(alpha: 0.85),
                     fontSize: AppType.small,

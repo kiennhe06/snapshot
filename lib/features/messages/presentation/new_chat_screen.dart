@@ -101,10 +101,17 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
         children: [
           if (_multi)
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                0,
+              ),
               child: AppTextField(
                 controller: _name,
-                label: _tab == 1 ? tr('Tên nhóm', 'Group name') : tr('Tên kênh', 'Channel name'),
+                label: _tab == 1
+                    ? tr('Tên nhóm', 'Group name')
+                    : tr('Tên kênh', 'Channel name'),
                 hint: tr('Nhập tên...', 'Enter a name...'),
                 icon: _tab == 1 ? Icons.group_rounded : Icons.campaign_rounded,
                 onChanged: (_) => setState(() {}),
@@ -123,7 +130,9 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
           Expanded(
             child: source.when(
               loading: () => const LoadingView(),
-              error: (e, _) => Center(child: Text(tr('Có lỗi xảy ra', 'Something went wrong'))),
+              error: (e, _) => Center(
+                child: Text(tr('Có lỗi xảy ra', 'Something went wrong')),
+              ),
               data: (all) {
                 final users = all.where((u) => u.uid != me).toList();
                 if (users.isEmpty) {
@@ -166,10 +175,18 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
                 top: false,
                 child: AppButton(
                   label: _tab == 1
-                      ? tr('Tạo nhóm (${_selected.length})', 'Create group (${_selected.length})')
-                      : tr('Tạo kênh (${_selected.length})', 'Create channel (${_selected.length})'),
+                      ? tr(
+                          'Tạo nhóm (${_selected.length})',
+                          'Create group (${_selected.length})',
+                        )
+                      : tr(
+                          'Tạo kênh (${_selected.length})',
+                          'Create channel (${_selected.length})',
+                        ),
                   isLoading: _busy,
-                  onPressed: _selected.isEmpty || _name.text.trim().isEmpty ? null : _create,
+                  onPressed: _selected.isEmpty || _name.text.trim().isEmpty
+                      ? null
+                      : _create,
                 ),
               ),
             ),
@@ -211,7 +228,10 @@ class _UserRow extends StatelessWidget {
                   : Icons.radio_button_unchecked_rounded,
               color: selected ? AppColors.primary : AppColors.textTertiary,
             )
-          : const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+          : const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textTertiary,
+            ),
     );
   }
 }

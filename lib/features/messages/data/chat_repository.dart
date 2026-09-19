@@ -96,20 +96,20 @@ class ChatRepository {
 
   /// Inbox: chats that contain [uid], newest activity first.
   Stream<List<Chat>> watchChats(String uid) {
-    return _chats
-        .where('memberIds', arrayContains: uid)
-        .snapshots()
-        .map((snap) {
-          final list = snap.docs.map((d) => Chat.fromMap(d.data())).toList();
-          list.sort((a, b) => b.lastAt.compareTo(a.lastAt));
-          return list;
-        });
+    return _chats.where('memberIds', arrayContains: uid).snapshots().map((
+      snap,
+    ) {
+      final list = snap.docs.map((d) => Chat.fromMap(d.data())).toList();
+      list.sort((a, b) => b.lastAt.compareTo(a.lastAt));
+      return list;
+    });
   }
 
   Stream<Chat?> watchChat(String chatId) {
-    return _chats.doc(chatId).snapshots().map(
-      (d) => d.exists ? Chat.fromMap(d.data()!) : null,
-    );
+    return _chats
+        .doc(chatId)
+        .snapshots()
+        .map((d) => d.exists ? Chat.fromMap(d.data()!) : null);
   }
 
   // ---- Messages --------------------------------------------------------------
@@ -129,14 +129,13 @@ class ChatRepository {
 
   /// Pinned messages of a chat (usually a handful).
   Stream<List<Message>> watchPinned(String chatId) {
-    return _messages(chatId)
-        .where('pinned', isEqualTo: true)
-        .snapshots()
-        .map((snap) {
-          final list = snap.docs.map((d) => Message.fromMap(d.data())).toList();
-          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return list;
-        });
+    return _messages(chatId).where('pinned', isEqualTo: true).snapshots().map((
+      snap,
+    ) {
+      final list = snap.docs.map((d) => Message.fromMap(d.data())).toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
   }
 
   /// Writes a message and updates the parent chat's last-activity summary.
@@ -289,14 +288,13 @@ class ChatRepository {
 
   /// Marks every message in a chat as read by [uid] (adds uid to readBy).
   Future<void> markRead(String chatId, String uid) async {
-    final unread = await _messages(chatId)
-        .orderBy('createdAt', descending: true)
-        .limit(30)
-        .get();
+    final unread = await _messages(
+      chatId,
+    ).orderBy('createdAt', descending: true).limit(30).get();
     final batch = _db.batch();
     for (final d in unread.docs) {
-      final readBy = (d.data()['readBy'] as List<dynamic>?)?.cast<String>() ??
-          const [];
+      final readBy =
+          (d.data()['readBy'] as List<dynamic>?)?.cast<String>() ?? const [];
       if (!readBy.contains(uid)) {
         batch.update(d.reference, {
           'readBy': FieldValue.arrayUnion([uid]),

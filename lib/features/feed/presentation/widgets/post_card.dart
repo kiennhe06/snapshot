@@ -430,8 +430,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                 reason: 'reported from feed',
               );
             }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(tr('Đã gửi báo cáo.', 'Report sent.'))),
+            showAppToast(
+              context,
+              tr('Đã gửi báo cáo.', 'Report sent.'),
+              type: AppToastType.success,
             );
           },
         ),

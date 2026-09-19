@@ -75,7 +75,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   void _snack(String m) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+    showAppToast(context, m);
   }
 
   // ---- Media picking / capture ------------------------------------------------

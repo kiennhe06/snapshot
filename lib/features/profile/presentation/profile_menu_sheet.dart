@@ -40,10 +40,10 @@ class _ProfileMenu extends ConsumerWidget {
     final archiveCount = uid == null
         ? null
         : ref
-            .watch(authoredPostsProvider(uid))
-            .valueOrNull
-            ?.where((p) => p.isArchived)
-            .length;
+              .watch(authoredPostsProvider(uid))
+              .valueOrNull
+              ?.where((p) => p.isArchived)
+              .length;
 
     return Container(
       margin: const EdgeInsets.all(AppSpacing.md),

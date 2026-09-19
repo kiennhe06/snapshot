@@ -330,9 +330,11 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
               onPressed: () {
                 _reply.clear();
                 _setPaused(false);
-                ScaffoldMessenger.of(
+                showAppToast(
                   context,
-                ).showSnackBar(SnackBar(content: Text(tr('Đã gửi.', 'Sent.'))));
+                  tr('Đã gửi.', 'Sent.'),
+                  type: AppToastType.success,
+                );
               },
             ),
           ],

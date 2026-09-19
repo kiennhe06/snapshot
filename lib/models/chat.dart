@@ -2,10 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum ChatType { dm, group, broadcast }
 
-ChatType chatTypeFrom(String? s) => ChatType.values.firstWhere(
-  (e) => e.name == s,
-  orElse: () => ChatType.dm,
-);
+ChatType chatTypeFrom(String? s) =>
+    ChatType.values.firstWhere((e) => e.name == s, orElse: () => ChatType.dm);
 
 enum MessageType { text, image, video, voice, post, story }
 

@@ -34,22 +34,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       await ref.read(authServiceProvider).sendPasswordReset(_email.text);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            tr(
-              'Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.',
-              'Password reset email sent. Please check your inbox.',
-            ),
-          ),
+      showAppToast(
+        context,
+        tr(
+          'Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.',
+          'Password reset email sent. Please check your inbox.',
         ),
+        type: AppToastType.success,
       );
       context.pop();
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(authErrorMessage(e))));
+        showAppToast(context, authErrorMessage(e), type: AppToastType.error);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

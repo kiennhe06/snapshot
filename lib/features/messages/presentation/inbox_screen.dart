@@ -32,15 +32,16 @@ class InboxScreen extends ConsumerWidget {
           AppIconButton(
             icon: Icons.edit_square,
             tooltip: tr('Tin nhắn mới', 'New message'),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const NewChatScreen()),
-            ),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const NewChatScreen())),
           ),
         ],
       ),
       body: chats.when(
         loading: () => const LoadingView(),
-        error: (e, _) => Center(child: Text(tr('Có lỗi xảy ra', 'Something went wrong'))),
+        error: (e, _) =>
+            Center(child: Text(tr('Có lỗi xảy ra', 'Something went wrong'))),
         data: (list) => ListView(
           children: [
             if (me != null) _NotesStrip(me: me),
@@ -79,7 +80,10 @@ class _NotesStrip extends ConsumerWidget {
       height: 104,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         children: [
           _MyNote(me: me, profile: myProfile),
           for (final u in following) _NoteAvatar(user: u),
@@ -106,7 +110,11 @@ class _MyNote extends ConsumerWidget {
     );
   }
 
-  Future<void> _editNote(BuildContext context, WidgetRef ref, String? current) async {
+  Future<void> _editNote(
+    BuildContext context,
+    WidgetRef ref,
+    String? current,
+  ) async {
     final controller = TextEditingController(text: current ?? '');
     final result = await showModalBottomSheet<String?>(
       context: context,
@@ -195,11 +203,13 @@ class _NoteAvatar extends ConsumerWidget {
       isMine: false,
       onTap: () async {
         if (me == null) return;
-        final chatId = await ref.read(chatRepositoryProvider).openDm(me, user.uid);
+        final chatId = await ref
+            .read(chatRepositoryProvider)
+            .openDm(me, user.uid);
         if (!context.mounted) return;
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ChatScreen(chatId: chatId)),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => ChatScreen(chatId: chatId)));
       },
     );
   }
@@ -243,7 +253,10 @@ class _NoteColumn extends StatelessWidget {
                 ),
                 Container(
                   constraints: const BoxConstraints(maxWidth: 74),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.layer1,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -293,13 +306,17 @@ class _ChatRow extends ConsumerWidget {
     String title;
     String? photoUrl;
     if (chat.isDm) {
-      final other = ref.watch(userProfileProvider(chat.otherMember(me))).valueOrNull;
+      final other = ref
+          .watch(userProfileProvider(chat.otherMember(me)))
+          .valueOrNull;
       title = other?.username.isNotEmpty == true
           ? other!.username
           : (other?.displayName ?? tr('Người dùng', 'User'));
       photoUrl = other?.photoUrl;
     } else {
-      title = chat.name ?? (chat.isBroadcast ? tr('Kênh', 'Channel') : tr('Nhóm', 'Group'));
+      title =
+          chat.name ??
+          (chat.isBroadcast ? tr('Kênh', 'Channel') : tr('Nhóm', 'Group'));
       photoUrl = chat.photoUrl;
     }
 
@@ -314,11 +331,14 @@ class _ChatRow extends ConsumerWidget {
         icon: chat.isBroadcast
             ? Icons.campaign_rounded
             : (chat.isGroup ? Icons.group_rounded : Icons.person_rounded),
-        imageProvider:
-            photoUrl != null ? CachedNetworkImageProvider(photoUrl) : null,
+        imageProvider: photoUrl != null
+            ? CachedNetworkImageProvider(photoUrl)
+            : null,
       ),
       title: title,
-      subtitle: preview.isEmpty ? tr('Nhấn để trò chuyện', 'Tap to chat') : preview,
+      subtitle: preview.isEmpty
+          ? tr('Nhấn để trò chuyện', 'Tap to chat')
+          : preview,
       trailing: kindIcon == null
           ? null
           : Icon(kindIcon, size: AppIconSize.sm, color: AppColors.textTertiary),

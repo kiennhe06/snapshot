@@ -113,7 +113,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (x == null) return;
     setState(() => _sending = true);
     try {
-      await ref.read(chatRepositoryProvider).sendMedia(
+      await ref
+          .read(chatRepositoryProvider)
+          .sendMedia(
             chatId: widget.chatId,
             senderId: me,
             file: File(x.path),
@@ -152,7 +154,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (cancel || path == null || me == null || ms < 500) return;
     setState(() => _sending = true);
     try {
-      await ref.read(chatRepositoryProvider).sendMedia(
+      await ref
+          .read(chatRepositoryProvider)
+          .sendMedia(
             chatId: widget.chatId,
             senderId: me,
             file: File(path),
@@ -184,8 +188,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _me = ref.watch(authStateProvider).valueOrNull?.uid;
     final chat = ref.watch(chatProvider(widget.chatId)).valueOrNull;
     final messages = ref.watch(messagesProvider(widget.chatId));
-    final typing = ref.watch(typingProvider(widget.chatId)).valueOrNull ?? const [];
-    final canSend = chat == null ||
+    final typing =
+        ref.watch(typingProvider(widget.chatId)).valueOrNull ?? const [];
+    final canSend =
+        chat == null ||
         !chat.isBroadcast ||
         (_me != null && chat.adminIds.contains(_me));
 
@@ -201,9 +207,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           Expanded(
             child: messages.when(
               loading: () => const LoadingView(),
-              error: (e, _) => Center(child: Text(tr('Có lỗi xảy ra', 'Something went wrong'))),
+              error: (e, _) => Center(
+                child: Text(tr('Có lỗi xảy ra', 'Something went wrong')),
+              ),
               data: (list) {
-                WidgetsBinding.instance.addPostFrameCallback((_) => _markRead());
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _markRead(),
+                );
                 var lastMineId = '';
                 for (final m in list) {
                   if (m.senderId == _me) lastMineId = m.messageId;
@@ -216,13 +226,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   itemBuilder: (_, i) {
                     final m = list[i];
                     final prev = i > 0 ? list[i - 1] : null;
-                    final showSender = chat != null &&
+                    final showSender =
+                        chat != null &&
                         !chat.isDm &&
                         m.senderId != _me &&
                         prev?.senderId != m.senderId;
                     return MessageBubble(
                       message: m,
-                      chat: chat ??
+                      chat:
+                          chat ??
                           Chat(
                             chatId: widget.chatId,
                             type: ChatType.dm,
@@ -249,7 +261,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Text(
-                tr('Chỉ quản trị viên mới có thể gửi.', 'Only admins can send.'),
+                tr(
+                  'Chỉ quản trị viên mới có thể gửi.',
+                  'Only admins can send.',
+                ),
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: AppColors.textTertiary),
               ),
@@ -269,23 +284,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _ => tr('Nội dung', 'Content'),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       color: AppColors.layer3,
       child: Row(
         children: [
-          const Icon(Icons.reply_rounded, size: AppIconSize.sm, color: AppColors.primary),
+          const Icon(
+            Icons.reply_rounded,
+            size: AppIconSize.sm,
+            color: AppColors.primary,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               tr('Trả lời: ', 'Reply: ') + preview,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: AppType.label),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.label,
+              ),
             ),
           ),
           GestureDetector(
             onTap: () => setState(() => _replyTo = null),
-            child: const Icon(Icons.close_rounded, size: AppIconSize.sm, color: AppColors.textSecondary),
+            child: const Icon(
+              Icons.close_rounded,
+              size: AppIconSize.sm,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -295,16 +324,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _composer() {
     if (_recording) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         color: AppColors.layer1,
         child: Row(
           children: [
             GestureDetector(
               onTap: () => _stopRecording(cancel: true),
-              child: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+              child: const Icon(
+                Icons.delete_outline_rounded,
+                color: AppColors.danger,
+              ),
             ),
             const SizedBox(width: AppSpacing.md),
-            const Icon(Icons.fiber_manual_record_rounded, color: AppColors.danger, size: 14),
+            const Icon(
+              Icons.fiber_manual_record_rounded,
+              color: AppColors.danger,
+              size: 14,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
@@ -324,7 +363,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     colors: [AppColors.primaryBright, AppColors.primary],
                   ),
                 ),
-                child: const Icon(Icons.send_rounded, color: Colors.white, size: AppIconSize.md),
+                child: const Icon(
+                  Icons.send_rounded,
+                  color: Colors.white,
+                  size: AppIconSize.md,
+                ),
               ),
             ),
           ],
@@ -333,7 +376,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       color: AppColors.layer1,
       child: SafeArea(
         top: false,
@@ -358,13 +406,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   minLines: 1,
                   maxLines: 5,
                   cursorColor: AppColors.primary,
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: AppType.subhead),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppType.subhead,
+                  ),
                   decoration: InputDecoration(
                     isDense: true,
                     border: InputBorder.none,
                     hintText: tr('Nhắn tin...', 'Message...'),
                     hintStyle: const TextStyle(color: AppColors.textTertiary),
-                    contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
                   ),
                 ),
               ),
@@ -378,7 +431,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   child: SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.primary),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               )
@@ -395,11 +451,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       colors: [AppColors.primaryBright, AppColors.primary],
                     ),
                   ),
-                  child: const Icon(Icons.send_rounded, color: Colors.white, size: AppIconSize.md),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: AppIconSize.md,
+                  ),
                 ),
               )
             else
-              AppIconButton(icon: Icons.mic_none_rounded, onTap: _startRecording),
+              AppIconButton(
+                icon: Icons.mic_none_rounded,
+                onTap: _startRecording,
+              ),
           ],
         ),
       ),
@@ -466,7 +529,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     GestureDetector(
                       onTap: () {
                         Navigator.pop(sheetCtx);
-                        ref.read(chatRepositoryProvider).react(
+                        ref
+                            .read(chatRepositoryProvider)
+                            .react(
                               chatId: widget.chatId,
                               messageId: m.messageId,
                               uid: me,
@@ -478,13 +543,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ],
               ),
               const Divider(height: AppSpacing.xl),
-              _actionRow(sheetCtx, Icons.reply_rounded, tr('Trả lời', 'Reply'),
-                  () => setState(() => _replyTo = m)),
+              _actionRow(
+                sheetCtx,
+                Icons.reply_rounded,
+                tr('Trả lời', 'Reply'),
+                () => setState(() => _replyTo = m),
+              ),
               _actionRow(
                 sheetCtx,
                 m.pinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
                 m.pinned ? tr('Bỏ ghim', 'Unpin') : tr('Ghim', 'Pin'),
-                () => ref.read(chatRepositoryProvider).setPinned(
+                () => ref
+                    .read(chatRepositoryProvider)
+                    .setPinned(
                       chatId: widget.chatId,
                       messageId: m.messageId,
                       pinned: !m.pinned,
@@ -495,10 +566,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   sheetCtx,
                   Icons.block_rounded,
                   tr('Thu hồi', 'Unsend'),
-                  () => ref.read(chatRepositoryProvider).unsend(
-                        chatId: widget.chatId,
-                        messageId: m.messageId,
-                      ),
+                  () => ref
+                      .read(chatRepositoryProvider)
+                      .unsend(chatId: widget.chatId, messageId: m.messageId),
                   destructive: true,
                 ),
             ],
@@ -522,12 +592,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         onTap();
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
         child: Row(
           children: [
-            Icon(icon, size: AppIconSize.md, color: destructive ? AppColors.danger : AppColors.textSecondary),
+            Icon(
+              icon,
+              size: AppIconSize.md,
+              color: destructive ? AppColors.danger : AppColors.textSecondary,
+            ),
             const SizedBox(width: AppSpacing.md),
-            Text(label, style: TextStyle(color: color, fontSize: AppType.subhead, fontWeight: AppType.medium)),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: AppType.subhead,
+                fontWeight: AppType.medium,
+              ),
+            ),
           ],
         ),
       ),
@@ -547,15 +631,25 @@ class _Header extends ConsumerWidget {
     String? photoUrl;
     String? sub;
     if (chat.isDm) {
-      final other = ref.watch(userProfileProvider(chat.otherMember(me))).valueOrNull;
-      title = other?.username.isNotEmpty == true ? other!.username : (other?.displayName ?? '');
+      final other = ref
+          .watch(userProfileProvider(chat.otherMember(me)))
+          .valueOrNull;
+      title = other?.username.isNotEmpty == true
+          ? other!.username
+          : (other?.displayName ?? '');
       photoUrl = other?.photoUrl;
     } else {
-      title = chat.name ?? (chat.isBroadcast ? tr('Kênh', 'Channel') : tr('Nhóm', 'Group'));
+      title =
+          chat.name ??
+          (chat.isBroadcast ? tr('Kênh', 'Channel') : tr('Nhóm', 'Group'));
       photoUrl = chat.photoUrl;
-      sub = tr('${chat.memberIds.length} thành viên', '${chat.memberIds.length} members');
+      sub = tr(
+        '${chat.memberIds.length} thành viên',
+        '${chat.memberIds.length} members',
+      );
     }
-    final typing = ref.watch(typingProvider(chat.chatId)).valueOrNull ?? const [];
+    final typing =
+        ref.watch(typingProvider(chat.chatId)).valueOrNull ?? const [];
     if (typing.isNotEmpty) sub = tr('đang gõ...', 'typing...');
 
     return Row(
@@ -565,7 +659,9 @@ class _Header extends ConsumerWidget {
           icon: chat.isBroadcast
               ? Icons.campaign_rounded
               : (chat.isGroup ? Icons.group_rounded : Icons.person_rounded),
-          imageProvider: photoUrl != null ? CachedNetworkImageProvider(photoUrl) : null,
+          imageProvider: photoUrl != null
+              ? CachedNetworkImageProvider(photoUrl)
+              : null,
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
@@ -586,7 +682,10 @@ class _Header extends ConsumerWidget {
               if (sub != null)
                 Text(
                   sub,
-                  style: const TextStyle(color: AppColors.primary, fontSize: AppType.small),
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: AppType.small,
+                  ),
                 ),
             ],
           ),
@@ -603,7 +702,8 @@ class _PinnedBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pinned = ref.watch(pinnedMessagesProvider(chatId)).valueOrNull ?? const [];
+    final pinned =
+        ref.watch(pinnedMessagesProvider(chatId)).valueOrNull ?? const [];
     if (pinned.isEmpty) return const SizedBox.shrink();
     final top = pinned.first;
     final preview = switch (top.type) {
@@ -614,24 +714,37 @@ class _PinnedBar extends ConsumerWidget {
       _ => tr('Nội dung', 'Content'),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       color: AppColors.layer3,
       child: Row(
         children: [
-          const Icon(Icons.push_pin_rounded, size: AppIconSize.sm, color: AppColors.primary),
+          const Icon(
+            Icons.push_pin_rounded,
+            size: AppIconSize.sm,
+            color: AppColors.primary,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               preview,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: AppType.label),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: AppType.label,
+              ),
             ),
           ),
           if (pinned.length > 1)
             Text(
               '+${pinned.length - 1}',
-              style: const TextStyle(color: AppColors.textTertiary, fontSize: AppType.small),
+              style: const TextStyle(
+                color: AppColors.textTertiary,
+                fontSize: AppType.small,
+              ),
             ),
         ],
       ),
@@ -648,8 +761,14 @@ class _TypingIndicator extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(left: AppSpacing.lg, bottom: AppSpacing.sm),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        margin: const EdgeInsets.only(
+          left: AppSpacing.lg,
+          bottom: AppSpacing.sm,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: AppColors.layer2,
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -657,7 +776,10 @@ class _TypingIndicator extends StatelessWidget {
         ),
         child: Text(
           tr('đang gõ...', 'typing...'),
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: AppType.label),
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: AppType.label,
+          ),
         ),
       ),
     );

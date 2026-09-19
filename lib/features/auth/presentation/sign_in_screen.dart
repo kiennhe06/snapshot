@@ -35,9 +35,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   void _snack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppToast(context, message);
   }
 
   Future<void> _signInEmail() async {

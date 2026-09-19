@@ -42,9 +42,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
 
   void _snack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppToast(context, message);
   }
 
   Future<void> _sendCode() async {

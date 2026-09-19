@@ -40,9 +40,7 @@ class SettingsScreen extends ConsumerWidget {
           _GroupCard(
             children: [
               _SettingRow(
-                icon: isPrivate
-                    ? Icons.lock_rounded
-                    : Icons.public_rounded,
+                icon: isPrivate ? Icons.lock_rounded : Icons.public_rounded,
                 label: tr('Tài khoản riêng tư', 'Private account'),
                 subtitle: tr(
                   'Chỉ người theo dõi được duyệt mới xem được bài của bạn.',
@@ -52,9 +50,8 @@ class SettingsScreen extends ConsumerWidget {
                   value: isPrivate,
                   onChanged: uid == null
                       ? null
-                      : (v) => ref
-                          .read(userRepositoryProvider)
-                          .setPrivate(uid, v),
+                      : (v) =>
+                            ref.read(userRepositoryProvider).setPrivate(uid, v),
                 ),
               ),
               const _RowDivider(),

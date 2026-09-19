@@ -303,8 +303,10 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                     reason: 'reported from comments',
                   );
             }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(tr('Đã gửi báo cáo.', 'Report sent.'))),
+            showAppToast(
+              context,
+              tr('Đã gửi báo cáo.', 'Report sent.'),
+              type: AppToastType.success,
             );
           },
         ),

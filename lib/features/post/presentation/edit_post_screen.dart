@@ -49,7 +49,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   void _snack(String m) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+    showAppToast(context, m);
   }
 
   Future<void> _save() async {

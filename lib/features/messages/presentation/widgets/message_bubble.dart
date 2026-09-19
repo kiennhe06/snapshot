@@ -55,12 +55,13 @@ class MessageBubble extends ConsumerWidget {
             ),
           PressScale(
             onLongPress: onLongPress,
-            onTap: message.type == MessageType.image ||
+            onTap:
+                message.type == MessageType.image ||
                     message.type == MessageType.video
                 ? () => onOpenMedia(
-                      message.mediaUrl!,
-                      message.type == MessageType.video,
-                    )
+                    message.mediaUrl!,
+                    message.type == MessageType.video,
+                  )
                 : null,
             child: _bubble(context, ref, mine),
           ),
@@ -197,9 +198,14 @@ class MessageBubble extends ConsumerWidget {
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
-        color: (mine ? Colors.white : AppColors.primary).withValues(alpha: 0.14),
+        color: (mine ? Colors.white : AppColors.primary).withValues(
+          alpha: 0.14,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border(
           left: BorderSide(
@@ -227,7 +233,11 @@ class MessageBubble extends ConsumerWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.block_rounded, size: AppIconSize.sm, color: fg.withValues(alpha: 0.7)),
+          Icon(
+            Icons.block_rounded,
+            size: AppIconSize.sm,
+            color: fg.withValues(alpha: 0.7),
+          ),
           const SizedBox(width: 6),
           Text(
             tr('Tin nhắn đã thu hồi', 'Message unsent'),
@@ -335,7 +345,10 @@ class MessageBubble extends ConsumerWidget {
                 color: AppColors.layer3,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(Icons.image_outlined, color: AppColors.textTertiary),
+              child: const Icon(
+                Icons.image_outlined,
+                color: AppColors.textTertiary,
+              ),
             ),
           if ((message.text ?? '').isNotEmpty)
             Padding(
