@@ -5,8 +5,10 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../../models/chat.dart';
 import '../../../models/post.dart';
 import '../../../widgets/components/components.dart';
+import '../../messages/presentation/share_to_chat_sheet.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
@@ -181,9 +183,24 @@ class _ReelPage extends ConsumerWidget {
               _action(
                 icon: Icons.send_outlined,
                 color: Colors.white,
-                onTap: () => Share.share(
-                  'Snapshot reel: snapshot://user/${post.authorId}',
-                ),
+                onTap: () => showAppMenu(context, [
+                  AppMenuAction(
+                    icon: Icons.mail_outline_rounded,
+                    label: tr('Gửi trong tin nhắn', 'Send in message'),
+                    onTap: () => showShareToChatSheet(
+                      context,
+                      type: MessageType.post,
+                      refId: post.postId,
+                    ),
+                  ),
+                  AppMenuAction(
+                    icon: Icons.ios_share_rounded,
+                    label: tr('Chia sẻ khác', 'Share via...'),
+                    onTap: () => Share.share(
+                      'Snapshot reel: snapshot://user/${post.authorId}',
+                    ),
+                  ),
+                ]),
               ),
               _action(
                 icon: isSaved

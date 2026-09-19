@@ -14,6 +14,8 @@ import '../../../../widgets/components/components.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../../interactions/presentation/comments_screen.dart';
 import '../../../interactions/providers/interaction_providers.dart';
+import '../../../messages/presentation/share_to_chat_sheet.dart';
+import '../../../../models/chat.dart';
 import '../../../profile/providers/profile_providers.dart';
 import '../../providers/feed_providers.dart';
 
@@ -205,9 +207,24 @@ class _PostCardState extends ConsumerState<PostCard> {
                     AppIconButton(
                       icon: Icons.send_outlined,
                       tooltip: tr('Chia sẻ', 'Share'),
-                      onTap: () => Share.share(
-                        'Xem bài viết trên Snapshot: snapshot://user/${post.authorId}',
-                      ),
+                      onTap: () => showAppMenu(context, [
+                        AppMenuAction(
+                          icon: Icons.mail_outline_rounded,
+                          label: tr('Gửi trong tin nhắn', 'Send in message'),
+                          onTap: () => showShareToChatSheet(
+                            context,
+                            type: MessageType.post,
+                            refId: post.postId,
+                          ),
+                        ),
+                        AppMenuAction(
+                          icon: Icons.ios_share_rounded,
+                          label: tr('Chia sẻ khác', 'Share via...'),
+                          onTap: () => Share.share(
+                            'Xem bài viết trên Snapshot: snapshot://user/${post.authorId}',
+                          ),
+                        ),
+                      ]),
                     ),
                     const Spacer(),
                     AppIconButton(
