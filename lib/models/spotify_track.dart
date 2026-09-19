@@ -19,6 +19,21 @@ class SpotifyTrack {
   /// for many apps, so callers must fall back to opening the track.
   final String? previewUrl;
 
+  /// From an iTunes Search API song result (free, key-less, works in Vietnam;
+  /// includes a 30-second preview + album art).
+  factory SpotifyTrack.fromItunes(Map<String, dynamic> j) {
+    final art = j['artworkUrl100'] as String? ?? '';
+    return SpotifyTrack(
+      id: '${j['trackId'] ?? ''}',
+      name: j['trackName'] as String? ?? '',
+      artist: j['artistName'] as String? ?? '',
+      // Upscale the 100px thumbnail to a crisper 300px cover.
+      coverUrl: art.replaceAll('100x100bb', '300x300bb'),
+      previewUrl: j['previewUrl'] as String?,
+      spotifyUrl: j['trackViewUrl'] as String? ?? '',
+    );
+  }
+
   factory SpotifyTrack.fromJson(Map<String, dynamic> j) {
     final artists = (j['artists'] as List<dynamic>? ?? const [])
         .map((a) => (a as Map<String, dynamic>)['name'] as String? ?? '')

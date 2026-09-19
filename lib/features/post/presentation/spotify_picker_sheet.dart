@@ -118,18 +118,9 @@ class _SpotifyPickerState extends ConsumerState<_SpotifyPicker> {
   );
 
   Widget _searchResults() {
-    final configured = ref.read(spotifyServiceProvider).isConfigured;
     final results = _query.isEmpty
         ? const AsyncValue<List<SpotifyTrack>>.data([])
         : ref.watch(spotifySearchProvider(_query));
-    if (!configured) {
-      return _hint(
-        tr(
-          'Dán link bài hát Spotify để thêm (tìm kiếm cần tài khoản Premium).',
-          'Paste a Spotify song link (search needs a Premium account).',
-        ),
-      );
-    }
     return results.when(
       loading: () => const Padding(
         padding: EdgeInsets.all(AppSpacing.xl),

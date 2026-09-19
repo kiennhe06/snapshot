@@ -568,8 +568,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     ),
                     title: tr('Thêm nhạc', 'Add music'),
                     subtitle: _music != null
-                        ? '${_music!.name} · ${_music!.artist}'
-                        : tr('Bài hát từ Spotify', 'A track from Spotify'),
+                        ? '${_music!.name}${_music!.artist.isEmpty ? '' : ' · ${_music!.artist}'}'
+                        : tr('Tìm bài hát bất kỳ', 'Search any song'),
                     trailing: _music != null
                         ? PressScale(
                             onTap: () {
