@@ -14,8 +14,18 @@ import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/interaction_providers.dart';
 
-/// Full comments experience: list roots + replies, like, reply, pin, delete,
-/// report, and hidden-word filtering.
+/// Compact, conversational time label ("just now", "3h", then a date).
+String _relTime(DateTime t) {
+  final d = DateTime.now().difference(t);
+  if (d.inSeconds < 45) return tr('vừa xong', 'just now');
+  if (d.inMinutes < 60) return tr('${d.inMinutes} phút', '${d.inMinutes}m');
+  if (d.inHours < 24) return tr('${d.inHours} giờ', '${d.inHours}h');
+  if (d.inDays < 7) return tr('${d.inDays} ngày', '${d.inDays}d');
+  return DateFormat('dd/MM').format(t);
+}
+
+/// Full comments experience: a post-context header, a threaded conversation
+/// with a connector rail, animated likes, and an avatar composer.
 class CommentsScreen extends ConsumerStatefulWidget {
   const CommentsScreen({super.key, required this.post});
 
@@ -27,9 +37,11 @@ class CommentsScreen extends ConsumerStatefulWidget {
 
 class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   final _input = TextEditingController();
+  final _focus = FocusNode();
   final _expanded = <String>{};
   Comment? _replyingTo;
   bool _sending = false;
+  bool _hasText = false;
 
   String get _postId => widget.post.postId;
   bool get _iAmPostAuthor {
@@ -38,8 +50,18 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _input.addListener(() {
+      final has = _input.text.trim().isNotEmpty;
+      if (has != _hasText) setState(() => _hasText = has);
+    });
+  }
+
+  @override
   void dispose() {
     _input.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -64,6 +86,11 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
     }
   }
 
+  void _startReply(Comment c) {
+    setState(() => _replyingTo = c);
+    _focus.requestFocus();
+  }
+
   bool _hidden(Comment c, List<String> words) {
     final lower = c.text.toLowerCase();
     return words.any(
@@ -80,6 +107,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
       topBar: AppTopBar(title: tr('Bình luận', 'Comments'), showBack: true),
       body: Column(
         children: [
+          _ContextHeader(post: widget.post, commentsAsync: commentsAsync),
           Expanded(
             child: AsyncValueView<List<Comment>>(
               value: commentsAsync,
@@ -102,155 +130,50 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                 if (roots.isEmpty) {
                   return EmptyView(
                     message: tr(
-                      'Chưa có bình luận nào.\nHãy là người đầu tiên!',
-                      'No comments yet.\nBe the first!',
+                      'Chưa có bình luận nào.\nHãy bắt đầu cuộc trò chuyện!',
+                      'No comments yet.\nStart the conversation!',
                     ),
                     icon: Icons.mode_comment_outlined,
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  padding: const EdgeInsets.only(
+                    top: AppSpacing.sm,
+                    bottom: AppSpacing.lg,
+                  ),
                   itemCount: roots.length,
                   itemBuilder: (_, i) {
                     final root = roots[i];
-                    final replies = repliesByParent[root.commentId] ?? const [];
+                    final replies =
+                        repliesByParent[root.commentId] ?? const [];
                     final showReplies = _expanded.contains(root.commentId);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _CommentRow(
-                          comment: root,
-                          onReply: () => setState(() => _replyingTo = root),
-                          onMenu: () => _menu(root),
-                        ),
-                        if (root.replyCount > 0)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 64, bottom: 4),
-                            child: PressScale(
-                              onTap: () => setState(() {
-                                if (showReplies) {
-                                  _expanded.remove(root.commentId);
-                                } else {
-                                  _expanded.add(root.commentId);
-                                }
-                              }),
-                              child: Text(
-                                showReplies
-                                    ? tr('Ẩn trả lời', 'Hide replies')
-                                    : tr(
-                                        'Xem ${root.replyCount} trả lời',
-                                        'View ${root.replyCount} replies',
-                                      ),
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: AppType.label,
-                                  fontWeight: AppType.medium,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (showReplies)
-                          ...replies.map(
-                            (r) => Padding(
-                              padding: const EdgeInsets.only(left: 40),
-                              child: _CommentRow(
-                                comment: r,
-                                onReply: () => setState(() => _replyingTo = r),
-                                onMenu: () => _menu(r),
-                              ),
-                            ),
-                          ),
-                      ],
+                    return _Thread(
+                      root: root,
+                      replies: replies,
+                      showReplies: showReplies,
+                      onToggleReplies: () => setState(() {
+                        showReplies
+                            ? _expanded.remove(root.commentId)
+                            : _expanded.add(root.commentId);
+                      }),
+                      onReply: _startReply,
+                      onMenu: _menu,
                     );
                   },
                 );
               },
             ),
           ),
-          _inputBar(),
+          _Composer(
+            input: _input,
+            focus: _focus,
+            hasText: _hasText,
+            sending: _sending,
+            replyingTo: _replyingTo,
+            onSend: _send,
+            onCancelReply: () => setState(() => _replyingTo = null),
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _inputBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.layer1,
-          border: Border(top: BorderSide(color: AppColors.borderSubtle)),
-        ),
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.sm,
-          AppSpacing.md,
-          AppSpacing.sm,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_replyingTo != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                child: Row(
-                  children: [
-                    Expanded(child: _ReplyingBanner(comment: _replyingTo!)),
-                    PressScale(
-                      onTap: () => setState(() => _replyingTo = null),
-                      child: const Icon(
-                        Icons.close_rounded,
-                        size: AppIconSize.sm,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.layer3,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    child: TextField(
-                      controller: _input,
-                      minLines: 1,
-                      maxLines: 4,
-                      cursorColor: AppColors.primary,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: AppType.subhead,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: tr('Thêm bình luận...', 'Add a comment...'),
-                        hintStyle: const TextStyle(
-                          color: AppColors.textTertiary,
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.md,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                AppIconButton(
-                  icon: Icons.send_rounded,
-                  active: true,
-                  onTap: _sending ? null : _send,
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -308,22 +231,168 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   }
 }
 
-class _ReplyingBanner extends ConsumerWidget {
-  const _ReplyingBanner({required this.comment});
-  final Comment comment;
+/// Slim context strip: the post thumbnail + caption + a live comment count, so
+/// the screen opens with content instead of an empty header.
+class _ContextHeader extends StatelessWidget {
+  const _ContextHeader({required this.post, required this.commentsAsync});
+  final Post post;
+  final AsyncValue<List<Comment>> commentsAsync;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final author = ref.watch(userProfileProvider(comment.authorId)).valueOrNull;
-    return Text(
-      tr(
-        'Đang trả lời ${author?.username ?? '...'}',
-        'Replying to ${author?.username ?? '...'}',
+  Widget build(BuildContext context) {
+    final count = commentsAsync.valueOrNull?.length ?? post.commentsCount;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.md,
       ),
-      style: const TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: AppType.label,
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
       ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: post.coverUrl.isEmpty
+                ? Container(
+                    width: 40,
+                    height: 40,
+                    color: AppColors.layer3,
+                    child: const Icon(
+                      Icons.image_outlined,
+                      size: AppIconSize.md,
+                      color: AppColors.textTertiary,
+                    ),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: post.coverUrl,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  count > 0
+                      ? tr(
+                          '$count bình luận',
+                          count == 1 ? '1 comment' : '$count comments',
+                        )
+                      : tr('Bình luận', 'Comments'),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppType.subhead,
+                    fontWeight: AppType.bold,
+                  ),
+                ),
+                if (post.caption.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Text(
+                      post.caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: AppType.label,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A root comment plus its reply rail.
+class _Thread extends StatelessWidget {
+  const _Thread({
+    required this.root,
+    required this.replies,
+    required this.showReplies,
+    required this.onToggleReplies,
+    required this.onReply,
+    required this.onMenu,
+  });
+
+  final Comment root;
+  final List<Comment> replies;
+  final bool showReplies;
+  final VoidCallback onToggleReplies;
+  final void Function(Comment) onReply;
+  final void Function(Comment) onMenu;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _CommentRow(
+          comment: root,
+          onReply: () => onReply(root),
+          onMenu: () => onMenu(root),
+        ),
+        if (root.replyCount > 0)
+          Padding(
+            padding: const EdgeInsets.only(left: 58, bottom: AppSpacing.xs),
+            child: PressScale(
+              onTap: onToggleReplies,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 22, height: 1, color: AppColors.borderStrong),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    showReplies
+                        ? tr('Ẩn trả lời', 'Hide replies')
+                        : tr(
+                            'Xem ${root.replyCount} trả lời',
+                            'View ${root.replyCount} replies',
+                          ),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: AppType.label,
+                      fontWeight: AppType.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (showReplies && replies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 34),
+            child: Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: AppColors.borderSubtle, width: 1.5),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final r in replies)
+                    _CommentRow(
+                      comment: r,
+                      compact: true,
+                      onReply: () => onReply(r),
+                      onMenu: () => onMenu(r),
+                    ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -333,140 +402,412 @@ class _CommentRow extends ConsumerWidget {
     required this.comment,
     required this.onReply,
     required this.onMenu,
+    this.compact = false,
   });
 
   final Comment comment;
   final VoidCallback onReply;
   final VoidCallback onMenu;
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final author = ref.watch(userProfileProvider(comment.authorId)).valueOrNull;
+    final name = author?.username.isNotEmpty == true
+        ? author!.username
+        : (author?.displayName ?? '...');
+    final avatarRadius = compact ? 14.0 : 18.0;
+
+    final row = Padding(
+      padding: EdgeInsets.fromLTRB(
+        compact ? AppSpacing.md : AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppAvatar(
+            radius: avatarRadius,
+            imageProvider: author?.photoUrl != null
+                ? CachedNetworkImageProvider(author!.photoUrl!)
+                : null,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: compact ? AppType.small : AppType.body,
+                          fontWeight: AppType.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      _relTime(comment.createdAt),
+                      style: const TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: AppType.small,
+                      ),
+                    ),
+                    if (comment.pinned) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      const Icon(
+                        Icons.push_pin,
+                        size: AppIconSize.xs,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  comment.text,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppType.subhead,
+                    height: 1.32,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                PressScale(
+                  onTap: onReply,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 1),
+                    child: Text(
+                      tr('Trả lời', 'Reply'),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: AppType.small,
+                        fontWeight: AppType.bold,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _LikeButton(comment: comment),
+        ],
+      ),
+    );
+
+    return PressScale(onLongPress: onMenu, scale: 0.99, child: row);
+  }
+}
+
+/// Heart + count with a little bounce when you tap it.
+class _LikeButton extends ConsumerStatefulWidget {
+  const _LikeButton({required this.comment});
+  final Comment comment;
+
+  @override
+  ConsumerState<_LikeButton> createState() => _LikeButtonState();
+}
+
+class _LikeButtonState extends ConsumerState<_LikeButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+  );
+  late final Animation<double> _scale = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween(begin: 1, end: 1.35), weight: 40),
+    TweenSequenceItem(tween: Tween(begin: 1.35, end: 1), weight: 60),
+  ]).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut));
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _tap(bool liked) {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return;
+    if (!liked) _c.forward(from: 0);
+    ref
+        .read(commentRepositoryProvider)
+        .toggleLike(
+          postId: widget.comment.postId,
+          commentId: widget.comment.commentId,
+          uid: uid,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final liked =
         ref
             .watch(
               isCommentLikedProvider((
-                postId: comment.postId,
-                commentId: comment.commentId,
+                postId: widget.comment.postId,
+                commentId: widget.comment.commentId,
               )),
             )
             .valueOrNull ??
         false;
-
     return PressScale(
-      onLongPress: onMenu,
+      onTap: () => _tap(liked),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.only(top: 1, left: AppSpacing.xs),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            AppAvatar(
-              radius: 18,
-              imageProvider: author?.photoUrl != null
-                  ? CachedNetworkImageProvider(author!.photoUrl!)
+            ScaleTransition(
+              scale: _scale,
+              child: Icon(
+                liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                size: AppIconSize.md,
+                color: liked ? AppColors.primary : AppColors.textTertiary,
+              ),
+            ),
+            SizedBox(
+              height: 14,
+              child: widget.comment.likesCount > 0
+                  ? Text(
+                      '${widget.comment.likesCount}',
+                      style: TextStyle(
+                        color: liked
+                            ? AppColors.primary
+                            : AppColors.textTertiary,
+                        fontSize: AppType.caption,
+                        fontWeight: AppType.bold,
+                      ),
+                    )
                   : null,
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        author?.username.isNotEmpty == true
-                            ? author!.username
-                            : (author?.displayName ?? '...'),
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: AppType.body,
-                          fontWeight: AppType.bold,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Modern conversation composer: your avatar, a soft pill field, a replying-to
+/// chip, and a dynamic send button that grows in when there is text.
+class _Composer extends ConsumerWidget {
+  const _Composer({
+    required this.input,
+    required this.focus,
+    required this.hasText,
+    required this.sending,
+    required this.replyingTo,
+    required this.onSend,
+    required this.onCancelReply,
+  });
+
+  final TextEditingController input;
+  final FocusNode focus;
+  final bool hasText;
+  final bool sending;
+  final Comment? replyingTo;
+  final VoidCallback onSend;
+  final VoidCallback onCancelReply;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(myProfileProvider).valueOrNull;
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.layer1,
+          border: Border(top: BorderSide(color: AppColors.borderSubtle)),
+        ),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.sm,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (replyingTo != null) _ReplyingChip(comment: replyingTo!, onCancel: onCancelReply),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                AppAvatar(
+                  radius: 16,
+                  imageProvider: me?.photoUrl != null
+                      ? CachedNetworkImageProvider(me!.photoUrl!)
+                      : null,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Container(
+                    constraints: const BoxConstraints(maxHeight: 120),
+                    decoration: BoxDecoration(
+                      color: AppColors.layer3,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    child: TextField(
+                      controller: input,
+                      focusNode: focus,
+                      minLines: 1,
+                      maxLines: 4,
+                      textCapitalization: TextCapitalization.sentences,
+                      cursorColor: AppColors.primary,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: AppType.subhead,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: replyingTo != null
+                            ? tr('Viết trả lời...', 'Write a reply...')
+                            : tr('Thêm bình luận...', 'Add a comment...'),
+                        hintStyle: const TextStyle(
+                          color: AppColors.textTertiary,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
                         ),
                       ),
-                      if (comment.pinned) ...[
-                        const SizedBox(width: AppSpacing.xs),
-                        const Icon(
-                          Icons.push_pin,
-                          size: AppIconSize.xs,
-                          color: AppColors.primary,
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    comment.text,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppType.subhead,
-                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Row(
-                    children: [
-                      Text(
-                        DateFormat('dd/MM HH:mm').format(comment.createdAt),
-                        style: const TextStyle(
-                          color: AppColors.textTertiary,
-                          fontSize: AppType.small,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.lg),
-                      if (comment.likesCount > 0)
-                        Text(
-                          tr(
-                            '${comment.likesCount} thích',
-                            '${comment.likesCount} likes',
-                          ),
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: AppType.small,
-                            fontWeight: AppType.medium,
-                          ),
-                        ),
-                      const SizedBox(width: AppSpacing.lg),
-                      PressScale(
-                        onTap: onReply,
-                        child: Text(
-                          tr('Trả lời', 'Reply'),
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: AppType.small,
-                            fontWeight: AppType.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                _SendButton(
+                  visible: hasText || sending,
+                  sending: sending,
+                  onTap: onSend,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SendButton extends StatelessWidget {
+  const _SendButton({
+    required this.visible,
+    required this.sending,
+    required this.onTap,
+  });
+  final bool visible;
+  final bool sending;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: visible ? 1 : 0.6,
+      duration: AppMotion.fast,
+      curve: AppMotion.emphasized,
+      child: AnimatedOpacity(
+        opacity: visible ? 1 : 0.4,
+        duration: AppMotion.fast,
+        child: PressScale(
+          onTap: (visible && !sending) ? onTap : null,
+          child: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: visible
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.primaryBright, AppColors.primary],
+                    )
+                  : null,
+              color: visible ? null : AppColors.layer3,
+              boxShadow: visible ? AppShadows.brandGlow : null,
+            ),
+            child: sending
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(
+                    Icons.arrow_upward_rounded,
+                    size: AppIconSize.md,
+                    color: visible ? Colors.white : AppColors.textTertiary,
                   ),
-                ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReplyingChip extends ConsumerWidget {
+  const _ReplyingChip({required this.comment, required this.onCancel});
+  final Comment comment;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final author = ref.watch(userProfileProvider(comment.authorId)).valueOrNull;
+    final name = author?.username.isNotEmpty == true
+        ? author!.username
+        : (author?.displayName ?? '...');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.sm,
+          AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.layer3,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.reply_rounded,
+              size: AppIconSize.sm,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                tr('Đang trả lời $name', 'Replying to $name'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: AppType.label,
+                  fontWeight: AppType.medium,
+                ),
               ),
             ),
             PressScale(
-              onTap: () {
-                final uid = ref.read(authStateProvider).valueOrNull?.uid;
-                if (uid != null) {
-                  ref
-                      .read(commentRepositoryProvider)
-                      .toggleLike(
-                        postId: comment.postId,
-                        commentId: comment.commentId,
-                        uid: uid,
-                      );
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.sm, top: 2),
-                child: Icon(
-                  liked
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  size: AppIconSize.md,
-                  color: liked ? AppColors.primary : AppColors.textTertiary,
-                ),
+              onTap: onCancel,
+              child: const Icon(
+                Icons.close_rounded,
+                size: AppIconSize.sm,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
