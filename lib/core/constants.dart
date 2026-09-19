@@ -55,4 +55,7 @@ class Routes {
 
   // Phase 8 — Messages
   static const String inbox = '/inbox';
+
+  // Settings (grouped account/privacy/security)
+  static const String settings = '/settings';
 }

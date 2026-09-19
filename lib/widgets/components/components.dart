@@ -4,6 +4,7 @@ export 'app_button.dart';
 export 'app_card.dart';
 export 'app_scaffold.dart';
 export 'app_sheet.dart';
+export 'app_switch.dart';
 export 'app_tabs.dart';
 export 'app_text_field.dart';
 export 'app_tile.dart';

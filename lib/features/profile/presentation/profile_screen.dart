@@ -14,6 +14,7 @@ import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../stories/presentation/widgets/highlights_row.dart';
 import '../providers/profile_providers.dart';
+import 'profile_menu_sheet.dart';
 import 'widgets/post_grid.dart';
 import 'widgets/profile_header.dart';
 
@@ -404,76 +405,7 @@ class _SettingsButton extends ConsumerWidget {
   }
 
   void _openMenu(BuildContext context, WidgetRef ref) {
-    final user = ref.read(userProfileProvider(uid)).valueOrNull;
-    final isPrivate = user?.isPrivate ?? false;
-    showAppMenu(context, [
-      AppMenuAction(
-        icon: Icons.edit_note_rounded,
-        label: tr('Bản nháp', 'Drafts'),
-        onTap: () => context.push(Routes.drafts),
-      ),
-      AppMenuAction(
-        icon: Icons.archive_outlined,
-        label: tr('Bài lưu trữ', 'Archive'),
-        onTap: () => context.push(Routes.archive),
-      ),
-      AppMenuAction(
-        icon: Icons.bookmark_border_rounded,
-        label: tr('Bài đã lưu', 'Saved'),
-        onTap: () => context.push(Routes.saved),
-      ),
-      AppMenuAction(
-        icon: Icons.speaker_notes_off_outlined,
-        label: tr(
-          'Từ khoá ẩn (lọc bình luận)',
-          'Hidden words (comment filter)',
-        ),
-        onTap: () => context.push(Routes.hiddenWords),
-      ),
-      AppMenuAction(
-        icon: Icons.lock_reset_rounded,
-        label: tr('Đổi mật khẩu', 'Change password'),
-        onTap: () => context.push(Routes.changePassword),
-      ),
-      AppMenuAction(
-        icon: isPrivate ? Icons.public_rounded : Icons.lock_outline_rounded,
-        label: isPrivate
-            ? tr('Chuyển sang công khai', 'Switch to public')
-            : tr('Chuyển sang riêng tư', 'Switch to private'),
-        onTap: () async {
-          final u = ref.read(userProfileProvider(uid)).valueOrNull;
-          if (u != null) {
-            await ref
-                .read(userRepositoryProvider)
-                .setPrivate(uid, !u.isPrivate);
-          }
-        },
-      ),
-      AppMenuAction(
-        icon: Icons.shield_outlined,
-        label: tr('Bật 2FA', 'Enable 2FA'),
-        onTap: () => context.push(Routes.mfaEnroll),
-      ),
-      AppMenuAction(
-        icon: Icons.history_rounded,
-        label: tr('Lịch sử đăng nhập', 'Login history'),
-        onTap: () => context.push(Routes.loginHistory),
-      ),
-      AppMenuAction(
-        icon: Icons.language_rounded,
-        label: currentLang == AppLang.vi
-            ? 'Ngôn ngữ: Tiếng Việt → English'
-            : 'Language: English → Tiếng Việt',
-        onTap: () => ref.read(localeProvider.notifier).toggle(),
-      ),
-      AppMenuAction(
-        icon: Icons.logout_rounded,
-        label: tr('Đăng xuất', 'Log out'),
-        destructive: true,
-        onTap: () async {
-          await ref.read(authServiceProvider).signOut();
-        },
-      ),
-    ]);
+    // Concept B: compact activity hub + one door into grouped Settings.
+    showProfileMenu(context);
   }
 }

@@ -25,6 +25,7 @@ import '../features/profile/presentation/change_password_screen.dart';
 import '../features/profile/presentation/edit_profile_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/profile/presentation/qr_nametag_screen.dart';
+import '../features/profile/presentation/settings_screen.dart';
 import '../features/settings/presentation/login_history_screen.dart';
 
 /// Routes reachable while signed out (part of the sign-in flow).
@@ -126,6 +127,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const HiddenWordsScreen(),
       ),
       GoRoute(path: Routes.inbox, builder: (_, _) => const InboxScreen()),
+      GoRoute(path: Routes.settings, builder: (_, _) => const SettingsScreen()),
     ],
   );
 });
