@@ -506,73 +506,62 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _messageActions(Message m) {
     final me = _me;
     if (me == null || m.deleted) return;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => Container(
-        margin: const EdgeInsets.all(AppSpacing.md),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.layer1,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          boxShadow: AppShadows.medium,
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  for (final e in const ['❤️', '😂', '😮', '😢', '👍', '🔥'])
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(sheetCtx);
-                        ref
-                            .read(chatRepositoryProvider)
-                            .react(
-                              chatId: widget.chatId,
-                              messageId: m.messageId,
-                              uid: me,
-                              emoji: e,
-                            );
-                      },
-                      child: Text(e, style: const TextStyle(fontSize: 28)),
-                    ),
-                ],
-              ),
-              const Divider(height: AppSpacing.xl),
+    showAppSheet<void>(
+      context,
+      builder: (sheetCtx) => AppSheetSurface(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                for (final e in const ['❤️', '😂', '😮', '😢', '👍', '🔥'])
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(sheetCtx);
+                      ref
+                          .read(chatRepositoryProvider)
+                          .react(
+                            chatId: widget.chatId,
+                            messageId: m.messageId,
+                            uid: me,
+                            emoji: e,
+                          );
+                    },
+                    child: Text(e, style: const TextStyle(fontSize: 28)),
+                  ),
+              ],
+            ),
+            const Divider(height: AppSpacing.xl),
+            _actionRow(
+              sheetCtx,
+              Icons.reply_rounded,
+              tr('Trả lời', 'Reply'),
+              () => setState(() => _replyTo = m),
+            ),
+            _actionRow(
+              sheetCtx,
+              m.pinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
+              m.pinned ? tr('Bỏ ghim', 'Unpin') : tr('Ghim', 'Pin'),
+              () => ref
+                  .read(chatRepositoryProvider)
+                  .setPinned(
+                    chatId: widget.chatId,
+                    messageId: m.messageId,
+                    pinned: !m.pinned,
+                  ),
+            ),
+            if (m.senderId == me)
               _actionRow(
                 sheetCtx,
-                Icons.reply_rounded,
-                tr('Trả lời', 'Reply'),
-                () => setState(() => _replyTo = m),
-              ),
-              _actionRow(
-                sheetCtx,
-                m.pinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
-                m.pinned ? tr('Bỏ ghim', 'Unpin') : tr('Ghim', 'Pin'),
+                Icons.block_rounded,
+                tr('Thu hồi', 'Unsend'),
                 () => ref
                     .read(chatRepositoryProvider)
-                    .setPinned(
-                      chatId: widget.chatId,
-                      messageId: m.messageId,
-                      pinned: !m.pinned,
-                    ),
+                    .unsend(chatId: widget.chatId, messageId: m.messageId),
+                destructive: true,
               ),
-              if (m.senderId == me)
-                _actionRow(
-                  sheetCtx,
-                  Icons.block_rounded,
-                  tr('Thu hồi', 'Unsend'),
-                  () => ref
-                      .read(chatRepositoryProvider)
-                      .unsend(chatId: widget.chatId, messageId: m.messageId),
-                  destructive: true,
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );

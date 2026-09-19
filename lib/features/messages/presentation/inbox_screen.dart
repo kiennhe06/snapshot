@@ -116,34 +116,17 @@ class _MyNote extends ConsumerWidget {
     String? current,
   ) async {
     final controller = TextEditingController(text: current ?? '');
-    final result = await showModalBottomSheet<String?>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    final result = await showAppSheet<String?>(
+      context,
       builder: (sheetCtx) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
         ),
-        child: Container(
-          margin: const EdgeInsets.all(AppSpacing.md),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: AppColors.layer1,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            boxShadow: AppShadows.medium,
-          ),
+        child: AppSheetSurface(
+          title: tr('Chia sẻ ghi chú', 'Share a note'),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                tr('Chia sẻ ghi chú', 'Share a note'),
-                style: const TextStyle(
-                  fontSize: AppType.headline,
-                  fontWeight: AppType.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
               AppTextField(
                 controller: controller,
                 label: tr('Ghi chú (24 giờ)', 'Note (24h)'),

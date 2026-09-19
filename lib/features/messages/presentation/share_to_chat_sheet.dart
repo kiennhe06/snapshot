@@ -17,10 +17,8 @@ Future<void> showShareToChatSheet(
   required MessageType type,
   required String refId,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
+  return showAppSheet<void>(
+    context,
     builder: (_) => _ShareSheet(type: type, refId: refId),
   );
 }
@@ -54,56 +52,27 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
     final me = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
     final chats = ref.watch(chatsProvider).valueOrNull ?? const [];
 
-    return Container(
-      margin: const EdgeInsets.all(AppSpacing.md),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.layer1,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: AppShadows.medium,
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+    return AppSheetSurface(
+      title: tr('Gửi tới...', 'Send to...'),
+      maxHeightFactor: 0.7,
+      child: chats.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
               child: Text(
-                tr('Gửi tới...', 'Send to...'),
-                style: const TextStyle(
-                  fontSize: AppType.headline,
-                  fontWeight: AppType.bold,
-                  color: AppColors.textPrimary,
-                ),
+                tr('Chưa có cuộc trò chuyện nào.', 'No conversations yet.'),
+                style: const TextStyle(color: AppColors.textTertiary),
+              ),
+            )
+          : ListView.builder(
+              shrinkWrap: true,
+              itemCount: chats.length,
+              itemBuilder: (_, i) => _ChatSendRow(
+                chat: chats[i],
+                me: me,
+                sent: _sent.contains(chats[i].chatId),
+                onSend: () => _send(chats[i], me),
               ),
             ),
-            if (chats.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Text(
-                  tr('Chưa có cuộc trò chuyện nào.', 'No conversations yet.'),
-                  style: const TextStyle(color: AppColors.textTertiary),
-                ),
-              )
-            else
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: chats.length,
-                  itemBuilder: (_, i) => _ChatSendRow(
-                    chat: chats[i],
-                    me: me,
-                    sent: _sent.contains(chats[i].chatId),
-                    onSend: () => _send(chats[i], me),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

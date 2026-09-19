@@ -9,10 +9,8 @@ import '../providers/auth_providers.dart';
 
 /// Shows the multi-account switcher as a modal bottom sheet.
 Future<void> showAccountSwitcher(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
+  return showAppSheet<void>(
+    context,
     builder: (_) => const _AccountSwitcherSheet(),
   );
 }
@@ -25,99 +23,62 @@ class _AccountSwitcherSheet extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsProvider);
     final currentUid = ref.watch(authStateProvider).valueOrNull?.uid;
 
-    return Container(
-      margin: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.layer5,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: AppShadows.medium,
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Drag handle.
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: AppColors.borderStrong,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
+    return AppSheetSurface(
+      title: tr('Tài khoản', 'Accounts'),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            accountsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(AppSpacing.xxxl),
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xl,
-                  AppSpacing.xs,
-                  AppSpacing.xl,
-                  AppSpacing.md,
-                ),
+              error: (_, _) => Padding(
+                padding: const EdgeInsets.all(AppSpacing.xxl),
                 child: Text(
-                  tr('Tài khoản', 'Accounts'),
+                  tr(
+                    'Không tải được danh sách tài khoản.',
+                    'Could not load the account list.',
+                  ),
                   style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.title,
-                    fontWeight: AppType.bold,
+                    color: AppColors.textSecondary,
+                    fontSize: AppType.subhead,
                   ),
                 ),
               ),
-              accountsAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(AppSpacing.xxxl),
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  ),
-                ),
-                error: (_, _) => Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xxl),
-                  child: Text(
-                    tr(
-                      'Không tải được danh sách tài khoản.',
-                      'Could not load the account list.',
-                    ),
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: AppType.subhead,
+              data: (accounts) => Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ...accounts.map(
+                    (a) => _AccountTile(
+                      account: a,
+                      isCurrent: a.uid == currentUid,
+                      onSwitch: () => _switchTo(context, ref, a),
+                      onRemove: () =>
+                          ref.read(accountsProvider.notifier).remove(a.uid),
                     ),
                   ),
-                ),
-                data: (accounts) => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ...accounts.map(
-                      (a) => _AccountTile(
-                        account: a,
-                        isCurrent: a.uid == currentUid,
-                        onSwitch: () => _switchTo(context, ref, a),
-                        onRemove: () =>
-                            ref.read(accountsProvider.notifier).remove(a.uid),
-                      ),
+                  const Divider(
+                    height: AppSpacing.md,
+                    color: AppColors.borderSubtle,
+                  ),
+                  AppTile(
+                    title: tr('Thêm tài khoản', 'Add account'),
+                    leading: const AppAvatar(
+                      radius: 22,
+                      icon: Icons.add_rounded,
                     ),
-                    const Divider(
-                      height: AppSpacing.md,
-                      color: AppColors.borderSubtle,
-                    ),
-                    AppTile(
-                      title: tr('Thêm tài khoản', 'Add account'),
-                      leading: const AppAvatar(
-                        radius: 22,
-                        icon: Icons.add_rounded,
-                      ),
-                      onTap: () => _addAccount(context, ref),
-                    ),
-                  ],
-                ),
+                    onTap: () => _addAccount(context, ref),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

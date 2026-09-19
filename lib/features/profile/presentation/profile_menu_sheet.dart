@@ -15,10 +15,8 @@ import '../providers/profile_providers.dart';
 /// as grouped cards, one door into full Settings, and Log out — instead of a
 /// flat 10-row menu. [parentContext] is used for routing after the sheet closes.
 Future<void> showProfileMenu(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
+  return showAppSheet<void>(
+    context,
     builder: (_) => _ProfileMenu(parentContext: context),
   );
 }
@@ -45,35 +43,12 @@ class _ProfileMenu extends ConsumerWidget {
               ?.where((p) => p.isArchived)
               .length;
 
-    return Container(
-      margin: const EdgeInsets.all(AppSpacing.md),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.layer1,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        boxShadow: AppShadows.medium,
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.borderStrong,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-            // My activity — grouped content cards
-            Row(
+    return AppSheetSurface(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // My activity — grouped content cards
+          Row(
               children: [
                 Expanded(
                   child: _ActivityCard(
@@ -119,9 +94,8 @@ class _ProfileMenu extends ConsumerWidget {
                 Navigator.pop(context);
                 await ref.read(authServiceProvider).signOut();
               },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
