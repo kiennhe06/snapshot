@@ -12,6 +12,7 @@ import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../feed/presentation/widgets/post_card.dart';
 import '../../stories/presentation/widgets/highlights_row.dart';
 import '../providers/profile_providers.dart';
 import 'profile_menu_sheet.dart';
@@ -319,30 +320,15 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
   }
 
   void _showPostViewer(BuildContext context, Post post) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(AppSpacing.xxl),
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CachedNetworkImage(imageUrl: post.coverUrl, fit: BoxFit.cover),
-              if (post.caption.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Text(
-                    post.caption,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppType.subhead,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-            ],
+    // Show the full post card (media, actions, caption, music chip) so a post
+    // reads exactly like it does in the feed.
+    showAppSheet<void>(
+      context,
+      builder: (_) => AppSheetSurface(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: PostCard(post: post),
           ),
         ),
       ),
