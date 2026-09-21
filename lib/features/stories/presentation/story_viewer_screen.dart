@@ -7,6 +7,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../models/story.dart';
 import '../../../widgets/components/components.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../messages/providers/message_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/story_providers.dart';
 import 'story_composer_screen.dart';
@@ -203,11 +204,13 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                               : null,
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        Expanded(
+                        Flexible(
                           child: Text(
                             author?.username.isNotEmpty == true
                                 ? author!.username
                                 : (author?.displayName ?? ''),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: AppType.subhead,
@@ -215,6 +218,23 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                             ),
                           ),
                         ),
+                        if (author?.isVerified == true) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.verified_rounded,
+                            size: 16,
+                            color: AppColors.accent,
+                          ),
+                        ],
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          _relTime(_current.createdAt),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: AppType.label,
+                          ),
+                        ),
+                        const Spacer(),
                         if (_current.closeFriendsOnly)
                           Icon(
                             Icons.star_rounded,
@@ -251,6 +271,26 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
         ),
       ),
     );
+  }
+
+  String _relTime(DateTime t) {
+    final d = DateTime.now().difference(t);
+    if (d.inMinutes < 60) return tr('${d.inMinutes} phút', '${d.inMinutes}m');
+    if (d.inHours < 24) return tr('${d.inHours} giờ', '${d.inHours}h');
+    return tr('${d.inDays} ngày', '${d.inDays}d');
+  }
+
+  /// Sends a reply/reaction to the story author as a real direct message.
+  Future<void> _sendToAuthor(String text) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    final body = text.trim();
+    if (uid == null || body.isEmpty || uid == _current.authorId) return;
+    final repo = ref.read(chatRepositoryProvider);
+    final chatId = await repo.openDm(uid, _current.authorId);
+    await repo.sendText(chatId: chatId, senderId: uid, text: body);
+    if (mounted) {
+      showAppToast(context, tr('Đã gửi.', 'Sent.'), type: AppToastType.success);
+    }
   }
 
   Widget _replyBar() {
@@ -325,16 +365,22 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                 ),
               ),
             ),
+            for (final e in const ['❤️', '🔥'])
+              PressScale(
+                onTap: () => _sendToAuthor(e),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(e, style: const TextStyle(fontSize: 26)),
+                ),
+              ),
+            const SizedBox(width: AppSpacing.xs),
             IconButton(
               icon: const Icon(Icons.send_rounded, color: Colors.white),
               onPressed: () {
+                final text = _reply.text;
                 _reply.clear();
                 _setPaused(false);
-                showAppToast(
-                  context,
-                  tr('Đã gửi.', 'Sent.'),
-                  type: AppToastType.success,
-                );
+                _sendToAuthor(text);
               },
             ),
           ],
