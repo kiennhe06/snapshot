@@ -41,7 +41,13 @@ final reelsControllerProvider = NotifierProvider<ReelsController, ReelsState>(
   ReelsController.new,
 );
 
+/// Which slice of reels to show.
+enum ReelsTab { forYou, following }
+
 class ReelsController extends Notifier<ReelsState> {
+  ReelsTab _tab = ReelsTab.forYou;
+  ReelsTab get tab => _tab;
+
   @override
   ReelsState build() {
     Future.microtask(loadMore);
@@ -50,11 +56,21 @@ class ReelsController extends Notifier<ReelsState> {
 
   FeedRepository get _repo => ref.read(feedRepositoryProvider);
 
+  /// Switches the active tab and reloads from scratch.
+  Future<void> setTab(ReelsTab tab) async {
+    if (tab == _tab) return;
+    _tab = tab;
+    await refresh();
+  }
+
   Future<void> loadMore({int want = 4}) async {
     if (state.isLoading || !state.hasMore) return;
     state = state.copyWith(isLoading: true);
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     final blocked = ref.read(blockedIdsProvider).valueOrNull ?? const [];
+    final following = _tab == ReelsTab.following
+        ? (ref.read(followingIdsProvider).valueOrNull ?? const [])
+        : const <String>[];
 
     var cursor = state.cursor;
     final collected = <Post>[];
@@ -66,7 +82,10 @@ class ReelsController extends Notifier<ReelsState> {
       collected.addAll(
         page.posts.where(
           (p) =>
-              p.isVideo && p.authorId != uid && !blocked.contains(p.authorId),
+              p.isVideo &&
+              p.authorId != uid &&
+              !blocked.contains(p.authorId) &&
+              (_tab == ReelsTab.forYou || following.contains(p.authorId)),
         ),
       );
       cursor = page.nextCursor;

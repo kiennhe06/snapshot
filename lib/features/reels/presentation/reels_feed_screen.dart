@@ -32,6 +32,17 @@ class _ReelsFeedScreenState extends ConsumerState<ReelsFeedScreen> {
   final _page = PageController();
   int _index = 0;
   bool _muted = false;
+  ReelsTab _tab = ReelsTab.forYou;
+
+  void _selectTab(ReelsTab tab) {
+    if (tab == _tab) return;
+    setState(() {
+      _tab = tab;
+      _index = 0;
+    });
+    if (_page.hasClients) _page.jumpToPage(0);
+    ref.read(reelsControllerProvider.notifier).setTab(tab);
+  }
 
   @override
   void dispose() {
@@ -97,15 +108,11 @@ class _ReelsFeedScreenState extends ConsumerState<ReelsFeedScreen> {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Row(
           children: [
-            Text(
-              'Reels',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: AppType.title,
-                fontWeight: AppType.heavy,
-                shadows: const [Shadow(color: Colors.black45, blurRadius: 8)],
-              ),
-            ),
+            const SizedBox(width: 40), // balance the create button
+            const Spacer(),
+            _tabLabel(tr('Dành cho bạn', 'For you'), ReelsTab.forYou),
+            const SizedBox(width: AppSpacing.lg),
+            _tabLabel(tr('Đang theo dõi', 'Following'), ReelsTab.following),
             const Spacer(),
             IconButton(
               icon: const Icon(Icons.videocam_rounded, color: Colors.white),
@@ -116,6 +123,37 @@ class _ReelsFeedScreenState extends ConsumerState<ReelsFeedScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _tabLabel(String label, ReelsTab tab) {
+    final selected = _tab == tab;
+    return PressScale(
+      onTap: () => _selectTab(tab),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : Colors.white60,
+              fontSize: AppType.subhead,
+              fontWeight: selected ? AppType.heavy : AppType.medium,
+              shadows: const [Shadow(color: Colors.black45, blurRadius: 8)],
+            ),
+          ),
+          const SizedBox(height: 3),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 2.5,
+            width: selected ? 20 : 0,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -142,13 +180,21 @@ class _ReelPage extends ConsumerWidget {
     final isSaved =
         ref.watch(isSavedProvider(post.postId)).valueOrNull ?? false;
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    final isMine = post.authorId == uid;
+    final isFollowing =
+        ref.watch(isFollowingProvider(post.authorId)).valueOrNull ?? false;
 
     return Stack(
       fit: StackFit.expand,
       children: [
         // Video
         if (post.media.isNotEmpty)
-          AppVideo(url: post.media.first.url, active: active, muted: muted)
+          AppVideo(
+            url: post.media.first.url,
+            active: active,
+            muted: muted,
+            showProgress: true,
+          )
         else
           const ColoredBox(color: Colors.black),
 
@@ -163,7 +209,7 @@ class _ReelPage extends ConsumerWidget {
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
                 color: isLiked ? AppColors.primary : Colors.white,
-                label: '${post.likesCount}',
+                label: _fmtCount(post.likesCount),
                 onTap: () {
                   if (uid != null) {
                     ref
@@ -175,7 +221,7 @@ class _ReelPage extends ConsumerWidget {
               _action(
                 icon: Icons.mode_comment_outlined,
                 color: Colors.white,
-                label: '${post.commentsCount}',
+                label: _fmtCount(post.commentsCount),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => CommentsScreen(post: post)),
                 ),
@@ -234,6 +280,19 @@ class _ReelPage extends ConsumerWidget {
                 color: Colors.white,
                 onTap: onToggleMute,
               ),
+              if (post.musicTitle != null)
+                PressScale(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          MusicPageScreen(musicTitle: post.musicTitle!),
+                    ),
+                  ),
+                  child: _SpinningDisc(
+                    coverUrl: post.musicCoverUrl,
+                    spinning: active && !muted,
+                  ),
+                ),
             ],
           ),
         ),
@@ -263,30 +322,72 @@ class _ReelPage extends ConsumerWidget {
                         : null,
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    author?.username.isNotEmpty == true
-                        ? author!.username
-                        : (author?.displayName ?? ''),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: AppType.bold,
-                      fontSize: AppType.subhead,
+                  Flexible(
+                    child: Text(
+                      author?.username.isNotEmpty == true
+                          ? '@${author!.username}'
+                          : (author?.displayName ?? ''),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: AppType.bold,
+                        fontSize: AppType.subhead,
+                      ),
                     ),
                   ),
+                  if (author?.isVerified == true) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.verified_rounded,
+                      size: 15,
+                      color: AppColors.accent,
+                    ),
+                  ],
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    _relTime(post.createdAt),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: AppType.label,
+                    ),
+                  ),
+                  if (!isMine && !isFollowing) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    PressScale(
+                      onTap: () {
+                        if (uid != null) {
+                          ref
+                              .read(followRepositoryProvider)
+                              .follow(currentUid: uid, targetUid: post.authorId);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                        ),
+                        child: Text(
+                          tr('Theo dõi', 'Follow'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: AppType.label,
+                            fontWeight: AppType.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               if (post.caption.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.xs),
-                  child: Text(
-                    post.caption,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: AppType.body,
-                    ),
-                  ),
+                  child: _CaptionText(caption: post.caption),
                 ),
               if (post.remixOfPostId != null)
                 Padding(
@@ -352,6 +453,25 @@ class _ReelPage extends ConsumerWidget {
     );
   }
 
+  String _relTime(DateTime t) {
+    final d = DateTime.now().difference(t);
+    if (d.inMinutes < 1) return tr('vừa xong', 'now');
+    if (d.inMinutes < 60) return tr('${d.inMinutes} phút', '${d.inMinutes}m');
+    if (d.inHours < 24) return tr('${d.inHours} giờ', '${d.inHours}h');
+    return tr('${d.inDays} ngày', '${d.inDays}d');
+  }
+
+  /// Formats large counts compactly, e.g. 128400 -> "128.4K", 2_100_000 -> "2.1M".
+  String _fmtCount(int n) {
+    if (n < 1000) return '$n';
+    if (n < 1000000) {
+      final v = (n / 1000).toStringAsFixed(n % 1000 >= 100 ? 1 : 0);
+      return '${v}K';
+    }
+    final v = (n / 1000000).toStringAsFixed(1);
+    return '${v}M';
+  }
+
   Widget _tagPill(IconData icon, String text) => Container(
     padding: const EdgeInsets.symmetric(
       horizontal: AppSpacing.md,
@@ -381,4 +501,100 @@ class _ReelPage extends ConsumerWidget {
       ],
     ),
   );
+}
+
+/// Caption with #hashtags tinted in the accent color.
+class _CaptionText extends StatelessWidget {
+  const _CaptionText({required this.caption});
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final spans = <TextSpan>[];
+    for (final word in caption.split(RegExp(r'(\s+)'))) {
+      if (word.isEmpty) continue;
+      final isTag = word.startsWith('#') || word.startsWith('@');
+      spans.add(
+        TextSpan(
+          text: '$word ',
+          style: TextStyle(
+            color: isTag ? AppColors.accent : Colors.white,
+            fontWeight: isTag ? AppType.bold : AppType.regular,
+          ),
+        ),
+      );
+    }
+    return RichText(
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        style: const TextStyle(fontSize: AppType.body, color: Colors.white),
+        children: spans,
+      ),
+    );
+  }
+}
+
+/// A rotating vinyl-style album disc for the attached track.
+class _SpinningDisc extends StatefulWidget {
+  const _SpinningDisc({required this.coverUrl, required this.spinning});
+  final String? coverUrl;
+  final bool spinning;
+
+  @override
+  State<_SpinningDisc> createState() => _SpinningDiscState();
+}
+
+class _SpinningDiscState extends State<_SpinningDisc>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.spinning) _spin.repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SpinningDisc old) {
+    super.didUpdateWidget(old);
+    if (widget.spinning && !_spin.isAnimating) {
+      _spin.repeat();
+    } else if (!widget.spinning && _spin.isAnimating) {
+      _spin.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _spin,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black,
+          border: Border.all(color: Colors.white24, width: 3),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: (widget.coverUrl ?? '').isNotEmpty
+            ? CachedNetworkImage(imageUrl: widget.coverUrl!, fit: BoxFit.cover)
+            : const Icon(
+                Icons.music_note_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+      ),
+    );
+  }
 }

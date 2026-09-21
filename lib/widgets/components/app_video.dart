@@ -14,6 +14,7 @@ class AppVideo extends StatefulWidget {
     this.fit = BoxFit.cover,
     this.loop = true,
     this.showControls = true,
+    this.showProgress = false,
   });
 
   final String url;
@@ -22,6 +23,9 @@ class AppVideo extends StatefulWidget {
   final BoxFit fit;
   final bool loop;
   final bool showControls;
+
+  /// Draws a thin playback progress line pinned to the bottom edge.
+  final bool showProgress;
 
   @override
   State<AppVideo> createState() => _AppVideoState();
@@ -128,6 +132,26 @@ class _AppVideoState extends State<AppVideo> {
               Icons.play_arrow_rounded,
               color: Colors.white70,
               size: 72,
+            ),
+          if (widget.showProgress)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: ValueListenableBuilder<VideoPlayerValue>(
+                valueListenable: c,
+                builder: (_, value, _) {
+                  final total = value.duration.inMilliseconds;
+                  final pos = value.position.inMilliseconds;
+                  final ratio = total > 0 ? (pos / total).clamp(0.0, 1.0) : 0.0;
+                  return LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: 2.5,
+                    backgroundColor: Colors.white24,
+                    valueColor: const AlwaysStoppedAnimation(Colors.white),
+                  );
+                },
+              ),
             ),
         ],
       ),
