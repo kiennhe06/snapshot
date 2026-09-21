@@ -150,7 +150,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       : null,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                AuthGradientButton(
+                AppGradientButton(
                   label: tr('Đăng ký', 'Sign up'),
                   loading: _loading,
                   onTap: _submit,

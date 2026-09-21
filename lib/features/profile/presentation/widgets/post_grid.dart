@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
+import '../../../../core/utils/format.dart';
 import '../../../../models/post.dart';
 import '../../../../widgets/empty_view.dart';
 
@@ -112,7 +113,7 @@ class PostGrid extends StatelessWidget {
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          _fmtCount(post.likesCount),
+                          formatCount(post.likesCount),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 11,
@@ -132,12 +133,4 @@ class PostGrid extends StatelessWidget {
       },
     );
   }
-}
-
-String _fmtCount(int n) {
-  if (n < 1000) return '$n';
-  if (n < 1000000) {
-    return '${(n / 1000).toStringAsFixed(n % 1000 >= 100 ? 1 : 0)}K';
-  }
-  return '${(n / 1000000).toStringAsFixed(1)}M';
 }

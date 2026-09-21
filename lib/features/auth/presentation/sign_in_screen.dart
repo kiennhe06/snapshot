@@ -264,7 +264,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  AuthGradientButton(
+                  AppGradientButton(
                     label: tr('Đăng nhập', 'Sign in'),
                     loading: _loading,
                     onTap: _signInEmail,

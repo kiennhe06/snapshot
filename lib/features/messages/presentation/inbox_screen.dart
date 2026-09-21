@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import '../../../core/utils/format.dart';
 
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
@@ -141,35 +141,10 @@ class _FilterBar extends StatelessWidget {
           for (final (f, label) in items)
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.sm),
-              child: PressScale(
+              child: AppFilterChip(
+                label: label,
+                selected: selected == f,
                 onTap: () => onSelect(f),
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected == f
-                        ? AppColors.primary
-                        : AppColors.layer1,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: selected == f
-                          ? AppColors.primary
-                          : AppColors.borderSubtle,
-                    ),
-                  ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: selected == f
-                          ? Colors.white
-                          : AppColors.textSecondary,
-                      fontSize: AppType.label,
-                      fontWeight: AppType.bold,
-                    ),
-                  ),
-                ),
               ),
             ),
         ],
@@ -493,7 +468,7 @@ class _ChatRow extends ConsumerWidget {
                       ],
                       const Spacer(),
                       Text(
-                        _relTime(chat.lastAt),
+                        relativeTime(chat.lastAt, short: true),
                         style: TextStyle(
                           color: hasUnread
                               ? AppColors.primary
@@ -624,13 +599,4 @@ class _KindBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-String _relTime(DateTime t) {
-  final d = DateTime.now().difference(t);
-  if (d.inMinutes < 1) return tr('vừa xong', 'now');
-  if (d.inMinutes < 60) return tr('${d.inMinutes} phút', '${d.inMinutes}m');
-  if (d.inHours < 24) return tr('${d.inHours} giờ', '${d.inHours}h');
-  if (d.inDays < 7) return tr('${d.inDays} ngày', '${d.inDays}d');
-  return DateFormat('dd/MM').format(t);
 }

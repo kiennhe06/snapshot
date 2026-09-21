@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../../core/utils/format.dart';
 import '../../../models/chat.dart';
 import '../../../models/post.dart';
 import '../../../widgets/components/components.dart';
@@ -206,7 +207,7 @@ class _ReelPage extends ConsumerWidget {
               _action(
                 icon: Icons.mode_comment_outlined,
                 color: Colors.white,
-                label: _fmtCount(post.commentsCount),
+                label: formatCount(post.commentsCount),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => CommentsScreen(post: post)),
                 ),
@@ -331,7 +332,7 @@ class _ReelPage extends ConsumerWidget {
                   ],
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    _relTime(post.createdAt),
+                    relativeTime(post.createdAt, short: true),
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: AppType.label,
@@ -438,25 +439,6 @@ class _ReelPage extends ConsumerWidget {
     );
   }
 
-  String _relTime(DateTime t) {
-    final d = DateTime.now().difference(t);
-    if (d.inMinutes < 1) return tr('vừa xong', 'now');
-    if (d.inMinutes < 60) return tr('${d.inMinutes} phút', '${d.inMinutes}m');
-    if (d.inHours < 24) return tr('${d.inHours} giờ', '${d.inHours}h');
-    return tr('${d.inDays} ngày', '${d.inDays}d');
-  }
-
-  /// Formats large counts compactly, e.g. 128400 -> "128.4K", 2_100_000 -> "2.1M".
-  String _fmtCount(int n) {
-    if (n < 1000) return '$n';
-    if (n < 1000000) {
-      final v = (n / 1000).toStringAsFixed(n % 1000 >= 100 ? 1 : 0);
-      return '${v}K';
-    }
-    final v = (n / 1000000).toStringAsFixed(1);
-    return '${v}M';
-  }
-
   Widget _tagPill(IconData icon, String text) => Container(
     padding: const EdgeInsets.symmetric(
       horizontal: AppSpacing.md,
@@ -501,14 +483,6 @@ class _ReelLikeButton extends ConsumerStatefulWidget {
 class _ReelLikeButtonState extends ConsumerState<_ReelLikeButton> {
   bool? _optimistic;
 
-  String _fmt(int n) {
-    if (n < 1000) return '$n';
-    if (n < 1000000) {
-      return '${(n / 1000).toStringAsFixed(n % 1000 >= 100 ? 1 : 0)}K';
-    }
-    return '${(n / 1000000).toStringAsFixed(1)}M';
-  }
-
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
@@ -541,7 +515,7 @@ class _ReelLikeButtonState extends ConsumerState<_ReelLikeButton> {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
-                _fmt(count < 0 ? 0 : count),
+                formatCount(count < 0 ? 0 : count),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: AppType.small,

@@ -3,7 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:share_plus/share_plus.dart';
@@ -11,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/constants.dart';
 import '../../../../core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
+import 'package:snapshot/core/utils/format.dart';
 import '../../../../models/post.dart';
 import '../../../../widgets/components/components.dart';
 import '../../../auth/providers/auth_providers.dart';
@@ -349,7 +349,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.xs),
                   child: Text(
-                    _relTime(post.createdAt),
+                    relativeTime(post.createdAt),
                     style: TextStyle(
                       color: AppColors.textTertiary,
                       fontSize: AppType.small,
@@ -392,15 +392,6 @@ class _PostCardState extends ConsumerState<PostCard> {
       spans.add(const TextSpan(text: ' '));
     }
     return spans;
-  }
-
-  String _relTime(DateTime t) {
-    final d = DateTime.now().difference(t);
-    if (d.inMinutes < 1) return tr('vừa xong', 'just now');
-    if (d.inMinutes < 60) return tr('${d.inMinutes} phút trước', '${d.inMinutes}m ago');
-    if (d.inHours < 24) return tr('${d.inHours} giờ trước', '${d.inHours}h ago');
-    if (d.inDays < 7) return tr('${d.inDays} ngày trước', '${d.inDays}d ago');
-    return DateFormat('dd/MM/yyyy').format(t);
   }
 
   void _postMenu(BuildContext context, Post post) {
@@ -515,13 +506,6 @@ class _PostCardState extends ConsumerState<PostCard> {
   }
 }
 
-/// An icon with an inline count (like / comment / share), à la VibeFeed.
-String _fmtLikes(int n) {
-  if (n < 1000) return '$n';
-  final k = (n / 1000).toStringAsFixed(1).replaceAll('.', ',');
-  return '${k.endsWith(',0') ? k.substring(0, k.length - 2) : k}K';
-}
-
 /// Like button with optimistic UI: the heart and count flip instantly on tap,
 /// then reconcile with the Firestore stream when it catches up (no perceived
 /// network delay).
@@ -556,7 +540,7 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
     return _CountAction(
       icon: liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
       color: liked ? AppColors.primary : AppColors.textPrimary,
-      label: post.likesHidden ? null : _fmtLikes(count < 0 ? 0 : count),
+      label: post.likesHidden ? null : formatCount(count < 0 ? 0 : count),
       onTap: () {
         final uid = widget.uid;
         if (uid == null) return;

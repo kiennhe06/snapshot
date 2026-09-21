@@ -270,32 +270,34 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
                 ),
               ),
             ),
-          // Source buttons: pick (outlined) + record (gradient).
+          // Source buttons: pick (secondary) + record (primary).
           Row(
             children: [
               Expanded(
-                child: _SourceButton(
-                  icon: Icons.movie_outlined,
+                child: AppButton(
                   label: tr('Chọn video', 'Pick video'),
-                  filled: false,
-                  onTap: () => _pick(ImageSource.gallery),
+                  variant: AppButtonVariant.secondary,
+                  icon: Icons.movie_outlined,
+                  onPressed: () => _pick(ImageSource.gallery),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: _SourceButton(
-                  icon: Icons.videocam_rounded,
+                child: AppButton(
                   label: tr('Quay video', 'Record'),
-                  filled: true,
-                  onTap: () => _pick(ImageSource.camera),
+                  icon: Icons.videocam_rounded,
+                  onPressed: () => _pick(ImageSource.camera),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          _PreviewCard(hasVideo: _video != null, onTap: () => _pick(ImageSource.gallery)),
+          _PreviewCard(
+            hasVideo: _video != null,
+            onTap: () => _pick(ImageSource.gallery),
+          ),
           const SizedBox(height: AppSpacing.xl),
-          _SectionLabel(tr('Chú thích & Hashtag', 'Caption & Hashtag')),
+          AppSectionLabel(tr('Chú thích & Hashtag', 'Caption & Hashtag')),
           const SizedBox(height: AppSpacing.sm),
           _CaptionCard(
             controller: _caption,
@@ -306,19 +308,16 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
             onEmoji: _emojiSheet,
           ),
           const SizedBox(height: AppSpacing.xl),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _SectionLabel(tr('Âm thanh / Bài hát', 'Sound / Music')),
-              Text(
-                tr('Thịnh hành', 'Trending'),
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: AppType.label,
-                  fontWeight: AppType.bold,
-                ),
+          AppSectionLabel(
+            tr('Âm thanh / Bài hát', 'Sound / Music'),
+            trailing: Text(
+              tr('Thịnh hành', 'Trending'),
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: AppType.label,
+                fontWeight: AppType.bold,
               ),
-            ],
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           _MusicSelector(
@@ -327,82 +326,12 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
             onRemove: () => setState(() => _track = null),
           ),
           const SizedBox(height: AppSpacing.xxl),
-          _GradientButton(
+          AppGradientButton(
             label: tr('Chia sẻ thước phim', 'Share reel'),
             loading: _loading,
             onTap: _post,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-  @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: TextStyle(
-      color: AppColors.textPrimary,
-      fontSize: AppType.subhead,
-      fontWeight: AppType.bold,
-    ),
-  );
-}
-
-/// Large pill source button; [filled] paints the brand gradient (Record).
-class _SourceButton extends StatelessWidget {
-  const _SourceButton({
-    required this.icon,
-    required this.label,
-    required this.filled,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final bool filled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return PressScale(
-      onTap: onTap,
-      child: Container(
-        height: 58,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: filled
-              ? LinearGradient(
-                  colors: [AppColors.primaryBright, AppColors.primary],
-                )
-              : null,
-          color: filled ? null : AppColors.layer1,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: filled ? Colors.transparent : AppColors.primary,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: filled ? Colors.white : AppColors.primary,
-              size: 22,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              label,
-              style: TextStyle(
-                color: filled ? Colors.white : AppColors.textPrimary,
-                fontSize: AppType.subhead,
-                fontWeight: AppType.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -417,17 +346,11 @@ class _PreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressScale(
+    return AppCard(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.layer1,
-          borderRadius: AppRadius.brLg,
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: [
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        children: [
             Row(
               children: [
                 Icon(
@@ -508,7 +431,6 @@ class _PreviewCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -533,13 +455,8 @@ class _CaptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.layer1,
-        borderRadius: AppRadius.brLg,
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -660,17 +577,11 @@ class _MusicSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = track;
-    return PressScale(
+    return AppCard(
       onTap: onPick,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.layer1,
-          borderRadius: AppRadius.brLg,
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Row(
-          children: [
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
             Container(
               width: 44,
               height: 44,
@@ -732,61 +643,7 @@ class _MusicSelector extends StatelessWidget {
               ),
           ],
         ),
-      ),
     );
   }
 }
 
-/// Full-width brand-gradient share button.
-class _GradientButton extends StatelessWidget {
-  const _GradientButton({
-    required this.label,
-    required this.loading,
-    required this.onTap,
-  });
-  final String label;
-  final bool loading;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return PressScale(
-      onTap: loading ? null : onTap,
-      child: Container(
-        height: 56,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.primaryBright, AppColors.primary, AppColors.accent],
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          boxShadow: AppShadows.soft,
-        ),
-        child: loading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Colors.white,
-                ),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: AppType.headline,
-                      fontWeight: AppType.heavy,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const Icon(Icons.arrow_forward_rounded, color: Colors.white),
-                ],
-              ),
-      ),
-    );
-  }
-}

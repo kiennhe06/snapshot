@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
+import 'package:snapshot/core/utils/format.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/constants.dart';
 import '../../../models/app_user.dart';
@@ -15,11 +16,6 @@ import '../../profile/providers/profile_providers.dart';
 import '../providers/search_providers.dart';
 import 'search_screen.dart';
 
-String _fmtCount(int n) {
-  if (n < 1000) return '$n';
-  final k = (n / 1000).toStringAsFixed(1).replaceAll('.', ',');
-  return '${k.endsWith(',0') ? k.substring(0, k.length - 2) : k}K';
-}
 
 /// Explore: search, filter chips, trending topics, people suggestions and a
 /// masonry of discovery content.
@@ -526,7 +522,7 @@ class _ExploreTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 3),
                       Text(
-                        _fmtCount(post.likesCount),
+                        formatCount(post.likesCount),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: AppType.small,
@@ -541,7 +537,7 @@ class _ExploreTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 3),
                       Text(
-                        _fmtCount(post.commentsCount),
+                        formatCount(post.commentsCount),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: AppType.small,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
+import 'package:snapshot/core/utils/format.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../../models/app_user.dart';
 
@@ -156,7 +157,7 @@ class _Stat extends StatelessWidget {
     return Column(
       children: [
         Text(
-          '$count',
+          formatCount(count),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: AppType.title,
