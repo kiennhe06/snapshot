@@ -12,6 +12,7 @@ import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
 import 'auth_flow.dart';
+import 'widgets/auth_ui.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -175,36 +176,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.lg),
-                  const _AuthLogo(),
+                  const AuthLogo(),
                   const SizedBox(height: AppSpacing.lg),
-                  Text(
-                    tr('Chào mừng trở lại', 'Welcome back'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppType.display,
-                      fontWeight: AppType.heavy,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    tr(
+                  AuthHeadline(
+                    title: tr('Chào mừng trở lại', 'Welcome back'),
+                    subtitle: tr(
                       'Đăng nhập để tiếp tục sáng tạo và kết nối\ncùng cộng đồng nghệ sĩ',
                       'Sign in to keep creating and connecting\nwith the artist community',
                     ),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: AppType.subhead,
-                      height: 1.4,
-                    ),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  _FieldLabel(tr('Email', 'Email')),
-                  const SizedBox(height: 6),
                   AppTextField(
                     controller: _email,
-                    label: tr('Email', 'Email'),
+                    label: tr('Email hoặc Tên người dùng', 'Email or username'),
                     keyboardType: TextInputType.emailAddress,
                     icon: Icons.alternate_email_rounded,
                     textInputAction: TextInputAction.next,
@@ -215,11 +199,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         : null,
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _FieldLabel(tr('Mật khẩu bảo mật', 'Password')),
-                  const SizedBox(height: 6),
                   AppTextField(
                     controller: _password,
-                    label: tr('Mật khẩu', 'Password'),
+                    label: tr('Mật khẩu bảo mật', 'Password'),
+                    hint: '••••••••',
                     obscureText: _obscure,
                     icon: Icons.lock_outline_rounded,
                     textInputAction: TextInputAction.done,
@@ -281,15 +264,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _GradientAuthButton(
+                  AuthGradientButton(
                     label: tr('Đăng nhập', 'Sign in'),
                     loading: _loading,
                     onTap: _signInEmail,
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  _OrDivider(tr('HOẶC ĐĂNG NHẬP VỚI', 'OR SIGN IN WITH')),
+                  AuthOrDivider(tr('HOẶC ĐĂNG NHẬP VỚI', 'OR SIGN IN WITH')),
                   const SizedBox(height: AppSpacing.lg),
-                  _SocialButton(
+                  AuthSocialButton(
                     label: tr('Tiếp tục với Google', 'Continue with Google'),
                     leading: const Text(
                       'G',
@@ -306,7 +289,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     onTap: _loading ? null : _signInGoogle,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  _SocialButton(
+                  AuthSocialButton(
                     label: tr('Đăng nhập bằng SMS OTP', 'Sign in with SMS OTP'),
                     leading: Icon(
                       Icons.sms_outlined,
@@ -370,195 +353,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.text);
-  final String text;
-  @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
-    child: Text(
-      text,
-      style: TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: AppType.label,
-        fontWeight: AppType.bold,
-      ),
-    ),
-  );
-}
-
-/// Glowing brand logo used at the top of the auth screens.
-class _AuthLogo extends StatelessWidget {
-  const _AuthLogo();
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 88,
-        height: 88,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.accent, AppColors.primary],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.5),
-              blurRadius: 32,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.camera_alt_rounded,
-          color: Colors.white,
-          size: 40,
-        ),
-      ),
-    );
-  }
-}
-
-/// "OR SIGN IN WITH" divider with hairlines on each side.
-class _OrDivider extends StatelessWidget {
-  const _OrDivider(this.text);
-  final String text;
-  @override
-  Widget build(BuildContext context) {
-    final line = Expanded(
-      child: Divider(color: AppColors.borderSubtle, thickness: 1),
-    );
-    return Row(
-      children: [
-        line,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(
-            text,
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: AppType.caption,
-              fontWeight: AppType.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        line,
-      ],
-    );
-  }
-}
-
-/// Full-width dark social sign-in row.
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.leading,
-    this.trailing,
-    required this.onTap,
-  });
-  final String label;
-  final Widget leading;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return PressScale(
-      onTap: onTap,
-      child: Container(
-        height: 54,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.layer1,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Row(
-          children: [
-            SizedBox(width: 24, child: Center(child: leading)),
-            Expanded(
-              child: Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.subhead,
-                    fontWeight: AppType.bold,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 24, child: Center(child: trailing)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Brand-gradient primary auth button.
-class _GradientAuthButton extends StatelessWidget {
-  const _GradientAuthButton({
-    required this.label,
-    required this.loading,
-    required this.onTap,
-  });
-  final String label;
-  final bool loading;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return PressScale(
-      onTap: loading ? null : onTap,
-      child: Container(
-        height: 56,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.accent, AppColors.primary, AppColors.primaryBright],
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: loading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Colors.white,
-                ),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: AppType.headline,
-                      fontWeight: AppType.heavy,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const Icon(Icons.arrow_forward_rounded, color: Colors.white),
-                ],
-              ),
       ),
     );
   }

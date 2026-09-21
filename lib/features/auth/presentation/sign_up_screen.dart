@@ -1,14 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:snapshot/app/theme.dart';
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/auth_error.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../providers/auth_providers.dart';
 import 'auth_flow.dart';
+import 'widgets/auth_ui.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -69,79 +70,117 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      topBar: AppTopBar(
-        title: tr('Tạo tài khoản', 'Create account'),
-        showBack: true,
-      ),
+      topBar: AppTopBar(showBack: true),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.md,
+        ),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Snapshot',
-                textAlign: TextAlign.center,
-                style: brandWordmark(context, size: 40),
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              AppTextField(
-                controller: _name,
-                label: tr('Tên hiển thị', 'Display name'),
-                icon: Icons.person_outline,
-                textInputAction: TextInputAction.next,
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? tr('Vui lòng nhập tên', 'Please enter your name')
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppTextField(
-                controller: _email,
-                label: 'Email',
-                keyboardType: TextInputType.emailAddress,
-                icon: Icons.email_outlined,
-                textInputAction: TextInputAction.next,
-                validator: (v) => (v == null || !v.contains('@'))
-                    ? tr('Email không hợp lệ', 'Invalid email')
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppTextField(
-                controller: _password,
-                label: tr('Mật khẩu', 'Password'),
-                obscureText: _obscure,
-                icon: Icons.lock_outline,
-                textInputAction: TextInputAction.next,
-                suffix: AppIconButton(
-                  icon: _obscure ? Icons.visibility_off : Icons.visibility,
-                  onTap: () => setState(() => _obscure = !_obscure),
+          child: AutofillGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppSpacing.sm),
+                const AuthLogo(),
+                const SizedBox(height: AppSpacing.lg),
+                AuthHeadline(
+                  title: tr('Tạo tài khoản mới', 'Create your account'),
+                  subtitle: tr(
+                    'Tham gia cộng đồng nghệ sĩ và\nbắt đầu chia sẻ sáng tạo của bạn',
+                    'Join the artist community and\nstart sharing your creations',
+                  ),
                 ),
-                validator: (v) => (v == null || v.length < 6)
-                    ? tr(
-                        'Mật khẩu tối thiểu 6 ký tự',
-                        'Password must be at least 6 characters',
-                      )
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppTextField(
-                controller: _confirm,
-                label: tr('Nhập lại mật khẩu', 'Confirm password'),
-                obscureText: _obscure,
-                icon: Icons.lock_outline,
-                textInputAction: TextInputAction.done,
-                validator: (v) => v != _password.text
-                    ? tr('Mật khẩu không khớp', 'Passwords do not match')
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              AppButton(
-                label: tr('Đăng ký', 'Sign up'),
-                isLoading: _loading,
-                onPressed: _submit,
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xxl),
+                AppTextField(
+                  controller: _name,
+                  label: tr('Tên hiển thị', 'Display name'),
+                  icon: Icons.person_outline,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.name],
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? tr('Vui lòng nhập tên', 'Please enter your name')
+                      : null,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                AppTextField(
+                  controller: _email,
+                  label: 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                  icon: Icons.alternate_email_rounded,
+                  textInputAction: TextInputAction.next,
+                  hint: 'you@example.com',
+                  autofillHints: const [AutofillHints.email],
+                  validator: (v) => (v == null || !v.contains('@'))
+                      ? tr('Email không hợp lệ', 'Invalid email')
+                      : null,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                AppTextField(
+                  controller: _password,
+                  label: tr('Mật khẩu bảo mật', 'Password'),
+                  hint: '••••••••',
+                  obscureText: _obscure,
+                  icon: Icons.lock_outline_rounded,
+                  textInputAction: TextInputAction.next,
+                  suffix: AppIconButton(
+                    icon: _obscure
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    onTap: () => setState(() => _obscure = !_obscure),
+                  ),
+                  validator: (v) => (v == null || v.length < 6)
+                      ? tr(
+                          'Mật khẩu tối thiểu 6 ký tự',
+                          'Password must be at least 6 characters',
+                        )
+                      : null,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                AppTextField(
+                  controller: _confirm,
+                  label: tr('Nhập lại mật khẩu', 'Confirm password'),
+                  hint: '••••••••',
+                  obscureText: _obscure,
+                  icon: Icons.lock_outline_rounded,
+                  textInputAction: TextInputAction.done,
+                  validator: (v) => v != _password.text
+                      ? tr('Mật khẩu không khớp', 'Passwords do not match')
+                      : null,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                AuthGradientButton(
+                  label: tr('Đăng ký', 'Sign up'),
+                  loading: _loading,
+                  onTap: _submit,
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      tr('Đã có tài khoản? ', 'Already have an account? '),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: AppType.subhead,
+                      ),
+                    ),
+                    PressScale(
+                      onTap: () => context.pop(),
+                      child: Text(
+                        tr('Đăng nhập', 'Sign in'),
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: AppType.subhead,
+                          fontWeight: AppType.heavy,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
