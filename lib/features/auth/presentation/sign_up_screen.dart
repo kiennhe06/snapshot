@@ -55,8 +55,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         await handlePostSignIn(ref, user: fresh, signInMethod: 'password');
       }
     } on FirebaseAuthException catch (e) {
-      // Keychain persistence error is non-fatal; the account is created.
-      if (!isKeychainError(e)) _snack(authErrorMessage(e));
+      _snack(isKeychainError(e)
+          ? tr(
+              'Không lưu được phiên trên thiết bị này (lỗi keychain). Cần thêm Team trong Xcode.',
+              'Could not save the session (keychain). Add a signing Team in Xcode.',
+            )
+          : authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

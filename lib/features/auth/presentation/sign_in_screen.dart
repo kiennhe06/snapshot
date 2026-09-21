@@ -111,9 +111,22 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       // 2FA required: route to the challenge screen with the resolver.
       if (mounted) context.push(Routes.mfaChallenge, extra: e.resolver);
     } on FirebaseAuthException catch (e) {
-      // The keychain error is non-fatal (auth still lands in memory); the
-      // auth-state stream will navigate. Don't scare the user with it.
-      if (!isKeychainError(e)) _snack(authErrorMessage(e));
+      if (isKeychainError(e)) {
+        // Firebase failed to persist the session to the keychain. If auth still
+        // landed in memory, proceed; otherwise tell the user what to do.
+        final u = ref.read(authServiceProvider).currentUser;
+        if (u != null) {
+          await _persistCredentials();
+          await handlePostSignIn(ref, user: u, signInMethod: 'password');
+        } else {
+          _snack(tr(
+            'Không lưu được phiên trên thiết bị này (lỗi keychain). Cần thêm Team trong Xcode để đăng nhập.',
+            'Could not save the session (keychain). Add a signing Team in Xcode to sign in.',
+          ));
+        }
+      } else {
+        _snack(authErrorMessage(e));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -131,13 +144,20 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     } on FirebaseAuthMultiFactorException catch (e) {
       if (mounted) context.push(Routes.mfaChallenge, extra: e.resolver);
     } on FirebaseAuthException catch (e) {
-      if (!isKeychainError(e)) _snack(authErrorMessage(e));
+      _snack(_authMsg(e));
     } catch (e) {
-      if (!isKeychainError(e)) _snack(authErrorMessage(e));
+      _snack(_authMsg(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
+
+  String _authMsg(Object e) => isKeychainError(e)
+      ? tr(
+          'Không lưu được phiên trên thiết bị này (lỗi keychain). Cần thêm Team trong Xcode.',
+          'Could not save the session (keychain). Add a signing Team in Xcode.',
+        )
+      : authErrorMessage(e);
 
   @override
   Widget build(BuildContext context) {
