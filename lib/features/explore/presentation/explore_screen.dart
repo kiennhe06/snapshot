@@ -481,6 +481,7 @@ class _ExploreTile extends StatelessWidget {
             children: [
               CachedNetworkImage(
                 imageUrl: post.coverUrl,
+                memCacheWidth: 500,
                 fit: BoxFit.cover,
                 placeholder: (_, _) => Container(color: AppColors.layer3),
                 errorWidget: (_, _, _) => Container(color: AppColors.layer3),

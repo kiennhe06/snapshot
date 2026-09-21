@@ -96,11 +96,16 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = imageProvider;
+    // Decode avatars small (they never render large) to keep lists smooth.
+    final sized = provider == null
+        ? null
+        : ResizeImage(provider, width: (radius * 3).round().clamp(48, 240));
     return CircleAvatar(
       radius: radius,
       backgroundColor: AppColors.layer3,
-      backgroundImage: imageProvider,
-      child: imageProvider == null
+      backgroundImage: sized,
+      child: provider == null
           ? Icon(icon, size: radius, color: AppColors.textSecondary)
           : null,
     );

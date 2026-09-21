@@ -81,7 +81,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                       radius: 19,
                       backgroundColor: AppColors.layer3,
                       backgroundImage: author?.photoUrl != null
-                          ? CachedNetworkImageProvider(author!.photoUrl!)
+                          ? ResizeImage(
+                              CachedNetworkImageProvider(author!.photoUrl!),
+                              width: 120,
+                            )
                           : null,
                       child: author?.photoUrl == null
                           ? Icon(
@@ -189,6 +192,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                           image: true,
                           child: CachedNetworkImage(
                             imageUrl: m.url,
+                            memCacheWidth: 1000,
                             fit: BoxFit.cover,
                             width: double.infinity,
                             placeholder: (_, _) =>
@@ -607,7 +611,10 @@ class _QuickComment extends ConsumerWidget {
             radius: 13,
             backgroundColor: AppColors.layer3,
             backgroundImage: me?.photoUrl != null
-                ? CachedNetworkImageProvider(me!.photoUrl!)
+                ? ResizeImage(
+                    CachedNetworkImageProvider(me!.photoUrl!),
+                    width: 90,
+                  )
                 : null,
             child: me?.photoUrl == null
                 ? Icon(Icons.person, size: AppIconSize.sm, color: AppColors.textSecondary)

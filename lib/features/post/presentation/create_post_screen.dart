@@ -930,7 +930,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           color: AppColors.textSecondary,
                         ),
                       )
-                    : Image.file(cur.file, fit: BoxFit.cover),
+                    : Image.file(cur.file, fit: BoxFit.cover, cacheWidth: 1000),
                 Positioned(
                   top: AppSpacing.sm,
                   left: AppSpacing.sm,
@@ -1093,6 +1093,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                         width: 56,
                         height: 56,
                         fit: BoxFit.cover,
+                        cacheWidth: 150,
                       ),
               ),
             ),

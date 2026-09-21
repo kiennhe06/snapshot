@@ -129,6 +129,7 @@ class MusicPageScreen extends ConsumerWidget {
           children: [
             CachedNetworkImage(
               imageUrl: p.coverUrl,
+              memCacheWidth: 400,
               fit: BoxFit.cover,
               placeholder: (_, _) => Container(color: AppColors.layer3),
               errorWidget: (_, _, _) => Container(color: AppColors.layer3),

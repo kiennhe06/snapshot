@@ -127,6 +127,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             borderRadius: BorderRadius.circular(AppRadius.md),
             child: CachedNetworkImage(
               imageUrl: p.coverUrl,
+              memCacheWidth: 400,
               fit: BoxFit.cover,
               placeholder: (_, _) => Container(color: AppColors.layer3),
               errorWidget: (_, _, _) => Container(
