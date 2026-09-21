@@ -39,8 +39,6 @@ class _PostCardState extends ConsumerState<PostCard> {
   Widget build(BuildContext context) {
     final post = widget.post;
     final author = ref.watch(userProfileProvider(post.authorId)).valueOrNull;
-    final isLiked =
-        ref.watch(isLikedProvider(post.postId)).valueOrNull ?? false;
     final isSaved =
         ref.watch(isSavedProvider(post.postId)).valueOrNull ?? false;
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
@@ -244,20 +242,7 @@ class _PostCardState extends ConsumerState<PostCard> {
             ),
             child: Row(
               children: [
-                _CountAction(
-                  icon: isLiked
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  color: isLiked ? AppColors.primary : AppColors.textPrimary,
-                  label: post.likesHidden ? null : _fmtCount(post.likesCount),
-                  onTap: () {
-                    if (uid != null) {
-                      ref
-                          .read(feedRepositoryProvider)
-                          .toggleLike(post.postId, uid);
-                    }
-                  },
-                ),
+                _LikeButton(post: post, uid: uid),
                 const SizedBox(width: AppSpacing.lg),
                 _CountAction(
                   icon: Icons.mode_comment_outlined,
@@ -409,13 +394,6 @@ class _PostCardState extends ConsumerState<PostCard> {
     return spans;
   }
 
-  /// 2400 → "2,4K", 5000 → "5K", 890 → "890".
-  String _fmtCount(int n) {
-    if (n < 1000) return '$n';
-    final k = (n / 1000).toStringAsFixed(1).replaceAll('.', ',');
-    return '${k.endsWith(',0') ? k.substring(0, k.length - 2) : k}K';
-  }
-
   String _relTime(DateTime t) {
     final d = DateTime.now().difference(t);
     if (d.inMinutes < 1) return tr('vừa xong', 'just now');
@@ -538,6 +516,57 @@ class _PostCardState extends ConsumerState<PostCard> {
 }
 
 /// An icon with an inline count (like / comment / share), à la VibeFeed.
+String _fmtLikes(int n) {
+  if (n < 1000) return '$n';
+  final k = (n / 1000).toStringAsFixed(1).replaceAll('.', ',');
+  return '${k.endsWith(',0') ? k.substring(0, k.length - 2) : k}K';
+}
+
+/// Like button with optimistic UI: the heart and count flip instantly on tap,
+/// then reconcile with the Firestore stream when it catches up (no perceived
+/// network delay).
+class _LikeButton extends ConsumerStatefulWidget {
+  const _LikeButton({required this.post, required this.uid});
+  final Post post;
+  final String? uid;
+
+  @override
+  ConsumerState<_LikeButton> createState() => _LikeButtonState();
+}
+
+class _LikeButtonState extends ConsumerState<_LikeButton> {
+  bool? _optimistic; // null = follow the server value
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
+    final serverLiked =
+        ref.watch(isLikedProvider(post.postId)).valueOrNull ?? false;
+
+    // Drop the override once the server agrees with our optimistic choice.
+    if (_optimistic != null && _optimistic == serverLiked) {
+      _optimistic = null;
+    }
+    final liked = _optimistic ?? serverLiked;
+    final count = post.likesCount +
+        (_optimistic != null && _optimistic != serverLiked
+            ? (_optimistic! ? 1 : -1)
+            : 0);
+
+    return _CountAction(
+      icon: liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+      color: liked ? AppColors.primary : AppColors.textPrimary,
+      label: post.likesHidden ? null : _fmtLikes(count < 0 ? 0 : count),
+      onTap: () {
+        final uid = widget.uid;
+        if (uid == null) return;
+        setState(() => _optimistic = !liked);
+        ref.read(feedRepositoryProvider).toggleLike(post.postId, uid);
+      },
+    );
+  }
+}
+
 class _CountAction extends StatelessWidget {
   const _CountAction({
     required this.icon,

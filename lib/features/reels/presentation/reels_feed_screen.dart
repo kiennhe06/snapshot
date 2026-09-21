@@ -175,8 +175,6 @@ class _ReelPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final author = ref.watch(userProfileProvider(post.authorId)).valueOrNull;
-    final isLiked =
-        ref.watch(isLikedProvider(post.postId)).valueOrNull ?? false;
     final isSaved =
         ref.watch(isSavedProvider(post.postId)).valueOrNull ?? false;
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
@@ -204,20 +202,7 @@ class _ReelPage extends ConsumerWidget {
           bottom: 96,
           child: Column(
             children: [
-              _action(
-                icon: isLiked
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                color: isLiked ? AppColors.primary : Colors.white,
-                label: _fmtCount(post.likesCount),
-                onTap: () {
-                  if (uid != null) {
-                    ref
-                        .read(feedRepositoryProvider)
-                        .toggleLike(post.postId, uid);
-                  }
-                },
-              ),
+              _ReelLikeButton(post: post, uid: uid),
               _action(
                 icon: Icons.mode_comment_outlined,
                 color: Colors.white,
@@ -501,6 +486,74 @@ class _ReelPage extends ConsumerWidget {
       ],
     ),
   );
+}
+
+/// Reels like button with optimistic UI (heart + count flip instantly on tap).
+class _ReelLikeButton extends ConsumerStatefulWidget {
+  const _ReelLikeButton({required this.post, required this.uid});
+  final Post post;
+  final String? uid;
+
+  @override
+  ConsumerState<_ReelLikeButton> createState() => _ReelLikeButtonState();
+}
+
+class _ReelLikeButtonState extends ConsumerState<_ReelLikeButton> {
+  bool? _optimistic;
+
+  String _fmt(int n) {
+    if (n < 1000) return '$n';
+    if (n < 1000000) {
+      return '${(n / 1000).toStringAsFixed(n % 1000 >= 100 ? 1 : 0)}K';
+    }
+    return '${(n / 1000000).toStringAsFixed(1)}M';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
+    final serverLiked =
+        ref.watch(isLikedProvider(post.postId)).valueOrNull ?? false;
+    if (_optimistic != null && _optimistic == serverLiked) _optimistic = null;
+    final liked = _optimistic ?? serverLiked;
+    final count = post.likesCount +
+        (_optimistic != null && _optimistic != serverLiked
+            ? (_optimistic! ? 1 : -1)
+            : 0);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: PressScale(
+        onTap: () {
+          final uid = widget.uid;
+          if (uid == null) return;
+          setState(() => _optimistic = !liked);
+          ref.read(feedRepositoryProvider).toggleLike(post.postId, uid);
+        },
+        child: Column(
+          children: [
+            Icon(
+              liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              color: liked ? AppColors.primary : Colors.white,
+              size: 30,
+              shadows: const [Shadow(color: Colors.black45, blurRadius: 8)],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                _fmt(count < 0 ? 0 : count),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: AppType.small,
+                  fontWeight: AppType.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Caption with #hashtags tinted in the accent color.
