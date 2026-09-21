@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,12 +20,34 @@ class SignInScreen extends ConsumerStatefulWidget {
   ConsumerState<SignInScreen> createState() => _SignInScreenState();
 }
 
+/// Dev-only credentials, supplied at build time via
+/// `--dart-define=DEV_EMAIL=... --dart-define=DEV_PASSWORD=...`.
+/// Empty by default so nothing sensitive is ever committed (public repo).
+const String _devEmail = String.fromEnvironment('DEV_EMAIL');
+const String _devPassword = String.fromEnvironment('DEV_PASSWORD');
+
 class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _loading = false;
   bool _obscure = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // In debug builds, prefill (and auto sign-in) with the dev account so the
+    // simulator doesn't ask for credentials after every reinstall/reset.
+    if (kDebugMode && _devEmail.isNotEmpty) {
+      _email.text = _devEmail;
+      _password.text = _devPassword;
+      if (_devPassword.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _signInEmail();
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
