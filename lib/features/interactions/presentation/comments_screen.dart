@@ -42,6 +42,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   Comment? _replyingTo;
   bool _sending = false;
   bool _hasText = false;
+  bool _sortByLikes = false; // false = newest, true = most liked
 
   String get _postId => widget.post.postId;
   bool get _iAmPostAuthor {
@@ -91,6 +92,19 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
     _focus.requestFocus();
   }
 
+  void _insertEmoji(String e) {
+    final sel = _input.selection;
+    final text = _input.text;
+    final start = sel.start < 0 ? text.length : sel.start;
+    final end = sel.end < 0 ? text.length : sel.end;
+    final newText = text.substring(0, start) + e + text.substring(end);
+    _input.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: start + e.length),
+    );
+    _focus.requestFocus();
+  }
+
   bool _hidden(Comment c, List<String> words) {
     final lower = c.text.toLowerCase();
     return words.any(
@@ -108,6 +122,10 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
       body: Column(
         children: [
           _ContextHeader(post: widget.post, commentsAsync: commentsAsync),
+          _SortBar(
+            byLikes: _sortByLikes,
+            onChanged: (v) => setState(() => _sortByLikes = v),
+          ),
           Expanded(
             child: AsyncValueView<List<Comment>>(
               value: commentsAsync,
@@ -117,6 +135,9 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                 final roots = visible.where((c) => !c.isReply).toList()
                   ..sort((a, b) {
                     if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
+                    if (_sortByLikes && a.likesCount != b.likesCount) {
+                      return b.likesCount.compareTo(a.likesCount);
+                    }
                     return b.createdAt.compareTo(a.createdAt);
                   });
                 final repliesByParent = <String, List<Comment>>{};
@@ -150,6 +171,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                     return _Thread(
                       root: root,
                       replies: replies,
+                      postAuthorId: widget.post.authorId,
                       showReplies: showReplies,
                       onToggleReplies: () => setState(() {
                         showReplies
@@ -171,6 +193,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
             sending: _sending,
             replyingTo: _replyingTo,
             onSend: _send,
+            onEmoji: _insertEmoji,
             onCancelReply: () => setState(() => _replyingTo = null),
           ),
         ],
@@ -233,14 +256,15 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
 
 /// Slim context strip: the post thumbnail + caption + a live comment count, so
 /// the screen opens with content instead of an empty header.
-class _ContextHeader extends StatelessWidget {
+class _ContextHeader extends ConsumerWidget {
   const _ContextHeader({required this.post, required this.commentsAsync});
   final Post post;
   final AsyncValue<List<Comment>> commentsAsync;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final count = commentsAsync.valueOrNull?.length ?? post.commentsCount;
+    final author = ref.watch(userProfileProvider(post.authorId)).valueOrNull;
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
@@ -279,18 +303,42 @@ class _ContextHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  count > 0
-                      ? tr(
-                          '$count bình luận',
-                          count == 1 ? '1 comment' : '$count comments',
-                        )
-                      : tr('Bình luận', 'Comments'),
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.subhead,
-                    fontWeight: AppType.bold,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        author != null && author.username.isNotEmpty
+                            ? '@${author.username}'
+                            : (count > 0
+                                  ? tr('$count bình luận', '$count comments')
+                                  : tr('Bình luận', 'Comments')),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: AppType.subhead,
+                          fontWeight: AppType.bold,
+                        ),
+                      ),
+                    ),
+                    if (author?.isVerified == true) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.verified_rounded,
+                        size: AppIconSize.sm,
+                        color: AppColors.accent,
+                      ),
+                    ],
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      count > 0 ? '· $count' : '',
+                      style: TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: AppType.label,
+                        fontWeight: AppType.medium,
+                      ),
+                    ),
+                  ],
                 ),
                 if (post.caption.isNotEmpty)
                   Padding(
@@ -314,11 +362,67 @@ class _ContextHeader extends StatelessWidget {
   }
 }
 
+/// Sort control: newest first or most liked first.
+class _SortBar extends StatelessWidget {
+  const _SortBar({required this.byLikes, required this.onChanged});
+  final bool byLikes;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget chip(String label, bool active, VoidCallback onTap) => PressScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: active
+              ? AppColors.primary.withValues(alpha: 0.14)
+              : AppColors.layer3,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? AppColors.primary : AppColors.textSecondary,
+            fontSize: AppType.label,
+            fontWeight: AppType.bold,
+          ),
+        ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.sort_rounded,
+            size: AppIconSize.sm,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          chip(tr('Mới nhất', 'Newest'), !byLikes, () => onChanged(false)),
+          const SizedBox(width: AppSpacing.sm),
+          chip(tr('Nhiều tim nhất', 'Top'), byLikes, () => onChanged(true)),
+        ],
+      ),
+    );
+  }
+}
+
 /// A root comment plus its reply rail.
 class _Thread extends StatelessWidget {
   const _Thread({
     required this.root,
     required this.replies,
+    required this.postAuthorId,
     required this.showReplies,
     required this.onToggleReplies,
     required this.onReply,
@@ -327,6 +431,7 @@ class _Thread extends StatelessWidget {
 
   final Comment root;
   final List<Comment> replies;
+  final String postAuthorId;
   final bool showReplies;
   final VoidCallback onToggleReplies;
   final void Function(Comment) onReply;
@@ -339,6 +444,7 @@ class _Thread extends StatelessWidget {
       children: [
         _CommentRow(
           comment: root,
+          isAuthor: root.authorId == postAuthorId,
           onReply: () => onReply(root),
           onMenu: () => onMenu(root),
         ),
@@ -385,6 +491,7 @@ class _Thread extends StatelessWidget {
                     _CommentRow(
                       comment: r,
                       compact: true,
+                      isAuthor: r.authorId == postAuthorId,
                       onReply: () => onReply(r),
                       onMenu: () => onMenu(r),
                     ),
@@ -403,12 +510,14 @@ class _CommentRow extends ConsumerWidget {
     required this.onReply,
     required this.onMenu,
     this.compact = false,
+    this.isAuthor = false,
   });
 
   final Comment comment;
   final VoidCallback onReply;
   final VoidCallback onMenu;
   final bool compact;
+  final bool isAuthor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -453,6 +562,28 @@ class _CommentRow extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    if (isAuthor) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(AppRadius.xxs),
+                        ),
+                        child: Text(
+                          tr('TÁC GIẢ', 'AUTHOR'),
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: AppType.caption,
+                            fontWeight: AppType.bold,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: AppSpacing.sm),
                     Text(
                       _relTime(comment.createdAt),
@@ -607,6 +738,7 @@ class _Composer extends ConsumerWidget {
     required this.sending,
     required this.replyingTo,
     required this.onSend,
+    required this.onEmoji,
     required this.onCancelReply,
   });
 
@@ -616,7 +748,10 @@ class _Composer extends ConsumerWidget {
   final bool sending;
   final Comment? replyingTo;
   final VoidCallback onSend;
+  final void Function(String) onEmoji;
   final VoidCallback onCancelReply;
+
+  static const _emojis = ['❤️', '🔥', '☕', '😍', '👏', '✨', '🙌'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -637,7 +772,28 @@ class _Composer extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (replyingTo != null) _ReplyingChip(comment: replyingTo!, onCancel: onCancelReply),
+            // Quick-emoji strip
+            SizedBox(
+              height: 34,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final e in _emojis)
+                    PressScale(
+                      onTap: () => onEmoji(e),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 2,
+                        ),
+                        child: Text(e, style: const TextStyle(fontSize: 22)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (replyingTo != null)
+              _ReplyingChip(comment: replyingTo!, onCancel: onCancelReply),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
