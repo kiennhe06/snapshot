@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../../models/spotify_track.dart';
 import '../../../widgets/components/components.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../post/presentation/spotify_picker_sheet.dart';
 import '../../profile/data/post_repository.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/reels_providers.dart';
@@ -26,22 +30,24 @@ class ReelComposerScreen extends ConsumerStatefulWidget {
 
 class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
   final _caption = TextEditingController();
-  late final TextEditingController _music = TextEditingController(
-    text: widget.music ?? '',
-  );
   File? _video;
+  SpotifyTrack? _track;
   bool _loading = false;
 
   @override
   void dispose() {
     _caption.dispose();
-    _music.dispose();
     super.dispose();
   }
 
   Future<void> _pick(ImageSource source) async {
     final x = await ImagePicker().pickVideo(source: source);
     if (x != null) setState(() => _video = File(x.path));
+  }
+
+  Future<void> _pickMusic() async {
+    final track = await showSpotifyPicker(context);
+    if (track != null && mounted) setState(() => _track = track);
   }
 
   Future<void> _post() async {
@@ -55,7 +61,11 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
             uid: uid,
             caption: _caption.text,
             media: [DraftMedia(file: _video!, isVideo: true)],
-            musicTitle: _music.text,
+            musicTitle: _track?.name ?? widget.music,
+            musicArtist: _track?.artist,
+            musicCoverUrl: _track?.coverUrl,
+            musicPreviewUrl: _track?.previewUrl,
+            musicUrl: _track?.spotifyUrl,
             remixOfPostId: widget.remixOfPostId,
           );
       if (mounted) {
@@ -83,7 +93,10 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      topBar: AppTopBar(title: tr('Tạo reel', 'Create reel'), showBack: true),
+      topBar: AppTopBar(
+        title: tr('Tạo thước phim', 'Create reel'),
+        showBack: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -142,19 +155,121 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
             maxLines: 3,
           ),
           const SizedBox(height: AppSpacing.lg),
-          AppTextField(
-            controller: _music,
-            label: tr('Nhạc (tên bài hát)', 'Music (song title)'),
-            icon: Icons.music_note_rounded,
-            hint: tr('ví dụ: Chúng ta của hiện tại', 'e.g. Blinding Lights'),
+          Text(
+            tr('Âm thanh / Bài hát', 'Sound / Music'),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: AppType.label,
+              fontWeight: AppType.bold,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _MusicSelector(
+            track: _track,
+            onPick: _pickMusic,
+            onRemove: () => setState(() => _track = null),
           ),
           const SizedBox(height: AppSpacing.xl),
           AppButton(
-            label: tr('Đăng reel', 'Share reel'),
+            label: tr('Chia sẻ thước phim', 'Share reel'),
             isLoading: _loading,
+            icon: Icons.arrow_forward_rounded,
             onPressed: _post,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Row that either invites the user to pick a track or shows the selected one
+/// (cover + title · artist) with a remove button. Uses the real iTunes picker.
+class _MusicSelector extends StatelessWidget {
+  const _MusicSelector({
+    required this.track,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final SpotifyTrack? track;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = track;
+    return PressScale(
+      onTap: onPick,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.layer1,
+          borderRadius: AppRadius.brLg,
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: (t?.coverUrl ?? '').isNotEmpty
+                  ? CachedNetworkImage(imageUrl: t!.coverUrl, fit: BoxFit.cover)
+                  : Icon(Icons.music_note_rounded, color: AppColors.primary),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: t == null
+                  ? Text(
+                      tr('Thêm âm thanh', 'Add sound'),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: AppType.bold,
+                        fontSize: AppType.subhead,
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: AppType.bold,
+                            fontSize: AppType.subhead,
+                          ),
+                        ),
+                        Text(
+                          t.artist,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: AppType.label,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+            if (t == null)
+              Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary)
+            else
+              GestureDetector(
+                onTap: onRemove,
+                child: Icon(
+                  Icons.close_rounded,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
