@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:snapshot/app/theme.dart';
 import 'package:snapshot/core/constants.dart';
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
@@ -161,50 +160,74 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(localeProvider);
     return AppScaffold(
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.xxl),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.xxl,
+          ),
           child: Form(
             key: _formKey,
             child: AutofillGroup(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: AppSpacing.xxl),
-                  Icon(
-                    Icons.camera_alt_rounded,
-                    size: 64,
-                    color: AppColors.primary,
+                  const SizedBox(height: AppSpacing.lg),
+                  const _AuthLogo(),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    tr('Chào mừng trở lại', 'Welcome back'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppType.display,
+                      fontWeight: AppType.heavy,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Snapshot',
+                    tr(
+                      'Đăng nhập để tiếp tục sáng tạo và kết nối\ncùng cộng đồng nghệ sĩ',
+                      'Sign in to keep creating and connecting\nwith the artist community',
+                    ),
                     textAlign: TextAlign.center,
-                    style: brandWordmark(context, size: 40),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: AppType.subhead,
+                      height: 1.4,
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.xxxl),
+                  const SizedBox(height: AppSpacing.xxl),
+                  _FieldLabel(tr('Email', 'Email')),
+                  const SizedBox(height: 6),
                   AppTextField(
                     controller: _email,
-                    label: 'Email',
+                    label: tr('Email', 'Email'),
                     keyboardType: TextInputType.emailAddress,
-                    icon: Icons.email_outlined,
+                    icon: Icons.alternate_email_rounded,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
+                    hint: 'you@example.com',
                     validator: (v) => (v == null || !v.contains('@'))
                         ? tr('Email không hợp lệ', 'Invalid email')
                         : null,
                   ),
                   const SizedBox(height: AppSpacing.lg),
+                  _FieldLabel(tr('Mật khẩu bảo mật', 'Password')),
+                  const SizedBox(height: 6),
                   AppTextField(
                     controller: _password,
                     label: tr('Mật khẩu', 'Password'),
                     obscureText: _obscure,
-                    icon: Icons.lock_outline,
+                    icon: Icons.lock_outline_rounded,
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.password],
                     suffix: AppIconButton(
-                      icon: _obscure ? Icons.visibility_off : Icons.visibility,
+                      icon: _obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       onTap: () => setState(() => _obscure = !_obscure),
                     ),
                     validator: (v) => (v == null || v.length < 6)
@@ -214,6 +237,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           )
                         : null,
                   ),
+                  const SizedBox(height: AppSpacing.md),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -224,8 +248,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           children: [
                             Icon(
                               _remember
-                                  ? Icons.check_box_rounded
-                                  : Icons.check_box_outline_blank_rounded,
+                                  ? Icons.check_circle_rounded
+                                  : Icons.circle_outlined,
                               size: 20,
                               color: _remember
                                   ? AppColors.primary
@@ -243,37 +267,53 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           ],
                         ),
                       ),
-                      AppButton(
-                        label: tr('Quên mật khẩu?', 'Forgot password?'),
-                        variant: AppButtonVariant.ghost,
-                        fullWidth: false,
-                        height: 44,
-                        onPressed: () => context.push(Routes.forgotPassword),
+                      PressScale(
+                        onTap: () => context.push(Routes.forgotPassword),
+                        child: Text(
+                          tr('Quên mật khẩu?', 'Forgot password?'),
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: AppType.label,
+                            fontWeight: AppType.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  AppButton(
+                  const SizedBox(height: AppSpacing.lg),
+                  _GradientAuthButton(
                     label: tr('Đăng nhập', 'Sign in'),
-                    isLoading: _loading,
-                    onPressed: _signInEmail,
+                    loading: _loading,
+                    onTap: _signInEmail,
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppButton(
-                    label: tr('Đăng nhập bằng Google', 'Sign in with Google'),
-                    variant: AppButtonVariant.secondary,
-                    icon: Icons.g_mobiledata,
-                    onPressed: _loading ? null : _signInGoogle,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppButton(
-                    label: tr(
-                      'Đăng nhập bằng số điện thoại',
-                      'Sign in with phone number',
+                  const SizedBox(height: AppSpacing.xl),
+                  _OrDivider(tr('HOẶC ĐĂNG NHẬP VỚI', 'OR SIGN IN WITH')),
+                  const SizedBox(height: AppSpacing.lg),
+                  _SocialButton(
+                    label: tr('Tiếp tục với Google', 'Continue with Google'),
+                    leading: const Text(
+                      'G',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF4285F4),
+                      ),
                     ),
-                    variant: AppButtonVariant.secondary,
-                    icon: Icons.phone_outlined,
-                    onPressed: _loading
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textTertiary,
+                    ),
+                    onTap: _loading ? null : _signInGoogle,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SocialButton(
+                    label: tr('Đăng nhập bằng SMS OTP', 'Sign in with SMS OTP'),
+                    leading: Icon(
+                      Icons.sms_outlined,
+                      color: AppColors.textPrimary,
+                      size: 20,
+                    ),
+                    onTap: _loading
                         ? null
                         : () => context.push(Routes.phoneSignIn),
                   ),
@@ -282,26 +322,243 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        tr('Chưa có tài khoản?', "Don't have an account?"),
+                        tr('Chưa có tài khoản? ', "Don't have an account? "),
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: AppType.subhead,
                         ),
                       ),
-                      AppButton(
-                        label: tr('Đăng ký', 'Sign up'),
-                        variant: AppButtonVariant.ghost,
-                        fullWidth: false,
-                        height: 44,
-                        onPressed: () => context.push(Routes.signUp),
+                      PressScale(
+                        onTap: () => context.push(Routes.signUp),
+                        child: Text(
+                          tr('Đăng ký ngay', 'Sign up'),
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: AppType.subhead,
+                            fontWeight: AppType.heavy,
+                          ),
+                        ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  PressScale(
+                    onTap: () => ref.read(localeProvider.notifier).toggle(),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.language_rounded,
+                          size: 15,
+                          color: AppColors.textTertiary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          lang == AppLang.vi
+                              ? 'Tiếng Việt (VN)'
+                              : 'English (EN)',
+                          style: TextStyle(
+                            color: AppColors.textTertiary,
+                            fontSize: AppType.label,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.centerLeft,
+    child: Text(
+      text,
+      style: TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: AppType.label,
+        fontWeight: AppType.bold,
+      ),
+    ),
+  );
+}
+
+/// Glowing brand logo used at the top of the auth screens.
+class _AuthLogo extends StatelessWidget {
+  const _AuthLogo();
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 88,
+        height: 88,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.accent, AppColors.primary],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.5),
+              blurRadius: 32,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.camera_alt_rounded,
+          color: Colors.white,
+          size: 40,
+        ),
+      ),
+    );
+  }
+}
+
+/// "OR SIGN IN WITH" divider with hairlines on each side.
+class _OrDivider extends StatelessWidget {
+  const _OrDivider(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    final line = Expanded(
+      child: Divider(color: AppColors.borderSubtle, thickness: 1),
+    );
+    return Row(
+      children: [
+        line,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: AppColors.textTertiary,
+              fontSize: AppType.caption,
+              fontWeight: AppType.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        line,
+      ],
+    );
+  }
+}
+
+/// Full-width dark social sign-in row.
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.label,
+    required this.leading,
+    this.trailing,
+    required this.onTap,
+  });
+  final String label;
+  final Widget leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressScale(
+      onTap: onTap,
+      child: Container(
+        height: 54,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.layer1,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 24, child: Center(child: leading)),
+            Expanded(
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppType.subhead,
+                    fontWeight: AppType.bold,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 24, child: Center(child: trailing)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Brand-gradient primary auth button.
+class _GradientAuthButton extends StatelessWidget {
+  const _GradientAuthButton({
+    required this.label,
+    required this.loading,
+    required this.onTap,
+  });
+  final String label;
+  final bool loading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressScale(
+      onTap: loading ? null : onTap,
+      child: Container(
+        height: 56,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.accent, AppColors.primary, AppColors.primaryBright],
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: loading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: AppType.headline,
+                      fontWeight: AppType.heavy,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                ],
+              ),
       ),
     );
   }
