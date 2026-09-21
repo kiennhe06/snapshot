@@ -7,10 +7,12 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../../models/spotify_track.dart';
 import '../../../models/story.dart';
 import '../../../widgets/components/components.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../feed/providers/feed_providers.dart';
+import '../../post/presentation/spotify_picker_sheet.dart';
 import '../providers/story_providers.dart';
 import 'widgets/story_sticker_view.dart';
 
@@ -37,6 +39,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   final List<StorySticker> _stickers = [];
   bool _closeFriends = false;
   bool _loading = false;
+  SpotifyTrack? _track;
 
   Future<void> _pick({required ImageSource source, required bool video}) async {
     final picker = ImagePicker();
@@ -74,6 +77,11 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
             closeFriends: favorites,
             addYoursPrompt: widget.addYoursPrompt,
             addYoursSourceId: widget.addYoursSourceId,
+            musicTitle: _track?.name,
+            musicArtist: _track?.artist,
+            musicCoverUrl: _track?.coverUrl,
+            musicPreviewUrl: _track?.previewUrl,
+            musicUrl: _track?.spotifyUrl,
           );
       if (mounted) {
         showAppToast(
@@ -142,6 +150,16 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                     ),
                     const Spacer(),
                     IconButton(
+                      icon: Icon(
+                        Icons.music_note_rounded,
+                        color: _track != null
+                            ? AppColors.primary
+                            : Colors.white,
+                      ),
+                      tooltip: tr('Thêm nhạc', 'Add music'),
+                      onPressed: _addMusic,
+                    ),
+                    IconButton(
                       icon: const Icon(
                         Icons.emoji_emotions_outlined,
                         color: Colors.white,
@@ -153,6 +171,17 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                 ),
               ),
             ),
+            // Selected music chip
+            if (_track != null)
+              Positioned(
+                top: 56,
+                left: AppSpacing.md,
+                right: AppSpacing.md,
+                child: _ComposerMusicChip(
+                  track: _track!,
+                  onRemove: () => setState(() => _track = null),
+                ),
+              ),
             // Bottom controls
             Positioned(
               left: 0,
@@ -306,17 +335,16 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
         onTap: () => _addText(StickerType.mention, 'username'),
       ),
       AppMenuAction(
-        icon: Icons.music_note_rounded,
-        label: tr('Nhạc', 'Music'),
-        onTap: () =>
-            _addText(StickerType.music, tr('Tên bài hát', 'Song title')),
-      ),
-      AppMenuAction(
         icon: Icons.gif_box_outlined,
         label: 'GIF / Emoji',
         onTap: () => _addText(StickerType.gif, '🎉'),
       ),
     ]);
+  }
+
+  Future<void> _addMusic() async {
+    final track = await showSpotifyPicker(context);
+    if (track != null && mounted) setState(() => _track = track);
   }
 
   void _add(StorySticker s) => setState(() => _stickers.add(s));
@@ -474,6 +502,59 @@ class _DraggableSticker extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// A compact pill on the composer showing the attached track, with a remove
+/// button. Playback preview happens in the story viewer.
+class _ComposerMusicChip extends StatelessWidget {
+  const _ComposerMusicChip({required this.track, required this.onRemove});
+  final SpotifyTrack track;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        AppSpacing.xs,
+        AppSpacing.xs,
+        AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.music_note_rounded, color: Colors.white, size: 16),
+          const SizedBox(width: AppSpacing.xs),
+          Flexible(
+            child: Text(
+              '${track.name} · ${track.artist}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: AppType.medium,
+                fontSize: AppType.label,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(
+              Icons.close_rounded,
+              color: Colors.white70,
+              size: 18,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

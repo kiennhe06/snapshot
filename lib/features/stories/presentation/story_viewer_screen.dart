@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,9 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
   int _idx = 0;
   late final AnimationController _progress;
   final _reply = TextEditingController();
+  final _audio = AudioPlayer();
+  bool _muted = false;
+  String? _playingUrl;
 
   StoryTray get _currentTray => widget.trays[_tray];
   Story get _current => _currentTray.stories[_idx];
@@ -43,6 +47,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
   void initState() {
     super.initState();
     _tray = widget.initialIndex;
+    _audio.setReleaseMode(ReleaseMode.loop); // 30s preview loops during story
     _progress =
         AnimationController(vsync: this, duration: const Duration(seconds: 5))
           ..addStatusListener((s) {
@@ -55,17 +60,46 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
   void dispose() {
     _progress.dispose();
     _reply.dispose();
+    _audio.dispose();
     super.dispose();
   }
 
   void _start() {
     _markViewed();
+    _syncMusic();
     if (!_current.isVideo) {
       _progress
         ..reset()
         ..forward();
     } else {
       _progress.reset(); // video: no auto timer in this build
+    }
+  }
+
+  /// Plays the current story's 30s music preview (looping) when it changes.
+  Future<void> _syncMusic() async {
+    final preview = _current.musicPreviewUrl;
+    if (preview == null || preview.isEmpty || _muted) {
+      _playingUrl = null;
+      await _audio.stop();
+      return;
+    }
+    if (_playingUrl == preview) return; // already playing this track
+    _playingUrl = preview;
+    try {
+      await _audio.play(UrlSource(preview));
+    } catch (_) {
+      _playingUrl = null;
+    }
+  }
+
+  void _toggleMute() {
+    setState(() => _muted = !_muted);
+    if (_muted) {
+      _audio.pause();
+    } else {
+      _playingUrl = null; // force replay of current track
+      _syncMusic();
     }
   }
 
@@ -107,8 +141,10 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
   void _setPaused(bool v) {
     if (v) {
       _progress.stop();
-    } else if (!_current.isVideo) {
-      _progress.forward();
+      _audio.pause();
+    } else {
+      if (!_current.isVideo) _progress.forward();
+      if (!_muted && _playingUrl != null) _audio.resume();
     }
   }
 
@@ -241,6 +277,20 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                             color: AppColors.success,
                             size: 18,
                           ),
+                        if (_current.hasMusic &&
+                            (_current.musicPreviewUrl ?? '').isNotEmpty)
+                          IconButton(
+                            icon: Icon(
+                              _muted
+                                  ? Icons.volume_off_rounded
+                                  : Icons.volume_up_rounded,
+                              color: Colors.white,
+                            ),
+                            tooltip: _muted
+                                ? tr('Bật tiếng', 'Unmute')
+                                : tr('Tắt tiếng', 'Mute'),
+                            onPressed: _toggleMute,
+                          ),
                         IconButton(
                           icon: const Icon(
                             Icons.close_rounded,
@@ -250,6 +300,13 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                         ),
                       ],
                     ),
+                    if (_current.hasMusic) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: _StoryMusicChip(story: _current),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -444,6 +501,67 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
       }
     }
     _setPaused(false);
+  }
+}
+
+/// A small pill showing the story's attached track (cover + title · artist).
+class _StoryMusicChip extends StatelessWidget {
+  const _StoryMusicChip({required this.story});
+  final Story story;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        4,
+        4,
+        AppSpacing.md,
+        4,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.black45,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: (story.musicCoverUrl ?? '').isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: story.musicCoverUrl!,
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 28,
+                    height: 28,
+                    color: Colors.white24,
+                    child: const Icon(
+                      Icons.music_note_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              '${story.musicTitle} · ${story.musicArtist ?? ''}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: AppType.medium,
+                fontSize: AppType.label,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

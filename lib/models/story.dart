@@ -75,6 +75,11 @@ class Story {
     this.stickers = const [],
     this.addYoursPrompt,
     this.addYoursSourceId,
+    this.musicTitle,
+    this.musicArtist,
+    this.musicCoverUrl,
+    this.musicPreviewUrl,
+    this.musicUrl,
     this.viewsCount = 0,
     required this.createdAt,
     required this.expiresAt,
@@ -92,12 +97,21 @@ class Story {
   final List<StorySticker> stickers;
   final String? addYoursPrompt;
   final String? addYoursSourceId;
+
+  /// Attached music (iTunes track). [musicPreviewUrl] is a 30s audio clip.
+  final String? musicTitle;
+  final String? musicArtist;
+  final String? musicCoverUrl;
+  final String? musicPreviewUrl;
+  final String? musicUrl;
+
   final int viewsCount;
   final DateTime createdAt;
   final DateTime expiresAt;
 
   bool get isVideo => mediaType == 'video';
   bool get isExpired => DateTime.now().isAfter(expiresAt);
+  bool get hasMusic => (musicTitle ?? '').isNotEmpty;
 
   factory Story.fromMap(Map<String, dynamic> j) {
     final rawStickers = (j['stickers'] as List<dynamic>?) ?? const [];
@@ -115,6 +129,11 @@ class Story {
           .toList(),
       addYoursPrompt: j['addYoursPrompt'] as String?,
       addYoursSourceId: j['addYoursSourceId'] as String?,
+      musicTitle: j['musicTitle'] as String?,
+      musicArtist: j['musicArtist'] as String?,
+      musicCoverUrl: j['musicCoverUrl'] as String?,
+      musicPreviewUrl: j['musicPreviewUrl'] as String?,
+      musicUrl: j['musicUrl'] as String?,
       viewsCount: (j['viewsCount'] as num?)?.toInt() ?? 0,
       createdAt: _toDate(j['createdAt']),
       expiresAt: _toDate(j['expiresAt']),
@@ -132,6 +151,11 @@ class Story {
     'stickers': stickers.map((s) => s.toMap()).toList(),
     'addYoursPrompt': addYoursPrompt,
     'addYoursSourceId': addYoursSourceId,
+    'musicTitle': musicTitle,
+    'musicArtist': musicArtist,
+    'musicCoverUrl': musicCoverUrl,
+    'musicPreviewUrl': musicPreviewUrl,
+    'musicUrl': musicUrl,
     'viewsCount': viewsCount,
     'createdAt': Timestamp.fromDate(createdAt),
     'expiresAt': Timestamp.fromDate(expiresAt),

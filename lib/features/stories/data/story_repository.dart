@@ -28,6 +28,11 @@ class StoryRepository {
     String? caption,
     String? addYoursPrompt,
     String? addYoursSourceId,
+    String? musicTitle,
+    String? musicArtist,
+    String? musicCoverUrl,
+    String? musicPreviewUrl,
+    String? musicUrl,
   }) async {
     final docRef = _stories.doc();
     final url = await _storage.uploadPostMedia(
@@ -48,6 +53,11 @@ class StoryRepository {
       stickers: stickers,
       addYoursPrompt: addYoursPrompt,
       addYoursSourceId: addYoursSourceId,
+      musicTitle: musicTitle,
+      musicArtist: musicArtist,
+      musicCoverUrl: musicCoverUrl,
+      musicPreviewUrl: musicPreviewUrl,
+      musicUrl: musicUrl,
       createdAt: now,
       expiresAt: now.add(const Duration(hours: 24)),
     );
