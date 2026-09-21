@@ -62,5 +62,3 @@ android/key.properties
 # Spotify app credentials (client secret) — PUBLIC repo, never commit.
 lib/core/spotify_config.dart
 
-# Local dev launcher with credentials (never commit)
-run_dev.sh

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:snapshot/app/theme.dart';
 import 'package:snapshot/core/constants.dart';
@@ -27,26 +28,60 @@ const String _devEmail = String.fromEnvironment('DEV_EMAIL');
 const String _devPassword = String.fromEnvironment('DEV_PASSWORD');
 
 class _SignInScreenState extends ConsumerState<SignInScreen> {
+  static const _emailKey = 'saved_email_v1';
+  static const _pwKey = 'saved_password_v1';
+
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _loading = false;
   bool _obscure = true;
+  bool _remember = true;
 
   @override
   void initState() {
     super.initState();
-    // In debug builds, prefill (and auto sign-in) with the dev account so the
-    // simulator doesn't ask for credentials after every reinstall/reset.
+    _restoreCredentials();
+  }
+
+  /// Prefills (and auto-signs-in with) locally remembered credentials, so the
+  /// user doesn't retype them after an app restart/reset. Falls back to the
+  /// debug --dart-define account when nothing is saved.
+  Future<void> _restoreCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString(_emailKey);
+      final pw = prefs.getString(_pwKey);
+      if (email != null && email.isNotEmpty) {
+        _email.text = email;
+        _password.text = pw ?? '';
+        if (mounted) setState(() {});
+        if ((pw ?? '').isNotEmpty) {
+          _signInEmail();
+          return;
+        }
+      }
+    } catch (_) {}
+
     if (kDebugMode && _devEmail.isNotEmpty) {
       _email.text = _devEmail;
       _password.text = _devPassword;
-      if (_devPassword.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _signInEmail();
-        });
-      }
+      if (mounted) setState(() {});
+      if (_devPassword.isNotEmpty) _signInEmail();
     }
+  }
+
+  Future<void> _persistCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_remember) {
+        await prefs.setString(_emailKey, _email.text.trim());
+        await prefs.setString(_pwKey, _password.text);
+      } else {
+        await prefs.remove(_emailKey);
+        await prefs.remove(_pwKey);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -69,6 +104,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       final cred = await service.signInWithEmail(_email.text, _password.text);
       final user = cred.user;
       if (user != null) {
+        await _persistCredentials();
         await handlePostSignIn(ref, user: user, signInMethod: 'password');
       }
     } on FirebaseAuthMultiFactorException catch (e) {
@@ -156,15 +192,43 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           )
                         : null,
                   ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: AppButton(
-                      label: tr('Quên mật khẩu?', 'Forgot password?'),
-                      variant: AppButtonVariant.ghost,
-                      fullWidth: false,
-                      height: 44,
-                      onPressed: () => context.push(Routes.forgotPassword),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      PressScale(
+                        onTap: () => setState(() => _remember = !_remember),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _remember
+                                  ? Icons.check_box_rounded
+                                  : Icons.check_box_outline_blank_rounded,
+                              size: 20,
+                              color: _remember
+                                  ? AppColors.primary
+                                  : AppColors.textTertiary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              tr('Ghi nhớ đăng nhập', 'Remember me'),
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: AppType.label,
+                                fontWeight: AppType.medium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AppButton(
+                        label: tr('Quên mật khẩu?', 'Forgot password?'),
+                        variant: AppButtonVariant.ghost,
+                        fullWidth: false,
+                        height: 44,
+                        onPressed: () => context.push(Routes.forgotPassword),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   AppButton(
