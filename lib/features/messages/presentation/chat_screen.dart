@@ -229,7 +229,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         !chat.isDm &&
                         m.senderId != _me &&
                         prev?.senderId != m.senderId;
-                    return MessageBubble(
+                    final showDate =
+                        prev == null ||
+                        !_sameDay(prev.createdAt, m.createdAt);
+                    final bubble = MessageBubble(
                       message: m,
                       chat:
                           chat ??
@@ -245,6 +248,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       isLastMine: m.messageId == lastMineId,
                       onLongPress: () => _messageActions(m),
                       onOpenMedia: _openMedia,
+                    );
+                    if (!showDate) return bubble;
+                    return Column(
+                      children: [_DateChip(date: m.createdAt), bubble],
                     );
                   },
                 );
@@ -739,12 +746,23 @@ class _PinnedBar extends ConsumerWidget {
   }
 }
 
-class _TypingIndicator extends StatelessWidget {
+class _TypingIndicator extends ConsumerWidget {
   const _TypingIndicator({required this.uids});
   final List<String> uids;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Name the first typer (e.g. "Hoàng Minh đang gõ…").
+    String label = tr('đang gõ…', 'typing…');
+    if (uids.isNotEmpty) {
+      final u = ref.watch(userProfileProvider(uids.first)).valueOrNull;
+      final name = u?.username.isNotEmpty == true ? u!.username : u?.displayName;
+      if (name != null && name.isNotEmpty) {
+        label = uids.length > 1
+            ? tr('$name +${uids.length - 1} đang gõ…', '$name +${uids.length - 1} typing…')
+            : tr('$name đang gõ…', '$name is typing…');
+      }
+    }
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
@@ -761,11 +779,111 @@ class _TypingIndicator extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(color: AppColors.borderSubtle),
         ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const _TypingDots(),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.label,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Three animated dots for the typing indicator.
+class _TypingDots extends StatefulWidget {
+  const _TypingDots();
+  @override
+  State<_TypingDots> createState() => _TypingDotsState();
+}
+
+class _TypingDotsState extends State<_TypingDots>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1000),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, _) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) {
+            final t = (_c.value + i / 3) % 1.0;
+            final opacity = 0.3 + 0.7 * (t < 0.5 ? t * 2 : (1 - t) * 2);
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 1.5),
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: opacity),
+                ),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+}
+
+bool _sameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Centered date pill separating messages by day.
+class _DateChip extends StatelessWidget {
+  const _DateChip({required this.date});
+  final DateTime date;
+
+  String _label() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final that = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(that).inDays;
+    if (diff == 0) return tr('Hôm nay', 'Today');
+    if (diff == 1) return tr('Hôm qua', 'Yesterday');
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 4,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.layer2,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
         child: Text(
-          tr('đang gõ...', 'typing...'),
+          _label(),
           style: TextStyle(
             color: AppColors.textSecondary,
-            fontSize: AppType.label,
+            fontSize: AppType.small,
+            fontWeight: AppType.medium,
           ),
         ),
       ),

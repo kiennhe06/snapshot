@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design/tokens.dart';
 import '../../../../core/i18n/i18n.dart';
 import '../../../../models/chat.dart';
+import '../../../../models/post.dart';
 import '../../../../widgets/components/components.dart';
+import '../../../feed/presentation/widgets/post_card.dart';
 import '../../../profile/providers/profile_providers.dart';
 import '../../providers/message_providers.dart';
 import 'voice_bubble.dart';
@@ -70,21 +72,29 @@ class MessageBubble extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 2),
               child: _reactions(),
             ),
-          if (isLastMine && !message.deleted)
-            Padding(
-              padding: const EdgeInsets.only(top: 2, right: AppSpacing.xs),
-              child: Text(
-                _readLabel(),
-                style: TextStyle(
-                  color: AppColors.textTertiary,
-                  fontSize: AppType.caption,
-                ),
+          Padding(
+            padding: const EdgeInsets.only(
+              top: 2,
+              left: AppSpacing.xs,
+              right: AppSpacing.xs,
+            ),
+            child: Text(
+              (isLastMine && !message.deleted)
+                  ? '${_time(message.createdAt)} · ${_readLabel()}'
+                  : _time(message.createdAt),
+              style: TextStyle(
+                color: AppColors.textTertiary,
+                fontSize: AppType.caption,
               ),
             ),
+          ),
         ],
       ),
     );
   }
+
+  String _time(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
   String _readLabel() {
     final others = chat.memberIds.where((id) => id != me);
@@ -289,11 +299,11 @@ class MessageBubble extends ConsumerWidget {
         );
       case MessageType.post:
       case MessageType.story:
-        return _sharedCard(ref, mine);
+        return _sharedCard(context, ref, mine);
     }
   }
 
-  Widget _sharedCard(WidgetRef ref, bool mine) {
+  Widget _sharedCard(BuildContext context, WidgetRef ref, bool mine) {
     final async = ref.watch(sharedPostProvider(message.refId ?? ''));
     final fg = mine ? Colors.white : AppColors.textPrimary;
     final post = async.valueOrNull;
@@ -350,15 +360,78 @@ class MessageBubble extends ConsumerWidget {
                 color: AppColors.textTertiary,
               ),
             ),
-          if ((message.text ?? '').isNotEmpty)
+          if (post != null)
             Padding(
               padding: const EdgeInsets.only(top: 6),
+              child: _SharedAuthorLine(post: post, fg: fg),
+            ),
+          if ((message.text ?? '').isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
               child: Text(
                 message.text!,
                 style: TextStyle(color: fg, fontSize: AppType.body),
               ),
             ),
+          if (post != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: AppButton(
+                label: message.type == MessageType.story
+                    ? tr('Xem tin', 'View story')
+                    : (post.isVideo
+                          ? tr('Xem Reel', 'Watch Reel')
+                          : tr('Xem bài viết', 'View post')),
+                height: 40,
+                icon: post.isVideo
+                    ? Icons.play_circle_outline_rounded
+                    : Icons.open_in_full_rounded,
+                onPressed: () => _openPost(context, post),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+
+  void _openPost(BuildContext context, Post post) {
+    showAppSheet<void>(
+      context,
+      builder: (_) => AppSheetSurface(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: PostCard(post: post),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "@username • caption" line under a shared post/reel card.
+class _SharedAuthorLine extends ConsumerWidget {
+  const _SharedAuthorLine({required this.post, required this.fg});
+  final Post post;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final author = ref.watch(userProfileProvider(post.authorId)).valueOrNull;
+    final name = author?.username.isNotEmpty == true
+        ? '@${author!.username}'
+        : (author?.displayName ?? '');
+    final caption = post.caption.isNotEmpty
+        ? ' • ${post.caption}'
+        : '';
+    return Text(
+      '$name$caption',
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: fg,
+        fontSize: AppType.label,
+        fontWeight: AppType.medium,
       ),
     );
   }
