@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
@@ -15,12 +16,37 @@ import '../providers/message_providers.dart';
 import 'chat_screen.dart';
 import 'new_chat_screen.dart';
 
-/// Direct inbox: a Notes strip on top, then the conversation list.
-class InboxScreen extends ConsumerWidget {
+/// Inbox filter tabs, each mapping to a real conversation kind.
+enum _InboxFilter { all, dm, group, channel }
+
+/// Direct inbox: search + filters, a Notes strip, then the conversation list.
+class InboxScreen extends ConsumerStatefulWidget {
   const InboxScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InboxScreen> createState() => _InboxScreenState();
+}
+
+class _InboxScreenState extends ConsumerState<InboxScreen> {
+  final _search = TextEditingController();
+  String _query = '';
+  _InboxFilter _filter = _InboxFilter.all;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  bool _matchesFilter(Chat c) => switch (_filter) {
+    _InboxFilter.all => true,
+    _InboxFilter.dm => c.isDm,
+    _InboxFilter.group => c.isGroup,
+    _InboxFilter.channel => c.isBroadcast,
+  };
+
+  @override
+  Widget build(BuildContext context) {
     final chats = ref.watch(chatsProvider);
     final me = ref.watch(authStateProvider).valueOrNull?.uid;
 
@@ -41,25 +67,112 @@ class InboxScreen extends ConsumerWidget {
       body: AsyncValueView<List<Chat>>(
         value: chats,
         onRetry: () => ref.invalidate(chatsProvider),
-        builder: (list) => ListView(
-          children: [
-            if (me != null) _NotesStrip(me: me),
-            const Divider(height: 1),
-            if (list.isEmpty)
+        builder: (list) {
+          final filtered = list.where(_matchesFilter).toList();
+          return ListView(
+            children: [
+              if (me != null) _NotesStrip(me: me),
               Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xxxl),
-                child: EmptyView(
-                  message: tr(
-                    'Chưa có cuộc trò chuyện nào.\nBắt đầu nhắn tin!',
-                    'No conversations yet.\nStart chatting!',
-                  ),
-                  icon: Icons.forum_outlined,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                  AppSpacing.md,
+                  AppSpacing.sm,
                 ),
-              )
-            else
-              for (final c in list) _ChatRow(chat: c, me: me ?? ''),
-          ],
-        ),
+                child: AppTextField(
+                  controller: _search,
+                  label: tr('Tìm kiếm', 'Search'),
+                  hint: tr(
+                    'Tìm người dùng hoặc tin nhắn…',
+                    'Search people or messages…',
+                  ),
+                  icon: Icons.search_rounded,
+                  onChanged: (v) => setState(() => _query = v.trim()),
+                ),
+              ),
+              _FilterBar(
+                selected: _filter,
+                onSelect: (f) => setState(() => _filter = f),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              const Divider(height: 1),
+              if (filtered.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xxxl),
+                  child: EmptyView(
+                    message: tr(
+                      'Chưa có cuộc trò chuyện nào.\nBắt đầu nhắn tin!',
+                      'No conversations yet.\nStart chatting!',
+                    ),
+                    icon: Icons.forum_outlined,
+                  ),
+                )
+              else
+                for (final c in filtered)
+                  _ChatRow(chat: c, me: me ?? '', query: _query),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Horizontal filter chips mapped to conversation kinds.
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({required this.selected, required this.onSelect});
+  final _InboxFilter selected;
+  final ValueChanged<_InboxFilter> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <(_InboxFilter, String)>[
+      (_InboxFilter.all, tr('Tất cả', 'All')),
+      (_InboxFilter.dm, tr('Chat 1-1', 'DMs')),
+      (_InboxFilter.group, tr('Nhóm', 'Groups')),
+      (_InboxFilter.channel, tr('Kênh', 'Channels')),
+    ];
+    return SizedBox(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        children: [
+          for (final (f, label) in items)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
+              child: PressScale(
+                onTap: () => onSelect(f),
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected == f
+                        ? AppColors.primary
+                        : AppColors.layer1,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: selected == f
+                          ? AppColors.primary
+                          : AppColors.borderSubtle,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: selected == f
+                          ? Colors.white
+                          : AppColors.textSecondary,
+                      fontSize: AppType.label,
+                      fontWeight: AppType.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -277,16 +390,20 @@ class _NoteColumn extends StatelessWidget {
   }
 }
 
-/// A single conversation row in the inbox list.
+/// A single conversation row: avatar, name + verified, time, preview
+/// (typing / type-aware / group-sender-prefixed) and unread badge.
 class _ChatRow extends ConsumerWidget {
-  const _ChatRow({required this.chat, required this.me});
+  const _ChatRow({required this.chat, required this.me, this.query = ''});
   final Chat chat;
   final String me;
+  final String query;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Resolve display identity.
     String title;
     String? photoUrl;
+    bool verified = false;
     if (chat.isDm) {
       final other = ref
           .watch(userProfileProvider(chat.otherMember(me)))
@@ -295,6 +412,7 @@ class _ChatRow extends ConsumerWidget {
           ? other!.username
           : (other?.displayName ?? tr('Người dùng', 'User'));
       photoUrl = other?.photoUrl;
+      verified = other?.isVerified ?? false;
     } else {
       title =
           chat.name ??
@@ -302,31 +420,217 @@ class _ChatRow extends ConsumerWidget {
       photoUrl = chat.photoUrl;
     }
 
-    final preview = chat.lastText ?? '';
-    IconData? kindIcon;
-    if (chat.isGroup) kindIcon = Icons.group_rounded;
-    if (chat.isBroadcast) kindIcon = Icons.campaign_rounded;
+    // Search filter (hide non-matching rows).
+    if (query.isNotEmpty) {
+      final hay = '$title ${chat.lastText ?? ''}'.toLowerCase();
+      if (!hay.contains(query.toLowerCase())) return const SizedBox.shrink();
+    }
 
-    return AppTile(
-      leading: AppAvatar(
-        radius: 26,
-        icon: chat.isBroadcast
-            ? Icons.campaign_rounded
-            : (chat.isGroup ? Icons.group_rounded : Icons.person_rounded),
-        imageProvider: photoUrl != null
-            ? CachedNetworkImageProvider(photoUrl)
-            : null,
-      ),
-      title: title,
-      subtitle: preview.isEmpty
-          ? tr('Nhấn để trò chuyện', 'Tap to chat')
-          : preview,
-      trailing: kindIcon == null
-          ? null
-          : Icon(kindIcon, size: AppIconSize.sm, color: AppColors.textTertiary),
+    final typing = ref.watch(typingProvider(chat.chatId)).valueOrNull ?? const [];
+    final unread = chat.unreadFor(me);
+    final hasUnread = unread > 0;
+
+    // Group messages get a "Sender: " prefix.
+    String? senderPrefix;
+    if (chat.isGroup && chat.lastSenderId != null && chat.lastSenderId != me) {
+      final s = ref.watch(userProfileProvider(chat.lastSenderId!)).valueOrNull;
+      final name = s?.username.isNotEmpty == true ? s!.username : s?.displayName;
+      if (name != null && name.isNotEmpty) senderPrefix = '$name: ';
+    }
+
+    return PressScale(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => ChatScreen(chatId: chat.chatId)),
       ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            AppAvatar(
+              radius: 26,
+              icon: chat.isBroadcast
+                  ? Icons.campaign_rounded
+                  : (chat.isGroup ? Icons.group_rounded : Icons.person_rounded),
+              imageProvider: photoUrl != null
+                  ? CachedNetworkImageProvider(photoUrl)
+                  : null,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: AppType.subhead,
+                            fontWeight: hasUnread
+                                ? AppType.heavy
+                                : AppType.bold,
+                          ),
+                        ),
+                      ),
+                      if (verified) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.verified_rounded,
+                          size: 15,
+                          color: AppColors.accent,
+                        ),
+                      ],
+                      if (chat.isBroadcast) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        _KindBadge(label: tr('Kênh', 'Channel')),
+                      ],
+                      const Spacer(),
+                      Text(
+                        _relTime(chat.lastAt),
+                        style: TextStyle(
+                          color: hasUnread
+                              ? AppColors.primary
+                              : AppColors.textTertiary,
+                          fontSize: AppType.small,
+                          fontWeight: hasUnread
+                              ? AppType.bold
+                              : AppType.regular,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Expanded(child: _preview(context, typing, senderPrefix)),
+                      if (hasUnread) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        _UnreadBadge(count: unread),
+                      ] else if (chat.isDm &&
+                          chat.lastSenderId == me &&
+                          chat.readUpToLast(chat.otherMember(me)))
+                        Padding(
+                          padding: const EdgeInsets.only(left: AppSpacing.sm),
+                          child: Text(
+                            tr('Đã xem', 'Seen'),
+                            style: TextStyle(
+                              color: AppColors.textTertiary,
+                              fontSize: AppType.small,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _preview(
+    BuildContext context,
+    List<String> typing,
+    String? senderPrefix,
+  ) {
+    if (typing.isNotEmpty) {
+      return Text(
+        tr('Đang soạn tin nhắn…', 'Typing…'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: AppColors.primary,
+          fontSize: AppType.label,
+          fontStyle: FontStyle.italic,
+          fontWeight: AppType.bold,
+        ),
+      );
+    }
+    final raw = chat.lastText ?? '';
+    final text = raw.isEmpty
+        ? tr('Nhấn để trò chuyện', 'Tap to chat')
+        : '${senderPrefix ?? ''}$raw';
+    final unreadForMe = chat.unreadFor(me) > 0;
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: unreadForMe ? AppColors.textPrimary : AppColors.textSecondary,
+        fontSize: AppType.label,
+        fontWeight: unreadForMe ? AppType.bold : AppType.regular,
+      ),
+    );
+  }
+}
+
+/// Small pink pill with the unread message count.
+class _UnreadBadge extends StatelessWidget {
+  const _UnreadBadge({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 20),
+      height: 20,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: AppType.small,
+          fontWeight: AppType.heavy,
+        ),
+      ),
+    );
+  }
+}
+
+/// A subtle "Channel" tag next to broadcast titles.
+class _KindBadge extends StatelessWidget {
+  const _KindBadge({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: AppColors.accent,
+          fontSize: AppType.caption,
+          fontWeight: AppType.bold,
+        ),
+      ),
+    );
+  }
+}
+
+String _relTime(DateTime t) {
+  final d = DateTime.now().difference(t);
+  if (d.inMinutes < 1) return tr('vừa xong', 'now');
+  if (d.inMinutes < 60) return tr('${d.inMinutes} phút', '${d.inMinutes}m');
+  if (d.inHours < 24) return tr('${d.inHours} giờ', '${d.inHours}h');
+  if (d.inDays < 7) return tr('${d.inDays} ngày', '${d.inDays}d');
+  return DateFormat('dd/MM').format(t);
 }

@@ -23,6 +23,9 @@ class Chat {
     this.photoUrl,
     this.lastText,
     this.lastSenderId,
+    this.lastType,
+    this.unread = const {},
+    this.reads = const {},
     required this.lastAt,
   });
 
@@ -34,6 +37,15 @@ class Chat {
   final String? photoUrl;
   final String? lastText;
   final String? lastSenderId;
+
+  /// Type name of the last message ('text' | 'image' | 'video' | 'voice' | ...).
+  final String? lastType;
+
+  /// Per-user unread message counts, keyed by uid.
+  final Map<String, int> unread;
+
+  /// Per-user last-read timestamps, keyed by uid.
+  final Map<String, DateTime> reads;
   final DateTime lastAt;
 
   bool get isDm => type == ChatType.dm;
@@ -44,6 +56,14 @@ class Chat {
   String otherMember(String me) =>
       memberIds.firstWhere((id) => id != me, orElse: () => me);
 
+  int unreadFor(String uid) => unread[uid] ?? 0;
+
+  /// True when [uid] (the DM partner) has read up to the last message.
+  bool readUpToLast(String uid) {
+    final at = reads[uid];
+    return at != null && !at.isBefore(lastAt);
+  }
+
   factory Chat.fromMap(Map<String, dynamic> j) => Chat(
     chatId: j['chatId'] as String? ?? '',
     type: chatTypeFrom(j['type'] as String?),
@@ -53,6 +73,13 @@ class Chat {
     photoUrl: j['photoUrl'] as String?,
     lastText: j['lastText'] as String?,
     lastSenderId: j['lastSenderId'] as String?,
+    lastType: j['lastType'] as String?,
+    unread: ((j['unread'] as Map<dynamic, dynamic>?) ?? const {}).map(
+      (k, v) => MapEntry(k as String, (v as num?)?.toInt() ?? 0),
+    ),
+    reads: ((j['reads'] as Map<dynamic, dynamic>?) ?? const {}).map(
+      (k, v) => MapEntry(k as String, _toDate(v)),
+    ),
     lastAt: _toDate(j['lastAt']),
   );
 
@@ -65,6 +92,7 @@ class Chat {
     'photoUrl': photoUrl,
     'lastText': lastText,
     'lastSenderId': lastSenderId,
+    'lastType': lastType,
     'lastAt': Timestamp.fromDate(lastAt),
   };
 

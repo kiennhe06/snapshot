@@ -147,13 +147,25 @@ class ChatRepository {
   ) async {
     final ref = _messages(chatId).doc();
     final msg = build(ref.id);
-    final batch = _db.batch();
-    batch.set(ref, msg.toMap()..['createdAt'] = FieldValue.serverTimestamp());
-    batch.update(_chats.doc(chatId), {
+    // Read members so we can bump each recipient's unread counter.
+    final chatSnap = await _chats.doc(chatId).get();
+    final members =
+        (chatSnap.data()?['memberIds'] as List<dynamic>?)?.cast<String>() ??
+        const <String>[];
+    final updates = <String, Object?>{
       'lastText': preview,
       'lastSenderId': senderId,
+      'lastType': msg.type.name,
       'lastAt': FieldValue.serverTimestamp(),
-    });
+      // The sender has implicitly read their own message.
+      'reads.$senderId': FieldValue.serverTimestamp(),
+    };
+    for (final m in members) {
+      if (m != senderId) updates['unread.$m'] = FieldValue.increment(1);
+    }
+    final batch = _db.batch();
+    batch.set(ref, msg.toMap()..['createdAt'] = FieldValue.serverTimestamp());
+    batch.update(_chats.doc(chatId), updates);
     await batch.commit();
   }
 
@@ -301,6 +313,11 @@ class ChatRepository {
         });
       }
     }
+    // Reset this user's unread counter and record their read timestamp.
+    batch.update(_chats.doc(chatId), {
+      'unread.$uid': 0,
+      'reads.$uid': FieldValue.serverTimestamp(),
+    });
     await batch.commit();
   }
 
