@@ -55,7 +55,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         await handlePostSignIn(ref, user: fresh, signInMethod: 'password');
       }
     } on FirebaseAuthException catch (e) {
-      _snack(authErrorMessage(e));
+      // Keychain persistence error is non-fatal; the account is created.
+      if (!isKeychainError(e)) _snack(authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

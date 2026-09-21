@@ -111,7 +111,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       // 2FA required: route to the challenge screen with the resolver.
       if (mounted) context.push(Routes.mfaChallenge, extra: e.resolver);
     } on FirebaseAuthException catch (e) {
-      _snack(authErrorMessage(e));
+      // The keychain error is non-fatal (auth still lands in memory); the
+      // auth-state stream will navigate. Don't scare the user with it.
+      if (!isKeychainError(e)) _snack(authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -129,9 +131,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     } on FirebaseAuthMultiFactorException catch (e) {
       if (mounted) context.push(Routes.mfaChallenge, extra: e.resolver);
     } on FirebaseAuthException catch (e) {
-      _snack(authErrorMessage(e));
+      if (!isKeychainError(e)) _snack(authErrorMessage(e));
     } catch (e) {
-      _snack(authErrorMessage(e));
+      if (!isKeychainError(e)) _snack(authErrorMessage(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

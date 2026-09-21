@@ -2,12 +2,28 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:snapshot/core/i18n/i18n.dart';
 
+/// True for the non-fatal iOS keychain error (`-34018`) Firebase Auth throws on
+/// simulators/devices without a keychain entitlement. Sign-in still succeeds
+/// in memory, so this should not be surfaced as a failure.
+bool isKeychainError(Object error) {
+  if (error is FirebaseAuthException) {
+    if (error.code == 'keychain-error') return true;
+    final msg = error.message?.toLowerCase() ?? '';
+    return msg.contains('keychain');
+  }
+  return error.toString().toLowerCase().contains('keychain');
+}
+
 /// Maps a [FirebaseAuthException] to a friendly, localized message.
 ///
 /// Never surface a raw Firebase error code/message to the user.
 String authErrorMessage(Object error) {
   if (error is FirebaseAuthException) {
     return switch (error.code) {
+      'keychain-error' => tr(
+        'Không lưu được phiên đăng nhập trên thiết bị này.',
+        'Could not save the session on this device.',
+      ),
       'invalid-email' => tr('Email không hợp lệ.', 'Invalid email.'),
       'user-disabled' => tr(
         'Tài khoản đã bị vô hiệu hoá.',
