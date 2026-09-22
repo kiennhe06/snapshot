@@ -19,9 +19,18 @@ class EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = this.accent ?? AppColors.primary;
-    return Center(
+    // Center when there's room, scroll when the slot is short (avoids the
+    // "bottom overflowed" error inside tight profile tab areas).
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: constraints.hasBoundedHeight ? constraints.maxHeight : 0,
+          ),
+          child: Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -72,6 +81,9 @@ class EmptyView extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+          ),
         ),
       ),
     );
