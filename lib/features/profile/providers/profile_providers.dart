@@ -67,6 +67,23 @@ final followingUsersProvider = FutureProvider.autoDispose<List<AppUser>>((
   return users;
 });
 
+/// Resolved follower/following list for any user. Key: (uid, followers?).
+final followListProvider = FutureProvider.autoDispose
+    .family<List<AppUser>, ({String uid, bool followers})>((ref, arg) async {
+      final repo = ref.watch(followRepositoryProvider);
+      final ids = await (arg.followers
+              ? repo.watchFollowerIds(arg.uid)
+              : repo.watchFollowingIds(arg.uid))
+          .first;
+      final ur = ref.watch(userRepositoryProvider);
+      final users = <AppUser>[];
+      for (final id in ids) {
+        final u = await ur.getUser(id);
+        if (u != null) users.add(u);
+      }
+      return users;
+    });
+
 /// Whether the current user follows [targetUid].
 final isFollowingProvider = StreamProvider.autoDispose.family<bool, String>((
   ref,

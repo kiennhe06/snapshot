@@ -18,6 +18,14 @@ class FollowRepository {
         .map((snap) => snap.docs.map((d) => d.id).toList());
   }
 
+  /// Uids that follow the given user.
+  Stream<List<String>> watchFollowerIds(String uid) {
+    return _user(uid)
+        .collection('followers')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => d.id).toList());
+  }
+
   /// True while [currentUid] follows [targetUid].
   Stream<bool> watchIsFollowing({
     required String currentUid,

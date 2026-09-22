@@ -6,6 +6,7 @@ import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/format.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../../models/app_user.dart';
+import '../follow_list_screen.dart';
 
 /// Profile header: avatar, counts, name/bio/website and the primary action.
 class ProfileHeader extends StatelessWidget {
@@ -53,10 +54,12 @@ class ProfileHeader extends StatelessWidget {
                     _Stat(
                       count: user.followersCount,
                       label: tr('Người theo dõi', 'Followers'),
+                      onTap: () => _openFollowList(context, true),
                     ),
                     _Stat(
                       count: user.followingCount,
                       label: tr('Đang theo dõi', 'Following'),
+                      onTap: () => _openFollowList(context, false),
                     ),
                   ],
                 ),
@@ -145,16 +148,31 @@ class ProfileHeader extends StatelessWidget {
       ),
     );
   }
+
+  void _openFollowList(BuildContext context, bool followers) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FollowListScreen(
+          uid: user.uid,
+          username: user.username,
+          showFollowers: followers,
+        ),
+      ),
+    );
+  }
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.count, required this.label});
+  const _Stat({required this.count, required this.label, this.onTap});
   final int count;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return PressScale(
+      onTap: onTap,
+      child: Column(
       children: [
         Text(
           formatCount(count),
@@ -172,6 +190,7 @@ class _Stat extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
 }
