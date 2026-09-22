@@ -47,39 +47,26 @@ class _ProfileMenu extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // My activity — grouped content cards
-          Row(
-            children: [
-              Expanded(
-                child: _ActivityCard(
-                  icon: Icons.bookmark_rounded,
-                  label: tr('Đã lưu', 'Saved'),
-                  count: savedCount,
-                  onTap: () => _go(context, Routes.saved),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: _ActivityCard(
-                  icon: Icons.archive_rounded,
-                  label: tr('Lưu trữ', 'Archive'),
-                  count: archiveCount,
-                  onTap: () => _go(context, Routes.archive),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: _ActivityCard(
-                  icon: Icons.edit_note_rounded,
-                  label: tr('Bản nháp', 'Drafts'),
-                  count: draftCount,
-                  onTap: () => _go(context, Routes.drafts),
-                ),
-              ),
-            ],
+          // My activity + settings — one tidy list. Counts show only when > 0.
+          _MenuRow(
+            icon: Icons.bookmark_rounded,
+            label: tr('Đã lưu', 'Saved'),
+            count: savedCount,
+            onTap: () => _go(context, Routes.saved),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          // One door into everything else
+          _MenuRow(
+            icon: Icons.archive_rounded,
+            label: tr('Lưu trữ', 'Archive'),
+            count: archiveCount,
+            onTap: () => _go(context, Routes.archive),
+          ),
+          _MenuRow(
+            icon: Icons.edit_note_rounded,
+            label: tr('Bản nháp', 'Drafts'),
+            count: draftCount,
+            onTap: () => _go(context, Routes.drafts),
+          ),
+          Divider(height: 1, color: AppColors.borderSubtle),
           _MenuRow(
             icon: Icons.settings_outlined,
             label: tr('Cài đặt & quyền riêng tư', 'Settings & privacy'),
@@ -101,67 +88,19 @@ class _ProfileMenu extends ConsumerWidget {
   }
 }
 
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({
-    required this.icon,
-    required this.label,
-    required this.count,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final int? count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.lg,
-        horizontal: AppSpacing.sm,
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: AppIconSize.lg, color: AppColors.primary),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            count == null ? '—' : '$count',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: AppType.headline,
-              fontWeight: AppType.heavy,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: AppType.label,
-              fontWeight: AppType.medium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MenuRow extends StatelessWidget {
   const _MenuRow({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.count,
     this.destructive = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final int? count;
   final bool destructive;
 
   @override
@@ -192,6 +131,19 @@ class _MenuRow extends StatelessWidget {
                 ),
               ),
             ),
+            // Show a count only when there is something worth noting.
+            if (count != null && count! > 0)
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.xs),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: AppType.subhead,
+                    fontWeight: AppType.bold,
+                  ),
+                ),
+              ),
             if (!destructive)
               Icon(
                 Icons.chevron_right_rounded,
