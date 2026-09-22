@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/design/tokens.dart';
 import '../../../../core/i18n/i18n.dart';
@@ -117,18 +120,40 @@ class HighlightsRow extends ConsumerWidget {
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final stories = ref.read(myStoriesProvider).valueOrNull ?? const [];
-    if (stories.isEmpty) {
-      showAppToast(
-        context,
-        tr(
-          'Bạn chưa có tin đang hoạt động để ghim.',
-          'You have no active stories to highlight.',
-        ),
+    final repo = ref.read(highlightRepositoryProvider);
+
+    if (stories.isNotEmpty) {
+      // Highlight the active stories.
+      final title = await _promptTitle(context);
+      if (title == null || title.isEmpty) return;
+      await repo.createHighlight(
+        uid: uid,
+        title: title,
+        coverUrl: stories.first.mediaUrl,
+        storyIds: stories.map((s) => s.storyId).toList(),
       );
       return;
     }
+
+    // No active story: let the user pick a photo to build a highlight directly.
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1080,
+    );
+    if (x == null || !context.mounted) return;
+    final title = await _promptTitle(context);
+    if (title == null || title.isEmpty) return;
+    await repo.createHighlightFromMedia(
+      uid: uid,
+      title: title,
+      file: File(x.path),
+    );
+  }
+
+  Future<String?> _promptTitle(BuildContext context) {
     final controller = TextEditingController();
-    final ok = await showDialog<bool>(
+    return showDialog<String>(
       context: context,
       builder: (dctx) => Dialog(
         backgroundColor: Colors.transparent,
@@ -156,23 +181,13 @@ class HighlightsRow extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
               AppButton(
                 label: tr('Tạo', 'Create'),
-                onPressed: () => Navigator.pop(dctx, true),
+                onPressed: () => Navigator.pop(dctx, controller.text.trim()),
               ),
             ],
           ),
         ),
       ),
     );
-    if (ok == true && controller.text.trim().isNotEmpty) {
-      await ref
-          .read(highlightRepositoryProvider)
-          .createHighlight(
-            uid: uid,
-            title: controller.text.trim(),
-            coverUrl: stories.first.mediaUrl,
-            storyIds: stories.map((s) => s.storyId).toList(),
-          );
-    }
   }
 
   Future<void> _open(BuildContext context, WidgetRef ref, Highlight h) async {
@@ -181,6 +196,21 @@ class HighlightsRow extends ConsumerWidget {
     for (final id in h.storyIds) {
       final s = await repo.getStory(id);
       if (s != null) stories.add(s);
+    }
+    // A media-only highlight (no source stories) renders its cover as a frame.
+    if (stories.isEmpty && h.coverUrl.isNotEmpty) {
+      final now = DateTime.now();
+      stories.add(
+        Story(
+          storyId: h.id,
+          authorId: uid,
+          mediaUrl: h.coverUrl,
+          mediaType: 'image',
+          caption: h.title,
+          createdAt: now,
+          expiresAt: now,
+        ),
+      );
     }
     if (stories.isEmpty || !context.mounted) return;
     Navigator.of(context).push(
