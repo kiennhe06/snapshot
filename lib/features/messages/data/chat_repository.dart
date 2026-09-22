@@ -351,10 +351,24 @@ class ChatRepository {
 
   // ---- Notes -----------------------------------------------------------------
 
-  /// Sets the current user's inbox note (auto-expires after 24h).
-  Future<void> setNote(String uid, String text) {
+  /// Sets the current user's inbox note (auto-expires after 24h), optionally
+  /// with an attached track.
+  Future<void> setNote(
+    String uid,
+    String text, {
+    String? musicTitle,
+    String? musicArtist,
+    String? musicCoverUrl,
+    String? musicPreviewUrl,
+    String? musicUrl,
+  }) {
     return _db.collection('users').doc(uid).collection('meta').doc('note').set({
       'text': text,
+      'musicTitle': musicTitle,
+      'musicArtist': musicArtist,
+      'musicCoverUrl': musicCoverUrl,
+      'musicPreviewUrl': musicPreviewUrl,
+      'musicUrl': musicUrl,
       'expiresAt': Timestamp.fromDate(
         DateTime.now().add(const Duration(hours: 24)),
       ),

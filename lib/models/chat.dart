@@ -182,17 +182,39 @@ class Message {
 
 /// A short note shown at the top of the inbox: `users/{uid}/meta/note`.
 class Note {
-  const Note({required this.uid, required this.text, required this.expiresAt});
+  const Note({
+    required this.uid,
+    required this.text,
+    required this.expiresAt,
+    this.musicTitle,
+    this.musicArtist,
+    this.musicCoverUrl,
+    this.musicPreviewUrl,
+    this.musicUrl,
+  });
   final String uid;
   final String text;
   final DateTime expiresAt;
 
+  /// Optional attached track (iTunes), shown as "♫ title" on the note.
+  final String? musicTitle;
+  final String? musicArtist;
+  final String? musicCoverUrl;
+  final String? musicPreviewUrl;
+  final String? musicUrl;
+
   bool get isActive => DateTime.now().isBefore(expiresAt);
+  bool get hasMusic => (musicTitle ?? '').isNotEmpty;
 
   factory Note.fromMap(String uid, Map<String, dynamic> j) => Note(
     uid: uid,
     text: j['text'] as String? ?? '',
     expiresAt: _toDate(j['expiresAt']),
+    musicTitle: j['musicTitle'] as String?,
+    musicArtist: j['musicArtist'] as String?,
+    musicCoverUrl: j['musicCoverUrl'] as String?,
+    musicPreviewUrl: j['musicPreviewUrl'] as String?,
+    musicUrl: j['musicUrl'] as String?,
   );
 
   static DateTime _toDate(Object? v) {

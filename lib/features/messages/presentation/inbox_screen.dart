@@ -7,6 +7,8 @@ import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/app_user.dart';
 import '../../../models/chat.dart';
+import '../../../models/spotify_track.dart';
+import '../../post/presentation/spotify_picker_sheet.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
@@ -49,11 +51,45 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   Widget build(BuildContext context) {
     final chats = ref.watch(chatsProvider);
     final me = ref.watch(authStateProvider).valueOrNull?.uid;
+    final totalUnread = (chats.valueOrNull ?? const <Chat>[])
+        .fold<int>(0, (s, c) => s + c.unreadFor(me ?? ''));
 
     return AppScaffold(
       topBar: AppTopBar(
-        title: tr('Tin nhắn', 'Messages'),
         showBack: true,
+        titleWidget: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              tr('Tin nhắn', 'Messages'),
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: AppType.headline,
+                fontWeight: AppType.bold,
+              ),
+            ),
+            if (totalUnread > 0) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryBright, AppColors.primary],
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  tr('$totalUnread mới', '$totalUnread new'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: AppType.small,
+                    fontWeight: AppType.heavy,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           AppIconButton(
             icon: Icons.edit_square,
@@ -130,7 +166,7 @@ class _FilterBar extends StatelessWidget {
       (_InboxFilter.all, tr('Tất cả', 'All')),
       (_InboxFilter.dm, tr('Chat 1-1', 'DMs')),
       (_InboxFilter.group, tr('Nhóm', 'Groups')),
-      (_InboxFilter.channel, tr('Kênh', 'Channels')),
+      (_InboxFilter.channel, tr('Kênh thông báo', 'Channels')),
     ];
     return SizedBox(
       height: 40,
@@ -163,19 +199,33 @@ class _NotesStrip extends ConsumerWidget {
     final following = ref.watch(followingUsersProvider).valueOrNull ?? const [];
     final myProfile = ref.watch(myProfileProvider).valueOrNull;
 
-    return SizedBox(
-      height: 104,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            0,
+          ),
+          child: AppSectionLabel(tr('Ghi chú · 24h', 'Notes · 24h')),
         ),
-        children: [
-          _MyNote(me: me, profile: myProfile),
-          for (final u in following) _NoteAvatar(user: u),
-        ],
-      ),
+        SizedBox(
+          height: 104,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            children: [
+              _MyNote(me: me, profile: myProfile),
+              for (final u in following) _NoteAvatar(user: u),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -190,70 +240,234 @@ class _MyNote extends ConsumerWidget {
     final note = ref.watch(noteProvider(me)).valueOrNull;
     return _NoteColumn(
       photoUrl: profile?.photoUrl,
-      label: tr('Ghi chú', 'Note'),
-      noteText: note?.text,
+      label: tr('Ghi chú của bạn', 'Your note'),
+      note: note,
       isMine: true,
-      onTap: () => _editNote(context, ref, note?.text),
+      onTap: () => showAppSheet<void>(
+        context,
+        builder: (_) => _NoteComposerSheet(me: me, note: note),
+      ),
     );
   }
+}
 
-  Future<void> _editNote(
-    BuildContext context,
-    WidgetRef ref,
-    String? current,
-  ) async {
-    final controller = TextEditingController(text: current ?? '');
-    final result = await showAppSheet<String?>(
-      context,
-      builder: (sheetCtx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
-        ),
-        child: AppSheetSurface(
-          title: tr('Chia sẻ ghi chú', 'Share a note'),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppTextField(
-                controller: controller,
-                label: tr('Ghi chú (24 giờ)', 'Note (24h)'),
-                hint: tr('Bạn đang nghĩ gì?', 'What are you thinking?'),
-                maxLines: 2,
+/// Rich note composer matching the mockup: 60-char note, optional real track,
+/// audience label and a gradient share button. Notes auto-expire after 24h.
+class _NoteComposerSheet extends ConsumerStatefulWidget {
+  const _NoteComposerSheet({required this.me, required this.note});
+  final String me;
+  final Note? note;
+
+  @override
+  ConsumerState<_NoteComposerSheet> createState() => _NoteComposerSheetState();
+}
+
+class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
+  late final TextEditingController _text =
+      TextEditingController(text: widget.note?.text ?? '');
+  SpotifyTrack? _track;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final n = widget.note;
+    if (n != null && n.hasMusic) {
+      _track = SpotifyTrack(
+        id: n.musicUrl ?? n.musicTitle!,
+        name: n.musicTitle!,
+        artist: n.musicArtist ?? '',
+        coverUrl: n.musicCoverUrl ?? '',
+        spotifyUrl: n.musicUrl ?? '',
+        previewUrl: n.musicPreviewUrl,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickMusic() async {
+    final t = await showSpotifyPicker(context);
+    if (t != null && mounted) setState(() => _track = t);
+  }
+
+  Future<void> _share() async {
+    setState(() => _busy = true);
+    final repo = ref.read(chatRepositoryProvider);
+    final text = _text.text.trim();
+    if (text.isEmpty && _track == null) {
+      await repo.clearNote(widget.me);
+    } else {
+      await repo.setNote(
+        widget.me,
+        text,
+        musicTitle: _track?.name,
+        musicArtist: _track?.artist,
+        musicCoverUrl: _track?.coverUrl,
+        musicPreviewUrl: _track?.previewUrl,
+        musicUrl: _track?.spotifyUrl,
+      );
+    }
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: AppSheetSurface(
+        title: tr('Chia sẻ ghi chú', 'Share a note'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              tr(
+                'Ghi chú hiển thị trên đầu tin nhắn của bạn bè · 24 giờ',
+                'Shown on top of your friends\' inbox · 24h',
               ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.label,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.layer2,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (current != null)
-                    Expanded(
-                      child: AppButton(
-                        label: tr('Xoá', 'Delete'),
-                        variant: AppButtonVariant.secondary,
-                        height: 48,
-                        onPressed: () => Navigator.pop(sheetCtx, ''),
+                  TextField(
+                    controller: _text,
+                    maxLength: 60,
+                    maxLines: 2,
+                    minLines: 1,
+                    onChanged: (_) => setState(() {}),
+                    style: TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      counterText: '',
+                      hintText: tr(
+                        'Bạn đang nghĩ gì? Chia sẻ cảm xúc hoặc bài hát yêu thích…',
+                        'What are you thinking? Share a mood or a song…',
                       ),
+                      hintStyle: TextStyle(color: AppColors.textTertiary),
                     ),
-                  if (current != null) const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: AppButton(
-                      label: tr('Chia sẻ', 'Share'),
-                      height: 48,
-                      onPressed: () => Navigator.pop(sheetCtx, controller.text),
-                    ),
+                  ),
+                  const Divider(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      PressScale(
+                        onTap: _pickMusic,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(color: AppColors.primary),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.music_note_rounded,
+                                size: 15,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 150),
+                                child: Text(
+                                  _track == null
+                                      ? tr('Thêm nhạc', 'Add music')
+                                      : _track!.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: AppType.label,
+                                    fontWeight: AppType.bold,
+                                  ),
+                                ),
+                              ),
+                              if (_track != null) ...[
+                                const SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: () => setState(() => _track = null),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    size: 14,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${_text.text.characters.length}/60',
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: AppType.label,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Icon(
+                  Icons.group_outlined,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  tr(
+                    'Chia sẻ với người bạn theo dõi',
+                    'Shared with people you follow',
+                  ),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: AppType.label,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppGradientButton(
+              label: widget.note != null &&
+                      _text.text.trim().isEmpty &&
+                      _track == null
+                  ? tr('Xoá ghi chú', 'Remove note')
+                  : tr('Chia sẻ ghi chú', 'Share note'),
+              loading: _busy,
+              showArrow: false,
+              icon: Icons.auto_awesome_rounded,
+              onTap: _share,
+            ),
+          ],
         ),
       ),
     );
-    if (result == null) return;
-    final repo = ref.read(chatRepositoryProvider);
-    if (result.trim().isEmpty) {
-      await repo.clearNote(me);
-    } else {
-      await repo.setNote(me, result.trim());
-    }
   }
 }
 
@@ -269,7 +483,7 @@ class _NoteAvatar extends ConsumerWidget {
     return _NoteColumn(
       photoUrl: user.photoUrl,
       label: user.username.isNotEmpty ? user.username : user.displayName,
-      noteText: note.text,
+      note: note,
       isMine: false,
       onTap: () async {
         if (me == null) return;
@@ -289,23 +503,38 @@ class _NoteColumn extends StatelessWidget {
   const _NoteColumn({
     required this.photoUrl,
     required this.label,
-    required this.noteText,
+    required this.note,
     required this.isMine,
     required this.onTap,
   });
 
   final String? photoUrl;
   final String label;
-  final String? noteText;
+  final Note? note;
   final bool isMine;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final hasMusic = note?.hasMusic ?? false;
+    final bubble = hasMusic
+        ? '♪ ${note!.musicTitle}'
+        : ((note?.text.isNotEmpty ?? false)
+              ? note!.text
+              : (isMine ? tr('Ghi chú...', 'Note...') : ''));
+    // Ring: music notes get an accent ring; your own note gets the brand ring.
+    final ring = hasMusic
+        ? LinearGradient(colors: [AppColors.accent, AppColors.accent])
+        : (isMine
+              ? LinearGradient(
+                  colors: [AppColors.primaryBright, AppColors.primary],
+                )
+              : null);
+
     return PressScale(
       onTap: onTap,
       child: SizedBox(
-        width: 76,
+        width: 78,
         child: Column(
           children: [
             Stack(
@@ -314,15 +543,24 @@ class _NoteColumn extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
-                  child: AppAvatar(
-                    radius: 26,
-                    imageProvider: photoUrl != null
-                        ? CachedNetworkImageProvider(photoUrl!)
-                        : null,
+                  child: Container(
+                    padding: const EdgeInsets.all(2.5),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: ring,
+                      color: ring == null ? AppColors.layer3 : null,
+                    ),
+                    child: AppAvatar(
+                      radius: 24,
+                      imageProvider: photoUrl != null
+                          ? CachedNetworkImageProvider(photoUrl!)
+                          : null,
+                    ),
                   ),
                 ),
+                // Status bubble above the avatar.
                 Container(
-                  constraints: const BoxConstraints(maxWidth: 74),
+                  constraints: const BoxConstraints(maxWidth: 76),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
@@ -334,18 +572,37 @@ class _NoteColumn extends StatelessWidget {
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
                   child: Text(
-                    (noteText != null && noteText!.isNotEmpty)
-                        ? noteText!
-                        : (isMine ? '+' : ''),
+                    bubble,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: AppType.caption,
-                      color: AppColors.textPrimary,
+                      color: hasMusic ? AppColors.accent : AppColors.textPrimary,
+                      fontWeight: hasMusic ? AppType.bold : AppType.regular,
                     ),
                   ),
                 ),
+                // "+" affordance to add/edit your own note.
+                if (isMine)
+                  Positioned(
+                    right: 8,
+                    bottom: 0,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.layer1, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        size: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 4),
