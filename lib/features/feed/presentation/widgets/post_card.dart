@@ -2,6 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -32,8 +33,31 @@ class PostCard extends ConsumerStatefulWidget {
   ConsumerState<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends ConsumerState<PostCard> {
+class _PostCardState extends ConsumerState<PostCard>
+    with SingleTickerProviderStateMixin {
   int _page = 0;
+  late final AnimationController _heart = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 800),
+  );
+
+  @override
+  void dispose() {
+    _heart.dispose();
+    super.dispose();
+  }
+
+  /// Double-tap always likes (never unlikes), plays the heart burst + haptic.
+  void _onDoubleTapLike() {
+    HapticFeedback.mediumImpact();
+    _heart.forward(from: 0);
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    final liked =
+        ref.read(isLikedProvider(widget.post.postId)).valueOrNull ?? false;
+    if (!liked && uid != null) {
+      ref.read(feedRepositoryProvider).toggleLike(widget.post.postId, uid);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +150,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                             PressScale(
                               onTap: () {
                                 if (uid != null) {
+                                  HapticFeedback.lightImpact();
                                   ref
                                       .read(followRepositoryProvider)
                                       .follow(
@@ -174,7 +199,9 @@ class _PostCardState extends ConsumerState<PostCard> {
               borderRadius: BorderRadius.circular(AppRadius.lg),
               child: AspectRatio(
                 aspectRatio: 4 / 5,
-                child: Stack(
+                child: GestureDetector(
+                  onDoubleTap: _onDoubleTapLike,
+                  child: Stack(
                   fit: StackFit.expand,
                   children: [
                     PageView.builder(
@@ -226,7 +253,14 @@ class _PostCardState extends ConsumerState<PostCard> {
                           ),
                         ),
                       ),
+                    // Heart burst overlay on double-tap.
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: _HeartBurst(controller: _heart),
+                      ),
+                    ),
                   ],
+                ),
                 ),
               ),
             ),
@@ -287,6 +321,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                   color: isSaved ? AppColors.primary : null,
                   onTap: () {
                     if (uid != null) {
+                      HapticFeedback.lightImpact();
                       ref
                           .read(saveRepositoryProvider)
                           .toggleSave(uid: uid, postId: post.postId);
@@ -544,9 +579,43 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
       onTap: () {
         final uid = widget.uid;
         if (uid == null) return;
+        HapticFeedback.lightImpact();
         setState(() => _optimistic = !liked);
         ref.read(feedRepositoryProvider).toggleLike(post.postId, uid);
       },
+    );
+  }
+}
+
+/// A big white heart that pops (elastic) and fades out, played on double-tap.
+class _HeartBurst extends StatelessWidget {
+  const _HeartBurst({required this.controller});
+  final AnimationController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (_, _) {
+          final v = controller.value;
+          if (v == 0) return const SizedBox.shrink();
+          final pop = Curves.elasticOut.transform((v / 0.6).clamp(0.0, 1.0));
+          final opacity = v < 0.72 ? 1.0 : (1 - (v - 0.72) / 0.28);
+          return Opacity(
+            opacity: opacity.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: 0.5 + 0.7 * pop,
+              child: const Icon(
+                Icons.favorite_rounded,
+                color: Colors.white,
+                size: 104,
+                shadows: [Shadow(color: Colors.black54, blurRadius: 18)],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

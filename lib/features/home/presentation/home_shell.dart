@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -62,7 +63,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       bottomNavigationBar: AppBottomNav(
         items: _items,
         currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
+        onTap: (i) {
+          if (i != _index) HapticFeedback.selectionClick();
+          setState(() => _index = i);
+        },
         onCreate: () => context.push(Routes.createPost),
         createLabel: tr('Đăng bài', 'Post'),
       ),
