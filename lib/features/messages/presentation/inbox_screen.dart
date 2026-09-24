@@ -356,6 +356,7 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
+            // Note text box — only the text + counter, so nothing overlaps it.
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
@@ -369,8 +370,8 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
                   TextField(
                     controller: _text,
                     maxLength: 60,
-                    maxLines: 2,
-                    minLines: 1,
+                    maxLines: 3,
+                    minLines: 2,
                     onChanged: (_) => setState(() {}),
                     style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
@@ -384,73 +385,24 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
                       hintStyle: TextStyle(color: AppColors.textTertiary),
                     ),
                   ),
-                  const Divider(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      PressScale(
-                        onTap: _onMusicChipTap,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(color: AppColors.primary),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.music_note_rounded,
-                                size: 15,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 150),
-                                child: Text(
-                                  _track == null
-                                      ? tr('Thêm nhạc', 'Add music')
-                                      : _track!.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: AppType.label,
-                                    fontWeight: AppType.bold,
-                                  ),
-                                ),
-                              ),
-                              if (_track != null) ...[
-                                const SizedBox(width: 4),
-                                GestureDetector(
-                                  onTap: () => setState(() => _track = null),
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    size: 14,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${_text.text.characters.length}/60',
+                      style: TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: AppType.label,
                       ),
-                      const Spacer(),
-                      Text(
-                        '${_text.text.characters.length}/60',
-                        style: TextStyle(
-                          color: AppColors.textTertiary,
-                          fontSize: AppType.label,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.sm),
+            // Music sits on its own row below the note, never over the text.
+            _MusicChip(track: _track, onTap: _onMusicChipTap, onRemove: () {
+              setState(() => _track = null);
+            }),
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
@@ -485,6 +437,77 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
               onTap: _share,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The "Add music" / selected-track pill shown on its own row below the note
+/// text, so the music never overlaps what the user is typing.
+class _MusicChip extends StatelessWidget {
+  const _MusicChip({
+    required this.track,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  final SpotifyTrack? track;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(color: AppColors.primary),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.music_note_rounded,
+                size: 15,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 4),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 200),
+                child: Text(
+                  track == null
+                      ? tr('Thêm nhạc', 'Add music')
+                      : track!.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: AppType.label,
+                    fontWeight: AppType.bold,
+                  ),
+                ),
+              ),
+              if (track != null) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: onRemove,
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
