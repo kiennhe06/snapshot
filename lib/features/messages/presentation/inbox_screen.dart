@@ -212,7 +212,7 @@ class _NotesStrip extends ConsumerWidget {
           child: AppSectionLabel(tr('Ghi chú · 24h', 'Notes · 24h')),
         ),
         SizedBox(
-          height: 104,
+          height: 116,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(
