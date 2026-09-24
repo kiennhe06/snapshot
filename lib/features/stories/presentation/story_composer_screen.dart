@@ -249,42 +249,107 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   Widget _picker() {
     return AppScaffold(
       topBar: AppTopBar(title: tr('Tạo tin', 'Create story'), showBack: true),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.xxl,
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (widget.addYoursPrompt != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.xxl),
+            // Hero: glowing story ring.
+            Center(
+              child: Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.accent, AppColors.primary],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.5),
+                      blurRadius: 36,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 42,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              tr('Chia sẻ khoảnh khắc', 'Share a moment'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: AppType.title,
+                fontWeight: AppType.heavy,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              tr(
+                'Tin của bạn sẽ tự biến mất sau 24 giờ',
+                'Your story disappears after 24 hours',
+              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: AppType.subhead,
+              ),
+            ),
+            if (widget.addYoursPrompt != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
                 child: Text(
                   '${tr('Thử thách', 'Challenge')}: ${widget.addYoursPrompt}',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: AppType.bold,
+                    fontSize: AppType.label,
                   ),
                 ),
               ),
-            AppButton(
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+            _SourceTile(
+              icon: Icons.photo_library_rounded,
               label: tr('Chọn ảnh/video', 'Pick photo/video'),
-              icon: Icons.photo_library_outlined,
-              fullWidth: false,
-              onPressed: () => _pick(source: ImageSource.gallery, video: false),
+              subtitle: tr('Từ thư viện của bạn', 'From your library'),
+              primary: true,
+              onTap: () => _pick(source: ImageSource.gallery, video: false),
             ),
             const SizedBox(height: AppSpacing.md),
-            AppButton(
+            _SourceTile(
+              icon: Icons.photo_camera_rounded,
               label: tr('Chụp ảnh mới', 'Take a photo'),
-              variant: AppButtonVariant.secondary,
-              icon: Icons.photo_camera_outlined,
-              fullWidth: false,
-              onPressed: () => _pick(source: ImageSource.camera, video: false),
+              subtitle: tr('Dùng camera', 'Use the camera'),
+              onTap: () => _pick(source: ImageSource.camera, video: false),
             ),
             const SizedBox(height: AppSpacing.md),
-            AppButton(
+            _SourceTile(
+              icon: Icons.videocam_rounded,
               label: tr('Chọn video', 'Pick video'),
-              variant: AppButtonVariant.secondary,
-              icon: Icons.videocam_outlined,
-              fullWidth: false,
-              onPressed: () => _pick(source: ImageSource.gallery, video: true),
+              subtitle: tr('Từ thư viện của bạn', 'From your library'),
+              onTap: () => _pick(source: ImageSource.gallery, video: true),
             ),
           ],
         ),
@@ -554,6 +619,100 @@ class _ComposerMusicChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A full-width source option row: tinted icon, label + subtitle, chevron.
+/// [primary] paints the brand gradient for the recommended action.
+class _SourceTile extends StatelessWidget {
+  const _SourceTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+    this.primary = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = primary ? Colors.white : AppColors.textPrimary;
+    return PressScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: primary
+              ? LinearGradient(
+                  colors: [AppColors.primaryBright, AppColors.primary],
+                )
+              : null,
+          color: primary ? null : AppColors.layer1,
+          borderRadius: AppRadius.brLg,
+          border: Border.all(
+            color: primary ? Colors.transparent : AppColors.borderSubtle,
+          ),
+          boxShadow: primary ? AppShadows.soft : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: primary
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : AppColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Icon(
+                icon,
+                color: primary ? Colors.white : AppColors.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: AppType.subhead,
+                      fontWeight: AppType.bold,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: primary
+                          ? Colors.white.withValues(alpha: 0.85)
+                          : AppColors.textSecondary,
+                      fontSize: AppType.label,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: primary
+                  ? Colors.white.withValues(alpha: 0.9)
+                  : AppColors.textTertiary,
+            ),
+          ],
+        ),
       ),
     );
   }
