@@ -19,6 +19,7 @@ class ProfileHeader extends StatelessWidget {
     this.onEditProfile,
     this.onToggleFollow,
     this.onShowQr,
+    this.onChangeAvatar,
   });
 
   final AppUser user;
@@ -29,6 +30,9 @@ class ProfileHeader extends StatelessWidget {
   final VoidCallback? onToggleFollow;
   final VoidCallback? onShowQr;
 
+  /// Tapping the owner's avatar picks a new photo and uploads it immediately.
+  final VoidCallback? onChangeAvatar;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -38,12 +42,10 @@ class ProfileHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              AppAvatar(
-                imageProvider: user.photoUrl != null
-                    ? CachedNetworkImageProvider(user.photoUrl!)
-                    : null,
-                radius: 40,
-                icon: Icons.person_rounded,
+              _AvatarSlot(
+                user: user,
+                isMe: isMe,
+                onChangeAvatar: onChangeAvatar,
               ),
               const SizedBox(width: AppSpacing.xl),
               Expanded(
@@ -157,6 +159,63 @@ class ProfileHeader extends StatelessWidget {
           username: user.username,
           showFollowers: followers,
         ),
+      ),
+    );
+  }
+}
+
+/// The profile avatar. For the signed-in owner it is tappable and shows a
+/// small camera badge, signalling that tapping changes the profile photo.
+class _AvatarSlot extends StatelessWidget {
+  const _AvatarSlot({
+    required this.user,
+    required this.isMe,
+    required this.onChangeAvatar,
+  });
+
+  final AppUser user;
+  final bool isMe;
+  final VoidCallback? onChangeAvatar;
+
+  @override
+  Widget build(BuildContext context) {
+    final avatar = AppAvatar(
+      imageProvider: user.photoUrl != null
+          ? CachedNetworkImageProvider(user.photoUrl!)
+          : null,
+      radius: 40,
+      icon: Icons.person_rounded,
+    );
+
+    if (!isMe) return avatar;
+
+    return PressScale(
+      onTap: onChangeAvatar,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          avatar,
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryBright],
+                ),
+                border: Border.all(color: AppColors.scaffold, width: 2.5),
+              ),
+              child: const Icon(
+                Icons.add_a_photo_rounded,
+                size: 14,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

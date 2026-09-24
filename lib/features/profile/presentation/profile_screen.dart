@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/widgets/components/components.dart';
@@ -118,6 +121,7 @@ class _ProfileBody extends ConsumerWidget {
           onEditProfile: () => context.push(Routes.editProfile),
           onToggleFollow: () => _toggleFollow(ref, isFollowing),
           onShowQr: () => context.push('${Routes.qrNametag}?uid=${user.uid}'),
+          onChangeAvatar: () => _changeAvatar(context, ref),
         ),
         HighlightsRow(uid: user.uid, isMe: isMe),
         if (locked)
@@ -151,6 +155,50 @@ class _ProfileBody extends ConsumerWidget {
           ),
       ],
     );
+  }
+
+  /// Picks a photo from the gallery, uploads it, and saves it as the new
+  /// avatar. Runs entirely from the profile screen so the owner can change
+  /// their picture with a single tap on the avatar.
+  Future<void> _changeAvatar(BuildContext context, WidgetRef ref) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return;
+
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1080,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+
+    if (context.mounted) {
+      showAppToast(context, tr('Đang tải ảnh lên…', 'Uploading photo…'));
+    }
+    try {
+      final photoUrl = await ref
+          .read(storageServiceProvider)
+          .uploadAvatar(uid, File(picked.path));
+      await ref
+          .read(userRepositoryProvider)
+          .updateProfile(uid: uid, photoUrl: photoUrl);
+      if (context.mounted) {
+        showAppToast(
+          context,
+          tr('Đã cập nhật ảnh đại diện.', 'Profile photo updated.'),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        showAppToast(
+          context,
+          tr(
+            'Không tải được ảnh. Vui lòng thử lại.',
+            'Could not upload photo. Please try again.',
+          ),
+          type: AppToastType.error,
+        );
+      }
+    }
   }
 
   Future<void> _toggleFollow(WidgetRef ref, bool isFollowing) async {
