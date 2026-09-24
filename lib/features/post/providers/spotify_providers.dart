@@ -13,6 +13,14 @@ final spotifySearchProvider = FutureProvider.autoDispose
       return ref.watch(spotifyServiceProvider).searchTracks(query);
     });
 
+/// Suggested tracks shown before the user searches (popular songs).
+final spotifySuggestionsProvider = FutureProvider.autoDispose<List<SpotifyTrack>>(
+  (ref) {
+    ref.keepAlive(); // Cache across picker re-opens within a session.
+    return ref.watch(spotifyServiceProvider).suggestedTracks();
+  },
+);
+
 /// Resolves a pasted Spotify track link (free, via oEmbed).
 final spotifyResolveProvider = FutureProvider.autoDispose
     .family<SpotifyTrack?, String>((ref, url) {

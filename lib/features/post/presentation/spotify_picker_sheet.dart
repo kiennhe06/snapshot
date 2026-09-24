@@ -118,9 +118,10 @@ class _SpotifyPickerState extends ConsumerState<_SpotifyPicker> {
   );
 
   Widget _searchResults() {
-    final results = _query.isEmpty
-        ? const AsyncValue<List<SpotifyTrack>>.data([])
-        : ref.watch(spotifySearchProvider(_query));
+    // Before the user types, show popular suggestions instead of an empty box.
+    if (_query.isEmpty) return _suggestions();
+
+    final results = ref.watch(spotifySearchProvider(_query));
     return results.when(
       loading: () => const Padding(
         padding: EdgeInsets.all(AppSpacing.xl),
@@ -134,15 +135,6 @@ class _SpotifyPickerState extends ConsumerState<_SpotifyPicker> {
         ),
       ),
       data: (tracks) {
-        if (_query.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Text(
-              tr('Nhập tên bài hát để tìm.', 'Type a song to search.'),
-              style: TextStyle(color: AppColors.textTertiary),
-            ),
-          );
-        }
         if (tracks.isEmpty) {
           return Padding(
             padding: const EdgeInsets.all(AppSpacing.xl),
@@ -159,6 +151,56 @@ class _SpotifyPickerState extends ConsumerState<_SpotifyPicker> {
             track: tracks[i],
             onTap: () => Navigator.pop(context, tracks[i]),
           ),
+        );
+      },
+    );
+  }
+
+  /// Popular songs shown before the user searches, with a section label.
+  Widget _suggestions() {
+    final suggestions = ref.watch(spotifySuggestionsProvider);
+    return suggestions.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: LoadingViewInline(),
+      ),
+      error: (_, _) => _hint(
+        tr('Không tải được đề xuất.', 'Could not load suggestions.'),
+      ),
+      data: (tracks) {
+        if (tracks.isEmpty) {
+          return _hint(tr('Nhập tên bài hát để tìm.', 'Type a song to search.'));
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.xs,
+                bottom: 6,
+              ),
+              child: Text(
+                tr('Đề xuất cho bạn', 'Suggested for you'),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: AppType.label,
+                  fontWeight: AppType.bold,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: tracks.length,
+                itemBuilder: (_, i) => _TrackRow(
+                  track: tracks[i],
+                  onTap: () => Navigator.pop(context, tracks[i]),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

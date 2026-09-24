@@ -9,6 +9,7 @@ import '../../../models/app_user.dart';
 import '../../../models/chat.dart';
 import '../../../models/spotify_track.dart';
 import '../../post/presentation/spotify_picker_sheet.dart';
+import '../../post/presentation/track_detail_sheet.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
@@ -295,6 +296,25 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
     if (t != null && mounted) setState(() => _track = t);
   }
 
+  /// Chip tap: with no song, opens the picker; with a song selected, opens its
+  /// detail sheet (preview + change/remove).
+  Future<void> _onMusicChipTap() async {
+    if (_track == null) {
+      await _pickMusic();
+      return;
+    }
+    final action = await showTrackDetail(context, _track!);
+    if (!mounted) return;
+    switch (action) {
+      case TrackDetailAction.change:
+        await _pickMusic();
+      case TrackDetailAction.remove:
+        setState(() => _track = null);
+      case null:
+        break;
+    }
+  }
+
   Future<void> _share() async {
     setState(() => _busy = true);
     final repo = ref.read(chatRepositoryProvider);
@@ -368,7 +388,7 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
                   Row(
                     children: [
                       PressScale(
-                        onTap: _pickMusic,
+                        onTap: _onMusicChipTap,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.sm,
