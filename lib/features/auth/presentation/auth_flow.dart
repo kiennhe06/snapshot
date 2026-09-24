@@ -13,19 +13,21 @@ Future<void> handlePostSignIn(
   required User user,
   required String signInMethod,
 }) async {
+  // Capture providers BEFORE any await: a successful sign-in flips the auth
+  // state and the router disposes the calling screen mid-flight, which would
+  // otherwise make a post-await ref.read throw "used after dispose".
+  final sessionService = ref.read(sessionServiceProvider);
+  final accounts = ref.read(accountsProvider.notifier);
+
   // Ensure a minimal users/{uid} profile document (merge = safe if it exists).
   // createdAt is only set on first write via a separate get-check.
   await _ensureUserDoc(user);
 
   // Login history / device record (non-fatal on failure).
-  await ref
-      .read(sessionServiceProvider)
-      .recordLogin(uid: user.uid, signInMethod: signInMethod);
+  await sessionService.recordLogin(uid: user.uid, signInMethod: signInMethod);
 
   // Remember account locally for the multi-account switcher.
-  await ref
-      .read(accountsProvider.notifier)
-      .remember(
+  await accounts.remember(
         StoredAccount(
           uid: user.uid,
           displayName:
