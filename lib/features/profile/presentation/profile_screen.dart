@@ -109,7 +109,10 @@ class _ProfileBody extends ConsumerWidget {
     // Private gating: only owner or followers can see posts.
     final locked = !isMe && user.isPrivate && !isFollowing;
 
-    return Column(
+    // The scroll-away header: avatar/stats/bio + story highlights. Shared by
+    // both the locked view and the tabbed view so it collapses on scroll.
+    final header = Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         ProfileHeader(
           user: user,
@@ -124,8 +127,15 @@ class _ProfileBody extends ConsumerWidget {
           onChangeAvatar: () => _changeAvatar(context, ref),
         ),
         HighlightsRow(uid: user.uid, isMe: isMe),
-        if (locked)
-          Expanded(
+      ],
+    );
+
+    if (locked) {
+      return ListView(
+        children: [
+          header,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.4,
             child: EmptyView(
               message: tr(
                 'Đây là tài khoản riêng tư.\nHãy theo dõi để xem bài viết.',
@@ -133,27 +143,27 @@ class _ProfileBody extends ConsumerWidget {
               ),
               icon: Icons.lock_outline_rounded,
             ),
-          )
-        else
-          Expanded(
-            child: AsyncValueView<List<Post>>(
-              value: postsAsync,
-              onRetry: () => ref.invalidate(authoredPostsProvider(user.uid)),
-              builder: (posts) {
-                // Followers-only posts are hidden from non-followers.
-                final canSeeFollowersOnly = isMe || isFollowing;
-                final vis = canSeeFollowersOnly
-                    ? posts
-                    : posts.where((p) => !p.isFollowersOnly).toList();
-                return _ProfileTabs(
-                  authorUid: user.uid,
-                  isMe: isMe,
-                  posts: vis,
-                );
-              },
-            ),
           ),
-      ],
+        ],
+      );
+    }
+
+    return AsyncValueView<List<Post>>(
+      value: postsAsync,
+      onRetry: () => ref.invalidate(authoredPostsProvider(user.uid)),
+      builder: (posts) {
+        // Followers-only posts are hidden from non-followers.
+        final canSeeFollowersOnly = isMe || isFollowing;
+        final vis = canSeeFollowersOnly
+            ? posts
+            : posts.where((p) => !p.isFollowersOnly).toList();
+        return _ProfileTabs(
+          authorUid: user.uid,
+          isMe: isMe,
+          posts: vis,
+          header: header,
+        );
+      },
     );
   }
 
@@ -218,18 +228,38 @@ class _ProfileTabs extends ConsumerStatefulWidget {
     required this.authorUid,
     required this.isMe,
     required this.posts,
+    required this.header,
   });
 
   final String authorUid;
   final bool isMe;
   final List<Post> posts;
 
+  /// Scroll-away header (avatar/bio + highlights) shown above the pinned tabs.
+  final Widget header;
+
   @override
   ConsumerState<_ProfileTabs> createState() => _ProfileTabsState();
 }
 
-class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
-  int _tab = 0;
+class _ProfileTabsState extends ConsumerState<_ProfileTabs>
+    with SingleTickerProviderStateMixin {
+  late final TabController _controller = TabController(length: 3, vsync: this);
+
+  @override
+  void initState() {
+    super.initState();
+    // Keep the active-tab underline in sync with taps and swipes.
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -244,65 +274,74 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
       if (widget.isMe) _showPostActions(context, ref, post);
     }
 
-    return Column(
-      children: [
-        AppIconTabs(
-          index: _tab,
-          icons: const [
-            Icons.grid_on_rounded,
-            Icons.movie_outlined,
-            Icons.person_pin_outlined,
-          ],
-          onChanged: (i) => setState(() => _tab = i),
-        ),
-        Expanded(
-          child: IndexedStack(
-            index: _tab,
-            children: [
-              // Grid: pinned row on top, then all active posts.
-              CustomScrollView(
-                slivers: [
-                  if (pinned.isNotEmpty)
-                    SliverToBoxAdapter(child: _PinnedRow(posts: pinned)),
-                  SliverFillRemaining(
-                    hasScrollBody: true,
-                    child: PostGrid(
-                      posts: active,
-                      emptyMessage: widget.isMe
-                          ? tr(
-                              'Chưa có bài viết. Nhấn + để đăng bài đầu tiên.',
-                              'No posts yet. Tap + to share your first one.',
-                            )
-                          : tr('Chưa có bài viết nào.', 'No posts yet.'),
-                      onTap: (p) => _showPostViewer(context, p),
-                      onLongPress: onLongPress,
-                    ),
-                  ),
+    return NestedScrollView(
+      headerSliverBuilder: (context, _) => [
+        // Avatar / bio / highlights — scrolls away as the grid scrolls up.
+        SliverToBoxAdapter(child: widget.header),
+        // The media tabs stay pinned below the collapsed header.
+        SliverOverlapAbsorber(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+          sliver: SliverPersistentHeader(
+            pinned: true,
+            delegate: _TabBarDelegate(
+              AppIconTabs(
+                index: _controller.index,
+                icons: const [
+                  Icons.grid_on_rounded,
+                  Icons.movie_outlined,
+                  Icons.person_pin_outlined,
                 ],
+                onChanged: (i) => _controller.animateTo(i),
               ),
-              PostGrid(
-                posts: reels,
-                emptyMessage: tr(
-                  'Chưa có video/reels nào.',
-                  'No videos/reels yet.',
-                ),
-                emptyIcon: Icons.movie_outlined,
-                onTap: (p) => _showPostViewer(context, p),
-                onLongPress: onLongPress,
-              ),
-              PostGrid(
-                posts: tagged,
-                emptyMessage: tr(
-                  'Chưa có bài viết được gắn thẻ.',
-                  'No tagged posts yet.',
-                ),
-                emptyIcon: Icons.person_pin_outlined,
-                onTap: (p) => _showPostViewer(context, p),
-              ),
-            ],
+            ),
           ),
         ),
       ],
+      body: TabBarView(
+        controller: _controller,
+        children: [
+          // Grid: pinned row on top, then all active posts.
+          _TabGridView(
+            leading: pinned.isNotEmpty
+                ? SliverToBoxAdapter(child: _PinnedRow(posts: pinned))
+                : null,
+            grid: SliverPostGrid(
+              posts: active,
+              emptyMessage: widget.isMe
+                  ? tr(
+                      'Chưa có bài viết. Nhấn + để đăng bài đầu tiên.',
+                      'No posts yet. Tap + to share your first one.',
+                    )
+                  : tr('Chưa có bài viết nào.', 'No posts yet.'),
+              onTap: (p) => _showPostViewer(context, p),
+              onLongPress: onLongPress,
+            ),
+          ),
+          _TabGridView(
+            grid: SliverPostGrid(
+              posts: reels,
+              emptyMessage: tr(
+                'Chưa có video/reels nào.',
+                'No videos/reels yet.',
+              ),
+              emptyIcon: Icons.movie_outlined,
+              onTap: (p) => _showPostViewer(context, p),
+              onLongPress: onLongPress,
+            ),
+          ),
+          _TabGridView(
+            grid: SliverPostGrid(
+              posts: tagged,
+              emptyMessage: tr(
+                'Chưa có bài viết được gắn thẻ.',
+                'No tagged posts yet.',
+              ),
+              emptyIcon: Icons.person_pin_outlined,
+              onTap: (p) => _showPostViewer(context, p),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -382,6 +421,55 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs> {
       ),
     );
   }
+}
+
+/// One tab's body inside the profile NestedScrollView: injects the pinned
+/// header's overlap, then an optional leading sliver and the grid sliver.
+class _TabGridView extends StatelessWidget {
+  const _TabGridView({required this.grid, this.leading});
+
+  final Widget grid;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        ),
+        ?leading,
+        grid,
+      ],
+    );
+  }
+}
+
+/// Pinned-header delegate hosting the media tab strip with an opaque backing
+/// so grid cells don't show through while it's stuck to the top.
+class _TabBarDelegate extends SliverPersistentHeaderDelegate {
+  _TabBarDelegate(this.child);
+
+  final Widget child;
+  static const double _height = 50;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      height: _height,
+      color: AppColors.scaffold,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_TabBarDelegate oldDelegate) => oldDelegate.child != child;
 }
 
 class _PinnedRow extends StatelessWidget {
