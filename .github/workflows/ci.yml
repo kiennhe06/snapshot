@@ -33,6 +33,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # The real lib/firebase_options.dart is git-ignored (holds project keys);
+      # provide a placeholder so analysis/tests can compile. Tests never call
+      # Firebase.initializeApp, so the dummy values are never used.
+      - name: Provide placeholder Firebase config
+        run: |
+          if [ ! -f lib/firebase_options.dart ]; then
+            cp ci/firebase_options.stub.dart lib/firebase_options.dart
+          fi
+
       - name: Static analysis
         run: flutter analyze
 
