@@ -62,3 +62,8 @@ android/key.properties
 # Spotify app credentials (client secret) — PUBLIC repo, never commit.
 lib/core/spotify_config.dart
 
+# Firebase Admin service-account keys — secret, never commit.
+**/serviceAccount.json
+*serviceAccount*.json
+tools/maintenance/node_modules/
+

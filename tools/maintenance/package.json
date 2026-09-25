@@ -1,0 +1,14 @@
+{
+  "name": "snapshot-maintenance",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Data-integrity maintenance for the Snapshot Firestore backend: reconcile denormalized counters, backfill derived fields, and purge expired ephemeral docs.",
+  "scripts": {
+    "reconcile": "node reconcile.mjs",
+    "reconcile:fix": "node reconcile.mjs --fix"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

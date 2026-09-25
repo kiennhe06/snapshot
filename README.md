@@ -27,5 +27,18 @@ Sau đó điền **Web client id** (oauth_client type 3, lấy từ `google-serv
 flutter run
 ```
 
-## Firestore rules
-Xem `firestore.rules`. Deploy: `firebase deploy --only firestore:rules`.
+## Firestore rules & indexes
+- Rules: `firestore.rules`
+- Indexes (as code): `firestore.indexes.json`
+- Deploy cả hai: `firebase deploy --only firestore:rules,firestore:indexes`
+
+## Automation
+Ba lớp tự động hoá bổ trợ nhau (không cần Blaze):
+
+| Lớp | Nơi | Việc |
+| --- | --- | --- |
+| **CI** | `.github/workflows/ci.yml` | Mỗi push/PR lên `main` chạy `flutter analyze` + `flutter test` |
+| **Firestore-as-code** | `firestore.indexes.json`, `scripts/enable-firestore-ttl.sh` | Index composite khai báo bằng code; TTL native tự xoá story/note hết hạn (chạy `scripts/enable-firestore-ttl.sh` một lần) |
+| **Reconcile** | `tools/maintenance/`, `.github/workflows/reconcile.yml` | Tính lại mọi bộ đếm (like/comment/follower/post) + backfill `contributorIds` + dọn doc hết hạn. Chạy tay hoặc theo lịch hằng tuần |
+
+Chi tiết reconcile: `tools/maintenance/README.md`.

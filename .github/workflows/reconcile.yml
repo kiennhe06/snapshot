@@ -1,0 +1,67 @@
+name: Reconcile data
+
+# Recomputes Firestore counters and purges expired ephemeral docs. Weekly
+# dry-run by default; run manually with "apply" checked to write fixes.
+#
+# Requires a repo secret FIREBASE_SERVICE_ACCOUNT holding the JSON of a Firebase
+# service-account key (Project settings → Service accounts → Generate key).
+on:
+  schedule:
+    - cron: '0 3 * * 1' # Mondays 03:00 UTC — dry run
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Apply fixes (leave off for a dry run)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: reconcile
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Reconcile counters
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for service-account secret
+        id: check
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "FIREBASE_SERVICE_ACCOUNT secret not set — skipping."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Write service account
+        if: steps.check.outputs.configured == 'true'
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > tools/maintenance/serviceAccount.json
+
+      - name: Install deps
+        if: steps.check.outputs.configured == 'true'
+        working-directory: tools/maintenance
+        run: npm install --no-audit --no-fund
+
+      - name: Reconcile
+        if: steps.check.outputs.configured == 'true'
+        working-directory: tools/maintenance
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ./serviceAccount.json
+        run: node reconcile.mjs ${{ (github.event_name == 'workflow_dispatch' && inputs.apply) && '--fix' || '' }}
+
+      - name: Clean up
+        if: always()
+        run: rm -f tools/maintenance/serviceAccount.json
