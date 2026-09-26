@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design/motion.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/story.dart';
@@ -175,20 +176,25 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Media
-            if (_current.isVideo)
-              AppVideo(
-                url: _current.mediaUrl,
-                active: true,
-                fit: BoxFit.contain,
-                showControls: false,
-              )
-            else
-              CachedNetworkImage(
-                imageUrl: _current.mediaUrl,
-                fit: BoxFit.contain,
-                placeholder: (_, _) => const ColoredBox(color: Colors.black),
-              ),
+            // Media — cross-fades as the story advances (keyed by storyId).
+            AnimatedSwitcher(
+              duration: Motion.dur(context, AppMotion.base),
+              child: _current.isVideo
+                  ? AppVideo(
+                      key: ValueKey(_current.storyId),
+                      url: _current.mediaUrl,
+                      active: true,
+                      fit: BoxFit.contain,
+                      showControls: false,
+                    )
+                  : CachedNetworkImage(
+                      key: ValueKey(_current.storyId),
+                      imageUrl: _current.mediaUrl,
+                      fit: BoxFit.contain,
+                      placeholder: (_, _) =>
+                          const ColoredBox(color: Colors.black),
+                    ),
+            ),
 
             // Stickers
             for (final s in _current.stickers)
@@ -225,19 +231,22 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: AppColors.layer3,
-                          backgroundImage: author?.photoUrl != null
-                              ? CachedNetworkImageProvider(author!.photoUrl!)
-                              : null,
-                          child: author?.photoUrl == null
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 18,
-                                  color: Colors.white,
-                                )
-                              : null,
+                        Hero(
+                          tag: 'story-avatar-${_current.authorId}',
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: AppColors.layer3,
+                            backgroundImage: author?.photoUrl != null
+                                ? CachedNetworkImageProvider(author!.photoUrl!)
+                                : null,
+                            child: author?.photoUrl == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 18,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Flexible(

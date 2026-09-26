@@ -106,8 +106,13 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
         onRetry: () => ref.invalidate(chatsProvider),
         builder: (list) {
           final filtered = list.where(_matchesFilter).toList();
-          return ListView(
-            children: [
+          return RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: AppColors.layer2,
+            onRefresh: () async => ref.invalidate(chatsProvider),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
               if (me != null) _NotesStrip(me: me),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -147,7 +152,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
               else
                 for (final c in filtered)
                   _ChatRow(chat: c, me: me ?? '', query: _query),
-            ],
+              ],
+            ),
           );
         },
       ),

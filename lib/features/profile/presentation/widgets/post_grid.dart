@@ -5,6 +5,7 @@ import 'package:snapshot/core/design/tokens.dart';
 import '../../../../core/utils/format.dart';
 import '../../../../models/post.dart';
 import '../../../../widgets/empty_view.dart';
+import '../../../../widgets/motion/motion.dart';
 
 /// A 3-column grid of post covers. Tapping a cell calls [onTap]; long-pressing
 /// calls [onLongPress] (used on the owner's profile for pin/archive actions).
@@ -59,6 +60,7 @@ class SliverPostGrid extends StatelessWidget {
     this.emptyIcon = Icons.grid_on_rounded,
     this.onTap,
     this.onLongPress,
+    this.entered,
   });
 
   final List<Post> posts;
@@ -66,6 +68,10 @@ class SliverPostGrid extends StatelessWidget {
   final IconData emptyIcon;
   final void Function(Post post)? onTap;
   final void Function(Post post)? onLongPress;
+
+  /// Ids of cells that have already animated in. Pass a set owned by the parent
+  /// so the grid assembles once and recycled cells don't re-animate on scroll.
+  final Set<String>? entered;
 
   @override
   Widget build(BuildContext context) {
@@ -79,14 +85,20 @@ class SliverPostGrid extends StatelessWidget {
       padding: const EdgeInsets.all(2),
       sliver: SliverGrid(
         gridDelegate: _gridDelegate,
-        delegate: SliverChildBuilderDelegate(
-          (_, i) => PostGridCell(
-            post: posts[i],
-            onTap: onTap,
-            onLongPress: onLongPress,
-          ),
-          childCount: posts.length,
-        ),
+        delegate: SliverChildBuilderDelegate((_, i) {
+          final post = posts[i];
+          final firstTime = entered?.add(post.postId) ?? true;
+          return MotionEntrance(
+            index: i,
+            animate: firstTime,
+            offset: 10,
+            child: PostGridCell(
+              post: post,
+              onTap: onTap,
+              onLongPress: onLongPress,
+            ),
+          );
+        }, childCount: posts.length),
       ),
     );
   }
@@ -196,6 +208,32 @@ class PostGridCell extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// A 3-column shimmer placeholder shown while a grid's posts load — reads as
+/// "content is coming" instead of a lone spinner. Use as a sliver.
+class SliverPostGridSkeleton extends StatelessWidget {
+  const SliverPostGridSkeleton({super.key, this.count = 12});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(2),
+      sliver: SliverToBoxAdapter(
+        child: Shimmer(
+          child: GridView.builder(
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            gridDelegate: _gridDelegate,
+            itemCount: count,
+            itemBuilder: (_, _) => const SkeletonBox(radius: 2),
+          ),
+        ),
       ),
     );
   }

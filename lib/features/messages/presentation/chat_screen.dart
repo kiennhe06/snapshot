@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
+import '../../../core/design/motion.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/chat.dart';
@@ -811,7 +812,18 @@ class _TypingDotsState extends State<_TypingDots>
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1000),
-  )..repeat();
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pulse only when motion is allowed; hold steady otherwise.
+    if (Motion.reduced(context)) {
+      _c.stop();
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
+  }
 
   @override
   void dispose() {

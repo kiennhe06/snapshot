@@ -50,16 +50,22 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
               value: savedAsync,
               onRetry: () => ref.invalidate(savedPostsProvider(_collectionId)),
               builder: (posts) {
-                if (posts.isEmpty) {
-                  return EmptyView(
-                    message: tr(
-                      'Chưa có bài viết nào được lưu.',
-                      'No saved posts yet.',
-                    ),
-                    icon: Icons.bookmark_border_rounded,
-                  );
-                }
-                return _grid(posts);
+                final content = posts.isEmpty
+                    ? EmptyView(
+                        message: tr(
+                          'Chưa có bài viết nào được lưu.',
+                          'No saved posts yet.',
+                        ),
+                        icon: Icons.bookmark_border_rounded,
+                      )
+                    : _grid(posts);
+                return RefreshIndicator(
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.layer2,
+                  onRefresh: () async =>
+                      ref.invalidate(savedPostsProvider(_collectionId)),
+                  child: content,
+                );
               },
             ),
           ),

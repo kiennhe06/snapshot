@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/design/tokens.dart';
+import 'app_bottom_sheet.dart';
 import 'app_button.dart';
 import 'press_scale.dart';
 
@@ -22,6 +23,8 @@ Future<void> showAppMenu(BuildContext context, List<AppMenuAction> actions) {
   return showModalBottomSheet<void>(
     context: context,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.55),
+    sheetAnimationStyle: appSheetAnimationStyle(context),
     builder: (sheetContext) => Container(
       margin: const EdgeInsets.all(AppSpacing.md),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

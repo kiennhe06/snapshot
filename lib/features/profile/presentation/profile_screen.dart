@@ -246,6 +246,12 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
     with SingleTickerProviderStateMixin {
   late final TabController _controller = TabController(length: 3, vsync: this);
 
+  // Track which cells have entered per tab so grids assemble once, not on
+  // every scroll recycle.
+  final Set<String> _enteredGrid = {};
+  final Set<String> _enteredReels = {};
+  final Set<String> _enteredTagged = {};
+
   @override
   void initState() {
     super.initState();
@@ -313,6 +319,7 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
                       'No posts yet. Tap + to share your first one.',
                     )
                   : tr('Chưa có bài viết nào.', 'No posts yet.'),
+              entered: _enteredGrid,
               onTap: (p) => _showPostViewer(context, p),
               onLongPress: onLongPress,
             ),
@@ -325,6 +332,7 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
                 'No videos/reels yet.',
               ),
               emptyIcon: Icons.movie_outlined,
+              entered: _enteredReels,
               onTap: (p) => _showPostViewer(context, p),
               onLongPress: onLongPress,
             ),
@@ -337,6 +345,7 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
                 'No tagged posts yet.',
               ),
               emptyIcon: Icons.person_pin_outlined,
+              entered: _enteredTagged,
               onTap: (p) => _showPostViewer(context, p),
             ),
           ),

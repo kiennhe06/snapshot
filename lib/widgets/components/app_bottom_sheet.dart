@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/design/motion.dart';
 import '../../core/design/tokens.dart';
 
 /// The single bottom-sheet foundation for the whole app. Every modal sheet
@@ -18,9 +19,22 @@ Future<T?> showAppSheet<T>(
     isScrollControlled: isScrollControlled,
     isDismissible: dismissible,
     enableDrag: dismissible,
+    // Branded scrim + timing: a deeper dim and a slightly longer, smoother
+    // rise than the Material default, so every sheet in the app opens the same.
+    barrierColor: Colors.black.withValues(alpha: 0.55),
+    sheetAnimationStyle: appSheetAnimationStyle(context),
     builder: builder,
   );
 }
+
+/// Shared sheet open/close timing (reduced-motion aware). Reused by menus so
+/// every modal presents with one motion signature.
+AnimationStyle appSheetAnimationStyle(BuildContext context) => AnimationStyle(
+  curve: AppMotion.enter,
+  reverseCurve: AppMotion.exit,
+  duration: Motion.dur(context, AppMotion.expressive),
+  reverseDuration: Motion.dur(context, AppMotion.base),
+);
 
 /// The consistent sheet container: floating rounded card + grab handle + an
 /// optional title, sized to its content up to [maxHeightFactor] of the screen.

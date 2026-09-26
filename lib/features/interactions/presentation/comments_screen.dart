@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/design/motion.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/comment.dart';
 import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
+import '../../../widgets/motion/motion.dart';
 import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -39,6 +41,9 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   final _input = TextEditingController();
   final _focus = FocusNode();
   final _expanded = <String>{};
+
+  /// Comment ids that have already animated in (entrance plays once each).
+  final _enteredComments = <String>{};
   Comment? _replyingTo;
   bool _sending = false;
   bool _hasText = false;
@@ -168,18 +173,22 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                     final replies =
                         repliesByParent[root.commentId] ?? const [];
                     final showReplies = _expanded.contains(root.commentId);
-                    return _Thread(
-                      root: root,
-                      replies: replies,
-                      postAuthorId: widget.post.authorId,
-                      showReplies: showReplies,
-                      onToggleReplies: () => setState(() {
-                        showReplies
-                            ? _expanded.remove(root.commentId)
-                            : _expanded.add(root.commentId);
-                      }),
-                      onReply: _startReply,
-                      onMenu: _menu,
+                    return MotionEntrance(
+                      index: i,
+                      animate: _enteredComments.add(root.commentId),
+                      child: _Thread(
+                        root: root,
+                        replies: replies,
+                        postAuthorId: widget.post.authorId,
+                        showReplies: showReplies,
+                        onToggleReplies: () => setState(() {
+                          showReplies
+                              ? _expanded.remove(root.commentId)
+                              : _expanded.add(root.commentId);
+                        }),
+                        onReply: _startReply,
+                        onMenu: _menu,
+                      ),
                     );
                   },
                 );
@@ -666,10 +675,14 @@ class _LikeButtonState extends ConsumerState<_LikeButton>
     super.dispose();
   }
 
+  bool? _optimistic; // null = follow the server value
+
   void _tap(bool liked) {
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     if (uid == null) return;
-    if (!liked) _c.forward(from: 0);
+    Motion.toggle();
+    if (!liked && !Motion.reduced(context)) _c.forward(from: 0);
+    setState(() => _optimistic = !liked);
     ref
         .read(commentRepositoryProvider)
         .toggleLike(
@@ -681,7 +694,7 @@ class _LikeButtonState extends ConsumerState<_LikeButton>
 
   @override
   Widget build(BuildContext context) {
-    final liked =
+    final serverLiked =
         ref
             .watch(
               isCommentLikedProvider((
@@ -691,6 +704,14 @@ class _LikeButtonState extends ConsumerState<_LikeButton>
             )
             .valueOrNull ??
         false;
+    if (_optimistic != null && _optimistic == serverLiked) _optimistic = null;
+    final liked = _optimistic ?? serverLiked;
+    // Reflect the pending like in the count too, so the tap has consequence.
+    final count =
+        widget.comment.likesCount +
+        (_optimistic != null && _optimistic != serverLiked
+            ? (_optimistic! ? 1 : -1)
+            : 0);
     return PressScale(
       onTap: () => _tap(liked),
       child: Padding(
@@ -708,9 +729,9 @@ class _LikeButtonState extends ConsumerState<_LikeButton>
             ),
             SizedBox(
               height: 14,
-              child: widget.comment.likesCount > 0
+              child: count > 0
                   ? Text(
-                      '${widget.comment.likesCount}',
+                      '$count',
                       style: TextStyle(
                         color: liked
                             ? AppColors.primary

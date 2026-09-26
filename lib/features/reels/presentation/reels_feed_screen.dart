@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/design/motion.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/utils/format.dart';
@@ -582,17 +583,23 @@ class _SpinningDiscState extends State<_SpinningDisc>
   );
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.spinning) _spin.repeat();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sync();
   }
 
   @override
   void didUpdateWidget(covariant _SpinningDisc old) {
     super.didUpdateWidget(old);
-    if (widget.spinning && !_spin.isAnimating) {
+    _sync();
+  }
+
+  /// Spins only when playing AND the user hasn't asked to reduce motion.
+  void _sync() {
+    final shouldSpin = widget.spinning && !Motion.reduced(context);
+    if (shouldSpin && !_spin.isAnimating) {
       _spin.repeat();
-    } else if (!widget.spinning && _spin.isAnimating) {
+    } else if (!shouldSpin && _spin.isAnimating) {
       _spin.stop();
     }
   }

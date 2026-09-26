@@ -132,7 +132,10 @@ class _TrayBubble extends ConsumerWidget {
         onTap: onTap,
         child: Column(
           children: [
-            _ringAvatar(user?.photoUrl, active: true),
+            Hero(
+              tag: 'story-avatar-$authorId',
+              child: _ringAvatar(user?.photoUrl, active: true),
+            ),
             const SizedBox(height: AppSpacing.xs),
             SizedBox(
               width: 68,
