@@ -8,10 +8,11 @@ import 'package:snapshot/core/i18n/i18n.dart';
 import '../../../core/design/tokens.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
-import '../../../widgets/loading_view.dart';
+import '../../../widgets/error_view.dart';
 import '../../../widgets/motion/motion.dart';
 import '../../stories/presentation/widgets/story_ring.dart';
 import '../providers/feed_providers.dart';
+import 'widgets/feed_skeleton.dart';
 import 'widgets/post_card.dart';
 
 /// Home feed with two custom segments: chronological "Đang theo dõi" and
@@ -136,7 +137,17 @@ class _FeedListState extends ConsumerState<_FeedList>
     final state = ref.watch(feedControllerProvider(widget.kind));
 
     if (!state.initialized && state.isLoading) {
-      return const LoadingView();
+      return const FeedSkeleton();
+    }
+
+    if (state.error != null && state.posts.isEmpty) {
+      return ErrorView(
+        message: tr(
+          'Không tải được bảng tin. Kéo để thử lại.',
+          'Could not load the feed. Pull to retry.',
+        ),
+        onRetry: _refresh,
+      );
     }
 
     if (state.posts.isEmpty) {

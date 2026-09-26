@@ -63,6 +63,7 @@ class FeedState {
     this.hasMore = true,
     this.cursor,
     this.initialized = false,
+    this.error,
   });
 
   final List<Post> posts;
@@ -71,18 +72,24 @@ class FeedState {
   final DateTime? cursor;
   final bool initialized;
 
+  /// Last load failure (network etc.). Cleared on every state transition, so it
+  /// only lives between a failed fetch and the next action (retry).
+  final Object? error;
+
   FeedState copyWith({
     List<Post>? posts,
     bool? isLoading,
     bool? hasMore,
     DateTime? cursor,
     bool? initialized,
+    Object? error,
   }) => FeedState(
     posts: posts ?? this.posts,
     isLoading: isLoading ?? this.isLoading,
     hasMore: hasMore ?? this.hasMore,
     cursor: cursor ?? this.cursor,
     initialized: initialized ?? this.initialized,
+    error: error,
   );
 }
 
@@ -110,27 +117,32 @@ class FeedController extends FamilyNotifier<FeedState, FeedKind> {
   /// screen on the first page.
   Future<void> loadMore({int want = 6}) async {
     if (state.isLoading || !state.hasMore) return;
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true); // also clears any prior error
 
-    var cursor = state.cursor;
-    final collected = <Post>[];
-    var hasMore = true;
-    var guard = 0;
-    while (collected.length < want && hasMore && guard < 6) {
-      guard++;
-      final page = await _repo.fetchPage(startAfter: cursor);
-      collected.addAll(_applyAudience(page.posts));
-      cursor = page.nextCursor;
-      hasMore = page.hasMore;
+    try {
+      var cursor = state.cursor;
+      final collected = <Post>[];
+      var hasMore = true;
+      var guard = 0;
+      while (collected.length < want && hasMore && guard < 6) {
+        guard++;
+        final page = await _repo.fetchPage(startAfter: cursor);
+        collected.addAll(_applyAudience(page.posts));
+        cursor = page.nextCursor;
+        hasMore = page.hasMore;
+      }
+
+      state = state.copyWith(
+        posts: [...state.posts, ...collected],
+        cursor: cursor,
+        hasMore: hasMore,
+        isLoading: false,
+        initialized: true,
+      );
+    } catch (e) {
+      // Never leave the feed stuck spinning: surface the error + let it retry.
+      state = state.copyWith(isLoading: false, initialized: true, error: e);
     }
-
-    state = state.copyWith(
-      posts: [...state.posts, ...collected],
-      cursor: cursor,
-      hasMore: hasMore,
-      isLoading: false,
-      initialized: true,
-    );
   }
 
   Future<void> refresh() async {

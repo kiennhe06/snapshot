@@ -171,14 +171,14 @@ class MessageBubble extends ConsumerWidget {
                   Icon(
                     Icons.push_pin_rounded,
                     size: AppIconSize.xs,
-                    color: mine ? Colors.white70 : AppColors.textTertiary,
+                    color: mine ? AppColors.onPrimaryMuted : AppColors.textTertiary,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     tr('Đã ghim', 'Pinned'),
                     style: TextStyle(
                       fontSize: AppType.caption,
-                      color: mine ? Colors.white70 : AppColors.textTertiary,
+                      color: mine ? AppColors.onPrimaryMuted : AppColors.textTertiary,
                     ),
                   ),
                 ],
@@ -213,13 +213,13 @@ class MessageBubble extends ConsumerWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: (mine ? Colors.white : AppColors.primary).withValues(
+        color: (mine ? AppColors.onPrimary : AppColors.primary).withValues(
           alpha: 0.14,
         ),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border(
           left: BorderSide(
-            color: mine ? Colors.white : AppColors.primary,
+            color: mine ? AppColors.onPrimary : AppColors.primary,
             width: 3,
           ),
         ),
@@ -230,14 +230,14 @@ class MessageBubble extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: AppType.label,
-          color: mine ? Colors.white : AppColors.textSecondary,
+          color: mine ? AppColors.onPrimary : AppColors.textSecondary,
         ),
       ),
     );
   }
 
   Widget _content(BuildContext context, WidgetRef ref, bool mine) {
-    final fg = mine ? Colors.white : AppColors.textPrimary;
+    final fg = mine ? AppColors.onPrimary : AppColors.textPrimary;
 
     if (message.deleted) {
       return Row(
@@ -283,10 +283,10 @@ class MessageBubble extends ConsumerWidget {
             alignment: Alignment.center,
             children: [
               Container(width: 220, height: 260, color: AppColors.layer3),
-              const Icon(
+              Icon(
                 Icons.play_circle_fill_rounded,
                 size: 54,
-                color: Colors.white,
+                color: AppColors.onMedia,
               ),
             ],
           ),
@@ -305,7 +305,7 @@ class MessageBubble extends ConsumerWidget {
 
   Widget _sharedCard(BuildContext context, WidgetRef ref, bool mine) {
     final async = ref.watch(sharedPostProvider(message.refId ?? ''));
-    final fg = mine ? Colors.white : AppColors.textPrimary;
+    final fg = mine ? AppColors.onPrimary : AppColors.textPrimary;
     final post = async.valueOrNull;
     return SizedBox(
       width: 200,

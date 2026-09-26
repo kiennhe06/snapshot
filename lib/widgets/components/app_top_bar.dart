@@ -43,17 +43,7 @@ class AppTopBar extends StatelessWidget {
                 ),
               if (showBack) const SizedBox(width: AppSpacing.xs),
               Expanded(
-                child:
-                    titleWidget ??
-                    Text(
-                      title ?? '',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: AppType.title,
-                        fontWeight: AppType.bold,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
+                child: titleWidget ?? Text(title ?? '', style: AppText.h1),
               ),
               ...actions,
             ],

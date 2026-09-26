@@ -46,9 +46,9 @@ class ErrorView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: AppText.h3.copyWith(
                 color: AppColors.textSecondary,
-                fontSize: AppType.subhead,
+                fontWeight: AppType.regular,
               ),
             ),
             if (onRetry != null) ...[

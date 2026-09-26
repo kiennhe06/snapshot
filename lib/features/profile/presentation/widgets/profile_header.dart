@@ -71,12 +71,12 @@ class ProfileHeader extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              Text(
-                user.displayName,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.headline,
-                  fontWeight: AppType.bold,
+              Flexible(
+                child: Text(
+                  user.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.h2,
                 ),
               ),
               if (user.isVerified) ...[
@@ -88,7 +88,7 @@ class ProfileHeader extends StatelessWidget {
                 ),
               ],
               if (user.isPrivate) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.xs),
                 Icon(
                   Icons.lock_outline_rounded,
                   size: AppIconSize.xs,
@@ -100,10 +100,9 @@ class ProfileHeader extends StatelessWidget {
           if (user.username.isNotEmpty)
             Text(
               '@${user.username}',
-              style: TextStyle(
-                color: AppColors.textTertiary,
-                fontSize: AppType.body,
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.body.copyWith(color: AppColors.textTertiary),
             ),
           if (user.bio.isNotEmpty) ...[
             const SizedBox(height: 6),

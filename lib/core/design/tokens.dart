@@ -165,10 +165,22 @@ abstract class AppColors {
 
   static Color get borderSubtle => _p.borderSubtle;
   static Color get borderStrong => _p.borderStrong;
+
+  /// Foreground on a brand-filled surface (primary button, "my" chat bubble,
+  /// selected chip). White reads on the purple→pink fill in both skins — use
+  /// this token instead of a raw `Colors.white` so the intent is explicit.
+  static const Color onPrimary = Color(0xFFFFFFFF);
+  static Color get onPrimaryMuted => Colors.white.withValues(alpha: 0.75);
+
+  /// Foreground on top of media (video/photo overlays, story controls).
+  static const Color onMedia = Color(0xFFFFFFFF);
+  static Color get onMediaMuted => Colors.white.withValues(alpha: 0.72);
 }
 
 /// 4-based spacing rhythm (airy — generous spacing).
 abstract class AppSpacing {
+  /// Hairline gap — avatar-ring insets, grid gutters. The one sub-4 step.
+  static const double xxs = 2;
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 12;
@@ -216,6 +228,93 @@ abstract class AppType {
   static const FontWeight medium = FontWeight.w600;
   static const FontWeight bold = FontWeight.w700;
   static const FontWeight heavy = FontWeight.w800;
+}
+
+/// Typography role system: composed text styles with a name, line-height and
+/// letter-spacing — the one place hierarchy is decided. Prefer these over
+/// hand-writing `TextStyle(color:…, fontSize:…, fontWeight:…)` at call sites so
+/// every screen reads with the same rhythm.
+///
+/// Sizes map 1:1 to [AppType] (adoption is visually neutral); the value added
+/// is consistent line-height/tracking and a sensible default colour. Override
+/// colour/weight with `.copyWith(...)` when a local context needs it. Styles
+/// are getters (not const) so they follow the live skin's text colours.
+abstract class AppText {
+  /// Screen hero / wordmark scale.
+  static TextStyle get display => TextStyle(
+    fontSize: AppType.display,
+    height: 1.1,
+    letterSpacing: -0.5,
+    fontWeight: AppType.heavy,
+    color: AppColors.textPrimary,
+  );
+
+  /// Screen title (top bar, section hero).
+  static TextStyle get h1 => TextStyle(
+    fontSize: AppType.title,
+    height: 1.2,
+    letterSpacing: -0.3,
+    fontWeight: AppType.bold,
+    color: AppColors.textPrimary,
+  );
+
+  /// Card/section header, author name.
+  static TextStyle get h2 => TextStyle(
+    fontSize: AppType.headline,
+    height: 1.25,
+    letterSpacing: -0.2,
+    fontWeight: AppType.bold,
+    color: AppColors.textPrimary,
+  );
+
+  /// Emphasised sub-header.
+  static TextStyle get h3 => TextStyle(
+    fontSize: AppType.subhead,
+    height: 1.3,
+    fontWeight: AppType.medium,
+    color: AppColors.textPrimary,
+  );
+
+  /// Default reading text.
+  static TextStyle get body => TextStyle(
+    fontSize: AppType.body,
+    height: 1.4,
+    fontWeight: AppType.regular,
+    color: AppColors.textPrimary,
+  );
+
+  /// Reading text, emphasised (e.g. username inline with a caption).
+  static TextStyle get bodyStrong =>
+      body.copyWith(fontWeight: AppType.bold);
+
+  /// Reading text, de-emphasised.
+  static TextStyle get bodyMuted =>
+      body.copyWith(color: AppColors.textSecondary);
+
+  /// UI labels, metadata, chips.
+  static TextStyle get label => TextStyle(
+    fontSize: AppType.label,
+    height: 1.3,
+    fontWeight: AppType.medium,
+    color: AppColors.textSecondary,
+  );
+
+  /// Smallest supporting text (timestamps, counts, footnotes).
+  static TextStyle get caption => TextStyle(
+    fontSize: AppType.small,
+    height: 1.3,
+    fontWeight: AppType.regular,
+    color: AppColors.textTertiary,
+  );
+
+  /// Text inside buttons/CTAs.
+  static TextStyle get button => TextStyle(
+    fontSize: AppType.subhead,
+    height: 1.0,
+    letterSpacing: 0.1,
+    fontWeight: AppType.bold,
+    color: AppColors.textPrimary,
+  );
 }
 
 /// The Snapshot motion language — the vocabulary every animation speaks so the

@@ -74,10 +74,9 @@ class EmptyView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: AppText.h3.copyWith(
                 color: AppColors.textSecondary,
-                fontSize: AppType.subhead,
-                height: 1.4,
+                fontWeight: AppType.regular,
               ),
             ),
           ],

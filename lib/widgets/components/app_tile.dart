@@ -48,11 +48,7 @@ class AppTile extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: titleColor ?? AppColors.textPrimary,
-                    fontSize: AppType.subhead,
-                    fontWeight: AppType.medium,
-                  ),
+                  style: AppText.h3.copyWith(color: titleColor),
                 ),
                 if (subtitle != null)
                   Padding(
@@ -61,10 +57,7 @@ class AppTile extends StatelessWidget {
                       subtitle!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: AppType.label,
-                      ),
+                      style: AppText.label,
                     ),
                   ),
               ],

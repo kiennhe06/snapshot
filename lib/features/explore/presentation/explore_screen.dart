@@ -223,13 +223,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       Icon(
                         f.$2,
                         size: AppIconSize.xs,
-                        color: f.$3 ? Colors.white : AppColors.textSecondary,
+                        color: f.$3 ? AppColors.onPrimary : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         f.$1,
                         style: TextStyle(
-                          color: f.$3 ? Colors.white : AppColors.textSecondary,
+                          color: f.$3 ? AppColors.onPrimary : AppColors.textSecondary,
                           fontSize: AppType.label,
                           fontWeight: AppType.bold,
                         ),

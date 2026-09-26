@@ -19,12 +19,17 @@ class AsyncValueView<T> extends StatelessWidget {
     this.errorMessage,
     this.isEmpty,
     this.empty,
+    this.loading,
   });
 
   final AsyncValue<T> value;
   final Widget Function(T data) builder;
   final VoidCallback onRetry;
   final String? errorMessage;
+
+  /// Optional first-load placeholder (e.g. a skeleton). Falls back to the
+  /// centered [LoadingView] spinner when omitted.
+  final Widget? loading;
 
   /// Optional: treat this data as "empty" and render [empty] instead of
   /// [builder]. Keeps empty-state handling consistent across screens.
@@ -62,7 +67,10 @@ class AsyncValueView<T> extends StatelessWidget {
       );
     }
     if (value.isLoading) {
-      return const KeyedSubtree(key: ValueKey('loading'), child: LoadingView());
+      return KeyedSubtree(
+        key: const ValueKey('loading'),
+        child: loading ?? const LoadingView(),
+      );
     }
     return KeyedSubtree(
       key: const ValueKey('error'),
