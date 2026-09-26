@@ -5,5 +5,6 @@ library;
 
 export 'motion_count_up.dart';
 export 'motion_entrance.dart';
+export 'list_skeleton.dart';
 export 'motion_switcher.dart';
 export 'shimmer.dart';

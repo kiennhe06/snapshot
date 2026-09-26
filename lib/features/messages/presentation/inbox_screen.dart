@@ -13,6 +13,7 @@ import '../../post/presentation/track_detail_sheet.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
+import '../../../widgets/motion/motion.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/message_providers.dart';
@@ -96,6 +97,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
       body: AsyncValueView<List<Chat>>(
         value: chats,
         onRetry: () => ref.invalidate(chatsProvider),
+        loading: const ListRowsSkeleton(),
         builder: (list) {
           final filtered = list.where(_matchesFilter).toList();
           return RefreshIndicator(

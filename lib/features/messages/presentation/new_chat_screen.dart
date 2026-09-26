@@ -6,6 +6,7 @@ import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../models/app_user.dart';
 import '../../../widgets/async_value_view.dart';
+import '../../../widgets/motion/motion.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
@@ -135,7 +136,8 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
                     ? followingUsersProvider
                     : userSearchProvider(_query.trim()),
               ),
-              builder: (all) {
+              loading: const ListRowsSkeleton(),
+      builder: (all) {
                 final users = all.where((u) => u.uid != me).toList();
                 if (users.isEmpty) {
                   return EmptyView(
