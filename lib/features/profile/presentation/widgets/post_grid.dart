@@ -49,6 +49,20 @@ const _gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
   mainAxisSpacing: 2,
 );
 
+/// Neutral cover placeholder for a missing/failed post image — reads as
+/// "no photo" (a soft card with a faint image glyph) instead of a broken-image
+/// error box. Shared by the grid and the pinned strip.
+Widget postCoverPlaceholder() => DecoratedBox(
+  decoration: BoxDecoration(gradient: AppGradients.card),
+  child: Center(
+    child: Icon(
+      Icons.image_outlined,
+      size: 22,
+      color: AppColors.textTertiary.withValues(alpha: 0.5),
+    ),
+  ),
+);
+
 /// Sliver variant of [PostGrid] for use inside a CustomScrollView /
 /// NestedScrollView (so a profile's header can scroll away above it). Renders
 /// an empty state as a fill-remaining sliver when there are no posts.
@@ -125,19 +139,16 @@ class PostGridCell extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          CachedNetworkImage(
-            imageUrl: post.coverUrl,
-            memCacheWidth: 400,
-            fit: BoxFit.cover,
-            placeholder: (_, _) => Container(color: AppColors.layer3),
-            errorWidget: (_, _, _) => Container(
-              color: AppColors.layer3,
-              child: Icon(
-                Icons.broken_image_rounded,
-                color: AppColors.textTertiary,
-              ),
+          if (post.coverUrl.isEmpty)
+            postCoverPlaceholder()
+          else
+            CachedNetworkImage(
+              imageUrl: post.coverUrl,
+              memCacheWidth: 400,
+              fit: BoxFit.cover,
+              placeholder: (_, _) => Container(color: AppColors.layer3),
+              errorWidget: (_, _, _) => postCoverPlaceholder(),
             ),
-          ),
           if (post.isVideo)
             const Positioned(
               top: 6,

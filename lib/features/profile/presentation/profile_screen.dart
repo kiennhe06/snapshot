@@ -524,14 +524,21 @@ class _PinnedRow extends StatelessWidget {
               .take(3)
               .map(
                 (p) => Padding(
-                  padding: const EdgeInsets.only(left: 6),
+                  padding: const EdgeInsets.only(left: AppSpacing.xs),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.xxs),
-                    child: CachedNetworkImage(
-                      imageUrl: p.coverUrl,
+                    child: SizedBox(
                       width: 48,
                       height: 48,
-                      fit: BoxFit.cover,
+                      child: p.coverUrl.isEmpty
+                          ? postCoverPlaceholder()
+                          : CachedNetworkImage(
+                              imageUrl: p.coverUrl,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, _, _) => postCoverPlaceholder(),
+                            ),
                     ),
                   ),
                 ),
