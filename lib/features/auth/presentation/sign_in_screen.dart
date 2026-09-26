@@ -254,11 +254,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         onTap: () => context.push(Routes.forgotPassword),
                         child: Text(
                           tr('Quên mật khẩu?', 'Forgot password?'),
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: AppType.label,
-                            fontWeight: AppType.bold,
-                          ),
+                          style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
                         ),
                       ),
                     ],
@@ -340,10 +336,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           lang == AppLang.vi
                               ? 'Tiếng Việt (VN)'
                               : 'English (EN)',
-                          style: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: AppType.label,
-                          ),
+                          style: AppText.label.copyWith(color: AppColors.textTertiary),
                         ),
                       ],
                     ),

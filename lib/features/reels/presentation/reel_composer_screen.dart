@@ -305,11 +305,7 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
             tr('Âm thanh / Bài hát', 'Sound / Music'),
             trailing: Text(
               tr('Thịnh hành', 'Trending'),
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: AppType.label,
-                fontWeight: AppType.bold,
-              ),
+              style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

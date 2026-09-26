@@ -119,10 +119,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                                   'Chưa có nội dung để khám phá.',
                                   'Nothing to explore yet.',
                                 ),
-                                style: TextStyle(
-                                  color: AppColors.textTertiary,
-                                  fontSize: AppType.label,
-                                ),
+                                style: AppText.label.copyWith(color: AppColors.textTertiary),
                               )
                             : const SizedBox.shrink()),
                 ),
@@ -299,11 +296,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     children: [
                       Text(
                         '#${t.key}',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: AppType.label,
-                          fontWeight: AppType.bold,
-                        ),
+                        style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -350,11 +343,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 onTap: () {},
                 child: Text(
                   tr('Xem tất cả', 'See all'),
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: AppType.label,
-                    fontWeight: AppType.bold,
-                  ),
+                  style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
                 ),
               ),
             ],

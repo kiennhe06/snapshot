@@ -475,11 +475,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen>
             children: [
               Text(
                 sticker.data['prompt']?.toString() ?? tr('Trả lời', 'Answer'),
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.subhead,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h3.copyWith(fontWeight: AppType.bold),
               ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(

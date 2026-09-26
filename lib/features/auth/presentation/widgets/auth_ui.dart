@@ -132,11 +132,7 @@ class AuthSocialButton extends StatelessWidget {
               child: Center(
                 child: Text(
                   label,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.subhead,
-                    fontWeight: AppType.bold,
-                  ),
+                  style: AppText.h3.copyWith(fontWeight: AppType.bold),
                 ),
               ),
             ),

@@ -726,11 +726,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       const SizedBox(width: AppSpacing.sm),
                       Text(
                         '@${u.username}',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: AppType.subhead,
-                          fontWeight: AppType.medium,
-                        ),
+                        style: AppText.h3,
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
@@ -738,10 +734,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           u.displayName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: AppType.label,
-                          ),
+                          style: AppText.label.copyWith(color: AppColors.textTertiary),
                         ),
                       ),
                     ],
@@ -787,11 +780,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     ),
                     child: Text(
                       '#$t',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: AppType.label,
-                        fontWeight: AppType.bold,
-                      ),
+                      style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
                     ),
                   ),
                 ),
@@ -1153,11 +1142,7 @@ class _CountBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: TextStyle(
-          color: AppColors.primary,
-          fontSize: AppType.label,
-          fontWeight: AppType.bold,
-        ),
+        style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
       ),
     );
   }
@@ -1254,10 +1239,7 @@ class _DraftStatus extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: AppType.label,
-            ),
+            style: AppText.label.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),

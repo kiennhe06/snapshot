@@ -107,10 +107,7 @@ class _YourStory extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               tr('Tin của bạn', 'Your story'),
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: AppType.small,
-              ),
+              style: AppText.caption.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -147,10 +144,7 @@ class _TrayBubble extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: AppType.small,
-                ),
+                style: AppText.caption.copyWith(color: AppColors.textSecondary),
               ),
             ),
           ],

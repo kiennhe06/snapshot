@@ -210,11 +210,7 @@ class _SettingRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.subhead,
-                    fontWeight: AppType.medium,
-                  ),
+                  style: AppText.h3,
                 ),
                 if (subtitle != null)
                   Padding(
@@ -267,11 +263,7 @@ class _LangPill extends StatelessWidget {
         children: [
           Text(
             current,
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: AppType.label,
-              fontWeight: AppType.bold,
-            ),
+            style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
           ),
           const SizedBox(width: 4),
           Icon(

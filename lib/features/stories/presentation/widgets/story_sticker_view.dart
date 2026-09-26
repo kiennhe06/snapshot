@@ -202,11 +202,7 @@ class _PollSticker extends ConsumerWidget {
               child: Text(
                 question,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.subhead,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h3.copyWith(fontWeight: AppType.bold),
               ),
             ),
           for (var i = 0; i < options.length; i++)
@@ -362,11 +358,7 @@ class _SliderStickerState extends ConsumerState<_SliderSticker> {
             Text(
               question,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.subhead,
-                fontWeight: AppType.bold,
-              ),
+              style: AppText.h3.copyWith(fontWeight: AppType.bold),
             ),
           const SizedBox(height: AppSpacing.xs),
           Row(
@@ -414,10 +406,7 @@ class _SliderStickerState extends ConsumerState<_SliderSticker> {
           if (avg != null)
             Text(
               '${tr('Trung bình: ', 'Average: ')}${(avg * 100).round()}%',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: AppType.small,
-              ),
+              style: AppText.caption.copyWith(color: AppColors.textSecondary),
             ),
         ],
       ),
@@ -457,11 +446,7 @@ class _QuizStickerState extends State<_QuizSticker> {
               child: Text(
                 question,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.subhead,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h3.copyWith(fontWeight: AppType.bold),
               ),
             ),
           for (var i = 0; i < options.length; i++)
@@ -519,11 +504,7 @@ class _QuestionSticker extends StatelessWidget {
             Text(
               prompt,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.subhead,
-                fontWeight: AppType.bold,
-              ),
+              style: AppText.h3.copyWith(fontWeight: AppType.bold),
             ),
             const SizedBox(height: AppSpacing.sm),
             Container(
@@ -588,11 +569,7 @@ class _CountdownStickerState extends State<_CountdownSticker> {
         children: [
           Text(
             title,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: AppType.subhead,
-              fontWeight: AppType.bold,
-            ),
+            style: AppText.h3.copyWith(fontWeight: AppType.bold),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

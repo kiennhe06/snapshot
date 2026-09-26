@@ -323,11 +323,7 @@ class _ContextHeader extends ConsumerWidget {
                                   : tr('Bình luận', 'Comments')),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: AppType.subhead,
-                          fontWeight: AppType.bold,
-                        ),
+                        style: AppText.h3.copyWith(fontWeight: AppType.bold),
                       ),
                     ),
                     if (author?.isVerified == true) ...[
@@ -356,10 +352,7 @@ class _ContextHeader extends ConsumerWidget {
                       post.caption,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: AppType.label,
-                      ),
+                      style: AppText.label.copyWith(color: AppColors.textTertiary),
                     ),
                   ),
               ],

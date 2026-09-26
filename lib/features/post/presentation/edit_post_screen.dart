@@ -220,11 +220,7 @@ class _CountBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: TextStyle(
-          color: AppColors.primary,
-          fontSize: AppType.label,
-          fontWeight: AppType.bold,
-        ),
+        style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
       ),
     );
   }

@@ -47,11 +47,7 @@ class AppToggleRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppType.subhead,
-                      fontWeight: AppType.medium,
-                    ),
+                    style: AppText.h3,
                   ),
                   if (subtitle != null)
                     Padding(

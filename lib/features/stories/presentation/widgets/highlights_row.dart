@@ -59,10 +59,7 @@ class HighlightsRow extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               tr('Mới', 'New'),
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: AppType.small,
-              ),
+              style: AppText.caption.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -93,10 +90,7 @@ class HighlightsRow extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: AppType.small,
-                ),
+                style: AppText.caption.copyWith(color: AppColors.textSecondary),
               ),
             ),
           ],

@@ -659,10 +659,7 @@ class _QuickComment extends ConsumerWidget {
                 tr('Thêm bình luận cho $authorName…', 'Add a comment for $authorName…'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.textTertiary,
-                  fontSize: AppType.label,
-                ),
+                style: AppText.label.copyWith(color: AppColors.textTertiary),
               ),
             ),
           ),
@@ -849,11 +846,7 @@ class _FollowChipState extends ConsumerState<_FollowChip> {
                   },
                   child: Text(
                     tr('Theo dõi', 'Follow'),
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: AppType.label,
-                      fontWeight: AppType.bold,
-                    ),
+                    style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
                   ),
                 ),
               ),

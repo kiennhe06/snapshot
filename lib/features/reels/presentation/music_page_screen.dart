@@ -47,18 +47,11 @@ class MusicPageScreen extends ConsumerWidget {
                     musicTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppType.subhead,
-                      fontWeight: AppType.bold,
-                    ),
+                    style: AppText.h3.copyWith(fontWeight: AppType.bold),
                   ),
                   Text(
                     tr('Âm thanh', 'Audio'),
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: AppType.small,
-                    ),
+                    style: AppText.caption.copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),

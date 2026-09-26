@@ -449,11 +449,7 @@ class _SenderName extends ConsumerWidget {
         : (user?.displayName ?? '');
     return Text(
       name,
-      style: TextStyle(
-        color: AppColors.primary,
-        fontSize: AppType.label,
-        fontWeight: AppType.bold,
-      ),
+      style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
     );
   }
 }

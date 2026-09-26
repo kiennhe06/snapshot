@@ -221,10 +221,7 @@ class _FeedListState extends ConsumerState<_FeedList>
                         )
                       : Text(
                           tr('Đã hết bài viết', 'No more posts'),
-                          style: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: AppType.label,
-                          ),
+                          style: AppText.label.copyWith(color: AppColors.textTertiary),
                         ),
                 ),
               );

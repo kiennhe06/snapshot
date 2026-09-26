@@ -118,11 +118,7 @@ class _SessionCard extends StatelessWidget {
                       child: Text(
                         session.deviceName,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: AppType.subhead,
-                          fontWeight: AppType.medium,
-                        ),
+                        style: AppText.h3,
                       ),
                     ),
                     if (session.isCurrent) ...[
@@ -158,10 +154,7 @@ class _SessionCard extends StatelessWidget {
                     'Đăng nhập: ${df.format(session.createdAt)}',
                     'Signed in: ${df.format(session.createdAt)}',
                   ),
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: AppType.label,
-                  ),
+                  style: AppText.label.copyWith(color: AppColors.textTertiary),
                 ),
               ],
             ),

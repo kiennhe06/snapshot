@@ -386,10 +386,7 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
                     alignment: Alignment.centerRight,
                     child: Text(
                       '${_text.text.characters.length}/60',
-                      style: TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: AppType.label,
-                      ),
+                      style: AppText.label.copyWith(color: AppColors.textTertiary),
                     ),
                   ),
                 ],
@@ -482,11 +479,7 @@ class _MusicChip extends StatelessWidget {
                       : track!.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: AppType.label,
-                    fontWeight: AppType.bold,
-                  ),
+                  style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),
                 ),
               ),
               if (track != null) ...[

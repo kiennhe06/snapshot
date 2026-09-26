@@ -48,11 +48,7 @@ void showAppToast(
               Expanded(
                 child: Text(
                   message,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.subhead,
-                    fontWeight: AppType.medium,
-                  ),
+                  style: AppText.h3,
                 ),
               ),
             ],
