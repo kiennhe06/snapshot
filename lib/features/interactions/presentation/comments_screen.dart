@@ -564,42 +564,18 @@ class _CommentRow extends ConsumerWidget {
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: compact ? AppType.small : AppType.body,
-                          fontWeight: AppType.bold,
-                        ),
+                        style: (compact ? AppText.caption : AppText.body)
+                            .copyWith(fontWeight: AppType.bold),
                       ),
                     ),
                     if (isAuthor) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(AppRadius.xxs),
-                        ),
-                        child: Text(
-                          tr('TÁC GIẢ', 'AUTHOR'),
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: AppType.caption,
-                            fontWeight: AppType.bold,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      AppTag(tr('TÁC GIẢ', 'AUTHOR'), color: AppColors.primary),
                     ],
                     const SizedBox(width: AppSpacing.sm),
                     Text(
                       _relTime(comment.createdAt),
-                      style: TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: AppType.small,
-                      ),
+                      style: AppText.caption,
                     ),
                     if (comment.pinned) ...[
                       const SizedBox(width: AppSpacing.sm),
@@ -614,11 +590,7 @@ class _CommentRow extends ConsumerWidget {
                 const SizedBox(height: 3),
                 Text(
                   comment.text,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.subhead,
-                    height: 1.32,
-                  ),
+                  style: AppText.h3.copyWith(fontWeight: AppType.regular),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 PressScale(
@@ -627,11 +599,9 @@ class _CommentRow extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 1),
                     child: Text(
                       tr('Trả lời', 'Reply'),
-                      style: TextStyle(
+                      style: AppText.caption.copyWith(
                         color: AppColors.textSecondary,
-                        fontSize: AppType.small,
                         fontWeight: AppType.bold,
-                        letterSpacing: 0.2,
                       ),
                     ),
                   ),
