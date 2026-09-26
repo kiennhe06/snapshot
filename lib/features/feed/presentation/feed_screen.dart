@@ -9,6 +9,7 @@ import '../../../core/design/tokens.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
+import '../../../widgets/motion/motion.dart';
 import '../../stories/presentation/widgets/story_ring.dart';
 import '../providers/feed_providers.dart';
 import 'widgets/post_card.dart';
@@ -112,6 +113,10 @@ class _FeedListState extends ConsumerState<_FeedList>
   @override
   bool get wantKeepAlive => true;
 
+  /// Post ids whose entrance animation has already played, so recycled rows
+  /// don't re-animate as the user scrolls.
+  final Set<String> _entered = {};
+
   /// Triggers pagination when the list nears its end. Uses scroll
   /// notifications instead of a controller so it cooperates with the
   /// NestedScrollView's coordinated scrolling.
@@ -213,14 +218,20 @@ class _FeedListState extends ConsumerState<_FeedList>
                 ),
               );
             }
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.sm,
-                AppSpacing.md,
-                AppSpacing.sm,
+            final post = state.posts[postIndex];
+            final firstTime = _entered.add(post.postId);
+            return MotionEntrance(
+              index: postIndex,
+              animate: firstTime,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                ),
+                child: PostCard(post: post),
               ),
-              child: PostCard(post: state.posts[postIndex]),
             );
           },
         ),

@@ -2,18 +2,19 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/constants.dart';
+import '../../../../core/design/motion.dart';
 import '../../../../core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/format.dart';
 import '../../../../models/post.dart';
 import '../../../../widgets/components/components.dart';
+import '../../../../widgets/motion/motion.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../../interactions/presentation/comments_screen.dart';
 import '../../../interactions/providers/interaction_providers.dart';
@@ -49,8 +50,8 @@ class _PostCardState extends ConsumerState<PostCard>
 
   /// Double-tap always likes (never unlikes), plays the heart burst + haptic.
   void _onDoubleTapLike() {
-    HapticFeedback.mediumImpact();
-    _heart.forward(from: 0);
+    Motion.toggle();
+    if (!Motion.reduced(context)) _heart.forward(from: 0);
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     final liked =
         ref.read(isLikedProvider(widget.post.postId)).valueOrNull ?? false;
@@ -63,12 +64,8 @@ class _PostCardState extends ConsumerState<PostCard>
   Widget build(BuildContext context) {
     final post = widget.post;
     final author = ref.watch(userProfileProvider(post.authorId)).valueOrNull;
-    final isSaved =
-        ref.watch(isSavedProvider(post.postId)).valueOrNull ?? false;
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
     final isMine = uid == post.authorId;
-    final isFollowing =
-        ref.watch(isFollowingProvider(post.authorId)).valueOrNull ?? false;
     final name = author?.username.isNotEmpty == true
         ? author!.username
         : (author?.displayName ?? '...');
@@ -145,30 +142,8 @@ class _PostCardState extends ConsumerState<PostCard>
                               color: AppColors.accent,
                             ),
                           ],
-                          if (!isMine && !isFollowing) ...[
-                            const SizedBox(width: AppSpacing.sm),
-                            PressScale(
-                              onTap: () {
-                                if (uid != null) {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(followRepositoryProvider)
-                                      .follow(
-                                        currentUid: uid,
-                                        targetUid: post.authorId,
-                                      );
-                                }
-                              },
-                              child: Text(
-                                tr('Theo dõi', 'Follow'),
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: AppType.label,
-                                  fontWeight: AppType.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                          if (!isMine)
+                            _FollowChip(uid: uid, targetUid: post.authorId),
                         ],
                       ),
                       if (post.location != null && post.location!.isNotEmpty)
@@ -314,20 +289,7 @@ class _PostCardState extends ConsumerState<PostCard>
                   ]),
                 ),
                 const Spacer(),
-                AppIconButton(
-                  icon: isSaved
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded,
-                  color: isSaved ? AppColors.primary : null,
-                  onTap: () {
-                    if (uid != null) {
-                      HapticFeedback.lightImpact();
-                      ref
-                          .read(saveRepositoryProvider)
-                          .toggleSave(uid: uid, postId: post.postId);
-                    }
-                  },
-                ),
+                _SaveButton(uid: uid, postId: post.postId),
               ],
             ),
           ),
@@ -575,11 +537,11 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
     return _CountAction(
       icon: liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
       color: liked ? AppColors.primary : AppColors.textPrimary,
-      label: post.likesHidden ? null : formatCount(count < 0 ? 0 : count),
+      count: post.likesHidden ? null : (count < 0 ? 0 : count),
       onTap: () {
         final uid = widget.uid;
         if (uid == null) return;
-        HapticFeedback.lightImpact();
+        Motion.toggle();
         setState(() => _optimistic = !liked);
         ref.read(feedRepositoryProvider).toggleLike(post.postId, uid);
       },
@@ -625,32 +587,52 @@ class _CountAction extends StatelessWidget {
     required this.icon,
     required this.color,
     this.label,
+    this.count,
     required this.onTap,
   });
 
   final IconData icon;
   final Color color;
+
+  /// Non-numeric trailing text (e.g. comment count already formatted).
   final String? label;
+
+  /// Numeric trailing count — rolls to its new value on change.
+  final int? count;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = onTap == null ? AppColors.textTertiary : color;
+    final textStyle = TextStyle(
+      color: AppColors.textPrimary,
+      fontSize: AppType.body,
+      fontWeight: AppType.bold,
+    );
     return PressScale(
       onTap: onTap,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 26, color: onTap == null ? AppColors.textTertiary : color),
-          if (label != null && label!.isNotEmpty) ...[
-            const SizedBox(width: 6),
-            Text(
-              label!,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.body,
-                fontWeight: AppType.bold,
-              ),
+          // The icon pops when its filled/outlined state flips (like/save).
+          AnimatedSwitcher(
+            duration: Motion.dur(context, AppMotion.base),
+            switchInCurve: AppMotion.overshoot,
+            transitionBuilder: (child, anim) =>
+                ScaleTransition(scale: anim, child: child),
+            child: Icon(
+              icon,
+              key: ValueKey('$icon-$iconColor'),
+              size: 26,
+              color: iconColor,
             ),
+          ),
+          if (count != null) ...[
+            const SizedBox(width: 6),
+            MotionCountUp(value: count!, format: formatCount, style: textStyle),
+          ] else if (label != null && label!.isNotEmpty) ...[
+            const SizedBox(width: 6),
+            Text(label!, style: textStyle),
           ],
         ],
       ),
@@ -840,6 +822,124 @@ class _MusicChipState extends State<_MusicChip> {
               ),
               const SizedBox(width: 4),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Follow" chip with optimistic UI: tapping flips instantly and the chip
+/// fades + collapses out, rather than waiting for the follow write to land.
+class _FollowChip extends ConsumerStatefulWidget {
+  const _FollowChip({required this.uid, required this.targetUid});
+  final String? uid;
+  final String targetUid;
+
+  @override
+  ConsumerState<_FollowChip> createState() => _FollowChipState();
+}
+
+class _FollowChipState extends ConsumerState<_FollowChip> {
+  bool? _optimistic; // null = follow the server value
+
+  @override
+  Widget build(BuildContext context) {
+    final server =
+        ref.watch(isFollowingProvider(widget.targetUid)).valueOrNull ?? false;
+    if (_optimistic != null && _optimistic == server) _optimistic = null;
+    final following = _optimistic ?? server;
+
+    return AnimatedSize(
+      duration: Motion.dur(context, AppMotion.base),
+      curve: AppMotion.standard,
+      alignment: Alignment.centerLeft,
+      child: AnimatedSwitcher(
+        duration: Motion.dur(context, AppMotion.base),
+        switchInCurve: AppMotion.overshoot,
+        transitionBuilder: (child, anim) => FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.8, end: 1).animate(anim),
+            child: child,
+          ),
+        ),
+        child: following
+            ? const SizedBox(key: ValueKey('followed'))
+            : Padding(
+                key: const ValueKey('follow'),
+                padding: const EdgeInsets.only(left: AppSpacing.sm),
+                child: PressScale(
+                  onTap: () {
+                    final uid = widget.uid;
+                    if (uid == null) return;
+                    Motion.toggle();
+                    setState(() => _optimistic = true);
+                    ref.read(followRepositoryProvider).follow(
+                          currentUid: uid,
+                          targetUid: widget.targetUid,
+                        );
+                  },
+                  child: Text(
+                    tr('Theo dõi', 'Follow'),
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: AppType.label,
+                      fontWeight: AppType.bold,
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+/// Save/bookmark button with optimistic UI + a bookmark fill that pops on tap.
+class _SaveButton extends ConsumerStatefulWidget {
+  const _SaveButton({required this.uid, required this.postId});
+  final String? uid;
+  final String postId;
+
+  @override
+  ConsumerState<_SaveButton> createState() => _SaveButtonState();
+}
+
+class _SaveButtonState extends ConsumerState<_SaveButton> {
+  bool? _optimistic; // null = follow the server value
+
+  @override
+  Widget build(BuildContext context) {
+    final server =
+        ref.watch(isSavedProvider(widget.postId)).valueOrNull ?? false;
+    if (_optimistic != null && _optimistic == server) _optimistic = null;
+    final saved = _optimistic ?? server;
+
+    return PressScale(
+      onTap: () {
+        final uid = widget.uid;
+        if (uid == null) return;
+        Motion.toggle();
+        setState(() => _optimistic = !saved);
+        ref
+            .read(saveRepositoryProvider)
+            .toggleSave(uid: uid, postId: widget.postId);
+      },
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: Center(
+          child: AnimatedSwitcher(
+            duration: Motion.dur(context, AppMotion.base),
+            switchInCurve: AppMotion.overshoot,
+            transitionBuilder: (child, anim) =>
+                ScaleTransition(scale: anim, child: child),
+            child: Icon(
+              saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              key: ValueKey(saved),
+              size: AppIconSize.md,
+              color: saved ? AppColors.primary : AppColors.textSecondary,
+            ),
           ),
         ),
       ),

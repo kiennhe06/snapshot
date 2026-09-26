@@ -218,12 +218,54 @@ abstract class AppType {
   static const FontWeight heavy = FontWeight.w800;
 }
 
+/// The Snapshot motion language — the vocabulary every animation speaks so the
+/// interface moves as one system.
+///
+/// Tempo scales with distance/importance; easing carries intent (arriving vs
+/// leaving vs settling); springs give physical, interruptible feel; stagger
+/// choreographs groups. Pair these with [Motion] (reduced-motion + haptics).
 abstract class AppMotion {
-  static const Duration fast = Duration(milliseconds: 150);
-  static const Duration base = Duration(milliseconds: 250);
-  static const Duration slow = Duration(milliseconds: 400);
-  static const Curve standard = Curves.easeOutCubic;
-  static const Curve emphasized = Curves.easeOutBack;
+  // Tempo — pick by how far/important the change is. Smaller = snappier.
+  static const Duration micro = Duration(milliseconds: 90); // color / tiny icon flips
+  static const Duration fast = Duration(milliseconds: 150); // press, small reveals
+  static const Duration quick = fast; // semantic alias
+  static const Duration base = Duration(milliseconds: 240); // most transitions
+  static const Duration expressive = Duration(
+    milliseconds: 380,
+  ); // entrances, sheets
+  static const Duration slow = Duration(milliseconds: 400); // legacy alias
+  static const Duration grand = Duration(
+    milliseconds: 520,
+  ); // full-screen / hero
+
+  // Easing — semantic. Things arriving decelerate; things leaving accelerate.
+  static const Curve standard = Curves.easeOutCubic; // default / arriving
+  static const Curve enter = Curves.easeOutCubic; // decelerate in
+  static const Curve exit = Curves.easeInCubic; // accelerate out
+  static const Curve inOut = Curves.easeInOutCubic; // move within bounds
+  static const Curve emphasized = Curves.easeOutBack; // confident settle (legacy)
+  static const Curve overshoot = Curves.easeOutBack; // playful confirm
+
+  // Stagger — group entrance choreography (feed cards, grid cells, story ring).
+  static const Duration stagger = Duration(milliseconds: 45);
+  static const int staggerMax = 8; // cap so long lists never crawl in
+
+  // Physics — springs for press, drag-release and sheets (interruptible feel).
+  static final SpringDescription snappy = SpringDescription.withDampingRatio(
+    mass: 1,
+    stiffness: 520,
+    ratio: 0.9,
+  );
+  static final SpringDescription gentle = SpringDescription.withDampingRatio(
+    mass: 1,
+    stiffness: 320,
+    ratio: 1.0,
+  );
+  static final SpringDescription bouncy = SpringDescription.withDampingRatio(
+    mass: 1,
+    stiffness: 480,
+    ratio: 0.55,
+  );
 }
 
 /// Depth shadows, tinted per skin.

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'error_view.dart';
 import 'loading_view.dart';
+import 'motion/motion_switcher.dart';
 
 /// Stale-while-revalidate view for an [AsyncValue].
 ///
@@ -32,28 +33,43 @@ class AsyncValueView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cross-fade between the four states instead of hard-swapping. Each branch
+    // carries a stable state key so a refresh (still "data") doesn't re-animate,
+    // but loading→data→empty→error transitions glide.
+    return MotionSwitcher(child: _branch(context));
+  }
+
+  Widget _branch(BuildContext context) {
     if (value.hasValue) {
       final data = value.requireValue;
       if (isEmpty != null && empty != null && isEmpty!(data)) {
-        return empty!(data);
+        return KeyedSubtree(key: const ValueKey('empty'), child: empty!(data));
       }
-      return Stack(
-        children: [
-          builder(data),
-          if (value.isLoading)
-            const Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: LinearProgressIndicator(minHeight: 2),
-            ),
-        ],
+      return KeyedSubtree(
+        key: const ValueKey('data'),
+        child: Stack(
+          children: [
+            builder(data),
+            if (value.isLoading)
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+          ],
+        ),
       );
     }
-    if (value.isLoading) return const LoadingView();
-    return ErrorView(
-      message: errorMessage ?? 'Đã xảy ra lỗi, vui lòng thử lại.',
-      onRetry: onRetry,
+    if (value.isLoading) {
+      return const KeyedSubtree(key: ValueKey('loading'), child: LoadingView());
+    }
+    return KeyedSubtree(
+      key: const ValueKey('error'),
+      child: ErrorView(
+        message: errorMessage ?? 'Đã xảy ra lỗi, vui lòng thử lại.',
+        onRetry: onRetry,
+      ),
     );
   }
 }

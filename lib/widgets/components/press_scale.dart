@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../core/design/motion.dart';
 import '../../core/design/tokens.dart';
 
 /// Custom tap wrapper that scales down slightly while pressed (replaces the
 /// default Material ink/hover feedback with a consistent, on-brand press).
+///
+/// This is the app's press verb: a single, consistent scale-down for every
+/// tappable surface. Set [enableHaptic] to pair it with a light tap; the scale
+/// collapses to instant under reduced motion.
 class PressScale extends StatefulWidget {
   const PressScale({
     super.key,
@@ -32,16 +37,23 @@ class _PressScaleState extends State<PressScale> {
     setState(() => _down = v);
   }
 
+  void _handleTap() {
+    if (widget.enableHaptic) Motion.tap();
+    widget.onTap?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Under reduced motion the press still registers, just without the scale.
+    final target = _down && !Motion.reduced(context) ? widget.scale : 1.0;
     return GestureDetector(
       onTapDown: (_) => _set(true),
       onTapUp: (_) => _set(false),
       onTapCancel: () => _set(false),
-      onTap: widget.onTap,
+      onTap: widget.onTap == null ? null : _handleTap,
       onLongPress: widget.onLongPress,
       child: AnimatedScale(
-        scale: _down ? widget.scale : 1.0,
+        scale: target,
         duration: AppMotion.fast,
         curve: AppMotion.standard,
         child: widget.child,
