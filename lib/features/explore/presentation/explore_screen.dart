@@ -267,11 +267,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 tr('Chủ đề thịnh hành', 'Trending'),
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.headline,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h2,
               ),
               const Spacer(),
               Text(
@@ -353,11 +349,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 tr('Gợi ý cho bạn', 'Suggested for you'),
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.headline,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h2,
               ),
               const Spacer(),
               PressScale(
@@ -404,11 +396,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           const SizedBox(width: AppSpacing.sm),
           Text(
             title,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: AppType.headline,
-              fontWeight: AppType.bold,
-            ),
+            style: AppText.h2,
           ),
         ],
       ),

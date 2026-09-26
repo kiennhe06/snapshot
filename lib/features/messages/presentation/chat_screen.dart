@@ -599,14 +599,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               color: destructive ? AppColors.danger : AppColors.textSecondary,
             ),
             const SizedBox(width: AppSpacing.md),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: AppType.subhead,
-                fontWeight: AppType.medium,
-              ),
-            ),
+            Text(label, style: AppText.h3.copyWith(color: color)),
           ],
         ),
       ),
@@ -668,19 +661,12 @@ class _Header extends ConsumerWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.headline,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h2,
               ),
               if (sub != null)
                 Text(
                   sub,
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: AppType.small,
-                  ),
+                  style: AppText.caption.copyWith(color: AppColors.primary),
                 ),
             ],
           ),

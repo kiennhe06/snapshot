@@ -265,7 +265,7 @@ class MessageBubble extends ConsumerWidget {
       case MessageType.text:
         return Text(
           message.text ?? '',
-          style: TextStyle(color: fg, fontSize: AppType.subhead, height: 1.3),
+          style: AppText.h3.copyWith(color: fg, fontWeight: AppType.regular),
         );
       case MessageType.image:
         return ClipRRect(

@@ -745,9 +745,7 @@ class _ChatRow extends ConsumerWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: AppType.subhead,
+                          style: AppText.h3.copyWith(
                             fontWeight: hasUnread
                                 ? AppType.heavy
                                 : AppType.bold,
@@ -755,10 +753,10 @@ class _ChatRow extends ConsumerWidget {
                         ),
                       ),
                       if (verified) ...[
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.xs),
                         Icon(
                           Icons.verified_rounded,
-                          size: 15,
+                          size: AppIconSize.sm,
                           color: AppColors.accent,
                         ),
                       ],
@@ -769,11 +767,10 @@ class _ChatRow extends ConsumerWidget {
                       const Spacer(),
                       Text(
                         relativeTime(chat.lastAt, short: true),
-                        style: TextStyle(
+                        style: AppText.caption.copyWith(
                           color: hasUnread
                               ? AppColors.primary
                               : AppColors.textTertiary,
-                          fontSize: AppType.small,
                           fontWeight: hasUnread
                               ? AppType.bold
                               : AppType.regular,
@@ -795,10 +792,7 @@ class _ChatRow extends ConsumerWidget {
                           padding: const EdgeInsets.only(left: AppSpacing.sm),
                           child: Text(
                             tr('Đã xem', 'Seen'),
-                            style: TextStyle(
-                              color: AppColors.textTertiary,
-                              fontSize: AppType.small,
-                            ),
+                            style: AppText.caption,
                           ),
                         ),
                     ],
@@ -822,9 +816,8 @@ class _ChatRow extends ConsumerWidget {
         tr('Đang soạn tin nhắn…', 'Typing…'),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
+        style: AppText.label.copyWith(
           color: AppColors.primary,
-          fontSize: AppType.label,
           fontStyle: FontStyle.italic,
           fontWeight: AppType.bold,
         ),
@@ -839,9 +832,8 @@ class _ChatRow extends ConsumerWidget {
       text,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(
+      style: AppText.label.copyWith(
         color: unreadForMe ? AppColors.textPrimary : AppColors.textSecondary,
-        fontSize: AppType.label,
         fontWeight: unreadForMe ? AppType.bold : AppType.regular,
       ),
     );
