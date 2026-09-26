@@ -109,9 +109,10 @@ class _ProfileBody extends ConsumerWidget {
     // Private gating: only owner or followers can see posts.
     final locked = !isMe && user.isPrivate && !isFollowing;
 
-    // The scroll-away header: avatar/stats/bio + story highlights. Shared by
-    // both the locked view and the tabbed view so it collapses on scroll.
-    final header = Column(
+    // The scroll-away header: avatar/stats/bio + story highlights. Built fresh
+    // per branch (a widget instance can't sit in two places during the state
+    // cross-fade).
+    Widget buildHeader() => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ProfileHeader(
@@ -133,7 +134,7 @@ class _ProfileBody extends ConsumerWidget {
     if (locked) {
       return ListView(
         children: [
-          header,
+          buildHeader(),
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.4,
             child: EmptyView(
@@ -151,6 +152,18 @@ class _ProfileBody extends ConsumerWidget {
     return AsyncValueView<List<Post>>(
       value: postsAsync,
       onRetry: () => ref.invalidate(authoredPostsProvider(user.uid)),
+      // Keep the header visible and shimmer the grid while posts load.
+      loading: Column(
+        children: [
+          buildHeader(),
+          const Expanded(
+            child: CustomScrollView(
+              physics: NeverScrollableScrollPhysics(),
+              slivers: [SliverPostGridSkeleton()],
+            ),
+          ),
+        ],
+      ),
       builder: (posts) {
         // Followers-only posts are hidden from non-followers.
         final canSeeFollowersOnly = isMe || isFollowing;
@@ -161,7 +174,7 @@ class _ProfileBody extends ConsumerWidget {
           authorUid: user.uid,
           isMe: isMe,
           posts: vis,
-          header: header,
+          header: buildHeader(),
         );
       },
     );

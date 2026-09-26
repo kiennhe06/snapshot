@@ -139,27 +139,15 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Delegates to the shared AppSectionLabel so section headers stay identical
+    // app-wide; keeps only the settings-specific spacing.
     return Padding(
       padding: const EdgeInsets.only(
         left: AppSpacing.sm,
         bottom: AppSpacing.sm,
         top: AppSpacing.sm,
       ),
-      child: Row(
-        children: [
-          Icon(icon, size: AppIconSize.sm, color: AppColors.primary),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: AppType.label,
-              fontWeight: AppType.bold,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
-      ),
+      child: AppSectionLabel(title, icon: icon),
     );
   }
 }
