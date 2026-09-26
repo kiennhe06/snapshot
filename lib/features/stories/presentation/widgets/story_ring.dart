@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design/tokens.dart';
 import '../../../../core/i18n/i18n.dart';
+import '../../../../widgets/components/components.dart';
 import '../../../../widgets/motion/motion.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../../profile/providers/profile_providers.dart';
@@ -159,36 +160,10 @@ class _TrayBubble extends ConsumerWidget {
   }
 }
 
-Widget _ringAvatar(String? photoUrl, {required bool active}) {
-  return Container(
-    padding: const EdgeInsets.all(2.5),
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: active
-          ? LinearGradient(
-              colors: [AppColors.primaryBright, AppColors.primary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            )
-          : null,
-      color: active ? null : AppColors.borderStrong,
-    ),
-    child: Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.scaffold,
-      ),
-      child: CircleAvatar(
-        radius: 30,
-        backgroundColor: AppColors.layer3,
-        backgroundImage: photoUrl != null
-            ? CachedNetworkImageProvider(photoUrl)
-            : null,
-        child: photoUrl == null
-            ? Icon(Icons.person_rounded, color: AppColors.textSecondary)
-            : null,
-      ),
-    ),
-  );
-}
+Widget _ringAvatar(String? photoUrl, {required bool active}) => AvatarRing(
+  radius: 30,
+  imageProvider: photoUrl != null ? CachedNetworkImageProvider(photoUrl) : null,
+  style: active ? AvatarRingStyle.gradient : AvatarRingStyle.solid,
+  ringWidth: 2.5,
+  gap: true,
+);

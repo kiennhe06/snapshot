@@ -88,31 +88,11 @@ class _PostCardState extends ConsumerState<PostCard>
                 PressScale(
                   onTap: () =>
                       context.push('${Routes.userProfile}/${post.authorId}'),
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [AppColors.primaryBright, AppColors.primary],
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 19,
-                      backgroundColor: AppColors.layer3,
-                      backgroundImage: author?.photoUrl != null
-                          ? ResizeImage(
-                              CachedNetworkImageProvider(author!.photoUrl!),
-                              width: 120,
-                            )
-                          : null,
-                      child: author?.photoUrl == null
-                          ? Icon(
-                              Icons.person,
-                              size: AppIconSize.md,
-                              color: AppColors.textSecondary,
-                            )
-                          : null,
-                    ),
+                  child: AvatarRing(
+                    radius: 19,
+                    imageProvider: author?.photoUrl != null
+                        ? CachedNetworkImageProvider(author!.photoUrl!)
+                        : null,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -127,15 +107,13 @@ class _PostCardState extends ConsumerState<PostCard>
                               name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: AppType.subhead,
+                              style: AppText.h3.copyWith(
                                 fontWeight: AppType.bold,
                               ),
                             ),
                           ),
                           if (author?.isVerified == true) ...[
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSpacing.xs),
                             Icon(
                               Icons.verified_rounded,
                               size: AppIconSize.sm,
@@ -151,9 +129,8 @@ class _PostCardState extends ConsumerState<PostCard>
                           post.location!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: AppText.caption.copyWith(
                             color: AppColors.textSecondary,
-                            fontSize: AppType.small,
                           ),
                         ),
                     ],
@@ -308,11 +285,7 @@ class _PostCardState extends ConsumerState<PostCard>
                 if (post.caption.isNotEmpty)
                   RichText(
                     text: TextSpan(
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: AppType.body,
-                        height: 1.4,
-                      ),
+                      style: AppText.body,
                       children: [
                         TextSpan(
                           text: '$name ',
@@ -336,10 +309,7 @@ class _PostCardState extends ConsumerState<PostCard>
                           'Xem tất cả ${post.commentsCount} bình luận',
                           'View all ${post.commentsCount} comments',
                         ),
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: AppType.label,
-                        ),
+                        style: AppText.label,
                       ),
                     ),
                   ),
@@ -347,10 +317,7 @@ class _PostCardState extends ConsumerState<PostCard>
                   padding: const EdgeInsets.only(top: AppSpacing.xs),
                   child: Text(
                     relativeTime(post.createdAt),
-                    style: TextStyle(
-                      color: AppColors.textTertiary,
-                      fontSize: AppType.small,
-                    ),
+                    style: AppText.caption,
                   ),
                 ),
               ],

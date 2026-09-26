@@ -77,26 +77,13 @@ class HighlightsRow extends ConsumerWidget {
         onTap: () => _open(context, ref, h),
         child: Column(
           children: [
-            Container(
-              width: 62,
-              height: 62,
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderStrong, width: 2),
-              ),
-              child: CircleAvatar(
-                backgroundColor: AppColors.layer3,
-                backgroundImage: h.coverUrl.isNotEmpty
-                    ? CachedNetworkImageProvider(h.coverUrl)
-                    : null,
-                child: h.coverUrl.isEmpty
-                    ? Icon(
-                        Icons.star_rounded,
-                        color: AppColors.textSecondary,
-                      )
-                    : null,
-              ),
+            AvatarRing(
+              radius: 27,
+              imageProvider: h.coverUrl.isNotEmpty
+                  ? CachedNetworkImageProvider(h.coverUrl)
+                  : null,
+              style: AvatarRingStyle.solid,
+              fallbackIcon: Icons.star_rounded,
             ),
             const SizedBox(height: AppSpacing.xs),
             SizedBox(

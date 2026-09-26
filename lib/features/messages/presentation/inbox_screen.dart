@@ -61,14 +61,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
         titleWidget: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              tr('Tin nhắn', 'Messages'),
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.headline,
-                fontWeight: AppType.bold,
-              ),
-            ),
+            Text(tr('Tin nhắn', 'Messages'), style: AppText.h2),
             if (totalUnread > 0) ...[
               const SizedBox(width: AppSpacing.sm),
               Container(
@@ -81,9 +74,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                 ),
                 child: Text(
                   tr('$totalUnread mới', '$totalUnread new'),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: AppType.small,
+                  style: AppText.caption.copyWith(
+                    color: AppColors.onPrimary,
                     fontWeight: AppType.heavy,
                   ),
                 ),
@@ -770,7 +762,7 @@ class _ChatRow extends ConsumerWidget {
                       ],
                       if (chat.isBroadcast) ...[
                         const SizedBox(width: AppSpacing.xs),
-                        _KindBadge(label: tr('Kênh', 'Channel')),
+                        AppTag(tr('Kênh', 'Channel')),
                       ],
                       const Spacer(),
                       Text(
@@ -793,7 +785,7 @@ class _ChatRow extends ConsumerWidget {
                       Expanded(child: _preview(context, typing, senderPrefix)),
                       if (hasUnread) ...[
                         const SizedBox(width: AppSpacing.sm),
-                        _UnreadBadge(count: unread),
+                        AppCountBadge(unread),
                       ] else if (chat.isDm &&
                           chat.lastSenderId == me &&
                           chat.readUpToLast(chat.otherMember(me)))
@@ -854,55 +846,3 @@ class _ChatRow extends ConsumerWidget {
   }
 }
 
-/// Small pink pill with the unread message count.
-class _UnreadBadge extends StatelessWidget {
-  const _UnreadBadge({required this.count});
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 20),
-      height: 20,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
-      child: Text(
-        count > 99 ? '99+' : '$count',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: AppType.small,
-          fontWeight: AppType.heavy,
-        ),
-      ),
-    );
-  }
-}
-
-/// A subtle "Channel" tag next to broadcast titles.
-class _KindBadge extends StatelessWidget {
-  const _KindBadge({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: AppColors.accent,
-          fontSize: AppType.caption,
-          fontWeight: AppType.bold,
-        ),
-      ),
-    );
-  }
-}
