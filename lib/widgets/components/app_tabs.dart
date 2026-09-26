@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/design/motion.dart';
 import '../../core/design/tokens.dart';
 import 'press_scale.dart';
 
@@ -26,6 +27,10 @@ class AppSegmentedTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final n = labels.length;
+    // Slide alignment: map the active index across the track's width.
+    final alignX = n > 1 ? -1.0 + 2.0 * (index / (n - 1)) : 0.0;
+    final motion = Motion.dur(context, AppMotion.base);
     return Container(
       margin: margin,
       padding: const EdgeInsets.all(AppSpacing.xs),
@@ -33,34 +38,56 @@ class AppSegmentedTabs extends StatelessWidget {
         color: AppColors.layer3,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
-      child: Row(
-        children: List.generate(labels.length, (i) {
-          final active = i == index;
-          return Expanded(
-            child: PressScale(
-              onTap: () => onChanged(i),
-              child: AnimatedContainer(
-                duration: AppMotion.base,
-                curve: AppMotion.standard,
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: active ? AppColors.layer1 : null,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  boxShadow: active ? AppShadows.soft : null,
-                ),
-                child: Text(
-                  labels[i],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: active ? AppColors.primary : AppColors.textSecondary,
-                    fontSize: AppType.body,
-                    fontWeight: active ? AppType.bold : AppType.medium,
+      child: Stack(
+        children: [
+          // One pill that glides to the active segment (instead of fading
+          // per-cell), so the selection reads as a single moving object.
+          Positioned.fill(
+            child: AnimatedAlign(
+              duration: motion,
+              curve: AppMotion.inOut,
+              alignment: Alignment(alignX, 0),
+              child: FractionallySizedBox(
+                widthFactor: 1 / n,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.layer1,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: AppShadows.soft,
                   ),
                 ),
               ),
             ),
-          );
-        }),
+          ),
+          Row(
+            children: List.generate(n, (i) {
+              final active = i == index;
+              return Expanded(
+                child: PressScale(
+                  onTap: () {
+                    Motion.selection();
+                    onChanged(i);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: AnimatedDefaultTextStyle(
+                      duration: motion,
+                      curve: AppMotion.standard,
+                      style: TextStyle(
+                        color: active
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                        fontSize: AppType.body,
+                        fontWeight: active ? AppType.bold : AppType.medium,
+                      ),
+                      child: Text(labels[i], textAlign: TextAlign.center),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }

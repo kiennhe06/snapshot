@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design/tokens.dart';
 import '../../../../core/i18n/i18n.dart';
+import '../../../../widgets/motion/motion.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../../profile/providers/profile_providers.dart';
 import '../../providers/story_providers.dart';
@@ -27,18 +28,26 @@ class StoryRing extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         children: [
           // Your story bubble (add or open own).
-          _YourStory(
-            hasStory: hasOwn,
-            onAdd: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const StoryComposerScreen()),
+          MotionEntrance(
+            index: 0,
+            offset: 8,
+            child: _YourStory(
+              hasStory: hasOwn,
+              onAdd: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const StoryComposerScreen()),
+              ),
+              onOpen: () => _openViewer(context, trays, 0),
             ),
-            onOpen: () => _openViewer(context, trays, 0),
           ),
           for (var i = 0; i < trays.length; i++)
             if (trays[i].authorId != myUid)
-              _TrayBubble(
-                authorId: trays[i].authorId,
-                onTap: () => _openViewer(context, trays, i),
+              MotionEntrance(
+                index: i + 1,
+                offset: 8,
+                child: _TrayBubble(
+                  authorId: trays[i].authorId,
+                  onTap: () => _openViewer(context, trays, i),
+                ),
               ),
         ],
       ),

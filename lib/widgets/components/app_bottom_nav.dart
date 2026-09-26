@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/design/motion.dart';
 import '../../core/design/tokens.dart';
 import 'press_scale.dart';
 
@@ -41,7 +42,7 @@ class AppBottomNav extends StatelessWidget {
     final slots = <Widget>[];
     for (var i = 0; i < items.length; i++) {
       if (onCreate != null && i == mid) slots.add(_createButton());
-      slots.add(Expanded(child: _tab(i)));
+      slots.add(Expanded(child: _tab(context, i)));
     }
     if (onCreate != null && mid == items.length) slots.add(_createButton());
 
@@ -71,31 +72,58 @@ class AppBottomNav extends StatelessWidget {
     );
   }
 
-  Widget _tab(int i) {
+  Widget _tab(BuildContext context, int i) {
     final active = i == currentIndex;
     final item = items[i];
     final color = active ? AppColors.primary : AppColors.textTertiary;
+    final motion = Motion.dur(context, AppMotion.base);
     return PressScale(
-      onTap: () => onTap(i),
+      onTap: () {
+        Motion.selection();
+        onTap(i);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              active ? item.activeIcon : item.icon,
-              size: AppIconSize.lg,
-              color: color,
+            // The icon crossfades + pops the moment its tab becomes active.
+            AnimatedSwitcher(
+              duration: motion,
+              switchInCurve: AppMotion.overshoot,
+              transitionBuilder: (child, anim) =>
+                  ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                active ? item.activeIcon : item.icon,
+                key: ValueKey(active),
+                size: AppIconSize.lg,
+                color: color,
+              ),
             ),
             const SizedBox(height: 3),
-            Text(
-              item.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            AnimatedDefaultTextStyle(
+              duration: motion,
+              curve: AppMotion.standard,
               style: TextStyle(
                 color: color,
                 fontSize: AppType.caption,
                 fontWeight: active ? AppType.bold : AppType.medium,
+              ),
+              child: Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+            // A small active dot that scales in under the label.
+            AnimatedScale(
+              duration: motion,
+              curve: AppMotion.overshoot,
+              scale: active ? 1 : 0,
+              child: Container(
+                margin: const EdgeInsets.only(top: 3),
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
           ],
