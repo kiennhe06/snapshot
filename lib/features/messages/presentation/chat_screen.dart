@@ -308,10 +308,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               tr('Trả lời: ', 'Reply: ') + preview,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: AppType.label,
-              ),
+              style: AppText.label,
             ),
           ),
           GestureDetector(
@@ -722,10 +719,7 @@ class _PinnedBar extends ConsumerWidget {
           if (pinned.length > 1)
             Text(
               '+${pinned.length - 1}',
-              style: TextStyle(
-                color: AppColors.textTertiary,
-                fontSize: AppType.small,
-              ),
+              style: AppText.caption,
             ),
         ],
       ),

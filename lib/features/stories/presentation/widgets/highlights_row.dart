@@ -157,11 +157,7 @@ class HighlightsRow extends ConsumerWidget {
             children: [
               Text(
                 tr('Tạo highlight', 'New highlight'),
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.title,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h1,
               ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(controller: controller, label: tr('Tên', 'Title')),

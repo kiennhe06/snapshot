@@ -151,10 +151,7 @@ class _SessionCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   '${session.osVersion} · ${_method(session.signInMethod)}',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: AppType.label,
-                  ),
+                  style: AppText.label,
                 ),
                 Text(
                   tr(

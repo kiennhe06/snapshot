@@ -122,11 +122,7 @@ class _TrackDetailSheetState extends State<_TrackDetailSheet> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: AppType.title,
-              fontWeight: AppType.bold,
-            ),
+            style: AppText.h1,
           ),
           if (track.artist.isNotEmpty) ...[
             const SizedBox(height: 4),
@@ -146,10 +142,7 @@ class _TrackDetailSheetState extends State<_TrackDetailSheet> {
             hasPreview
                 ? tr('Nhấn để nghe thử 30 giây', 'Tap to preview 30 seconds')
                 : tr('Không có bản nghe thử', 'No preview available'),
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: AppType.small,
-            ),
+            style: AppText.caption,
           ),
           const SizedBox(height: AppSpacing.xl),
           Row(

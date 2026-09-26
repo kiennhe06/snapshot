@@ -171,11 +171,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             children: [
               Text(
                 tr('Tạo bộ sưu tập', 'Create collection'),
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.title,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h1,
               ),
               const SizedBox(height: AppSpacing.lg),
               AppTextField(

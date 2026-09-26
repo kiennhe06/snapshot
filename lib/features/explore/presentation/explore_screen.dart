@@ -272,10 +272,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               const Spacer(),
               Text(
                 tr('Cập nhật liên tục', 'Live'),
-                style: TextStyle(
-                  color: AppColors.textTertiary,
-                  fontSize: AppType.small,
-                ),
+                style: AppText.caption,
               ),
             ],
           ),
@@ -311,10 +308,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       const SizedBox(width: 6),
                       Text(
                         tr('${t.value} bài', '${t.value} posts'),
-                        style: TextStyle(
-                          color: AppColors.textTertiary,
-                          fontSize: AppType.small,
-                        ),
+                        style: AppText.caption,
                       ),
                     ],
                   ),
@@ -612,10 +606,7 @@ class _SuggestionCard extends ConsumerWidget {
             '@${user.username}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: AppColors.textTertiary,
-              fontSize: AppType.small,
-            ),
+            style: AppText.caption,
           ),
           const SizedBox(height: AppSpacing.xs),
           Expanded(

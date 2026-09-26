@@ -234,18 +234,11 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           formatCount(count),
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: AppType.title,
-            fontWeight: AppType.bold,
-          ),
+          style: AppText.h1,
         ),
         Text(
           label,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: AppType.label,
-          ),
+          style: AppText.label,
         ),
       ],
       ),

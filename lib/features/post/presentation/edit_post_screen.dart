@@ -257,11 +257,7 @@ Future<String?> _showAltTextDialog(
           children: [
             Text(
               title,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.title,
-                fontWeight: AppType.bold,
-              ),
+              style: AppText.h1,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppTextField(

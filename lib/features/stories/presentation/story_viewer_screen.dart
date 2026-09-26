@@ -645,11 +645,7 @@ class _SeenBar extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Text(
                 '${tr('Người đã xem', 'Viewers')} (${viewers.length})',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppType.headline,
-                  fontWeight: AppType.bold,
-                ),
+                style: AppText.h2,
               ),
             ),
             for (final v in viewers) _ViewerRow(uid: v),

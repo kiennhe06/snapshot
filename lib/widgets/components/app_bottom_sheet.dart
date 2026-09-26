@@ -97,11 +97,7 @@ class AppSheetSurface extends StatelessWidget {
                 ),
                 child: Text(
                   title!,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.headline,
-                    fontWeight: AppType.bold,
-                  ),
+                  style: AppText.h2,
                 ),
               ),
             Flexible(child: child),

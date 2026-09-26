@@ -222,11 +222,7 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
               children: [
                 Text(
                   tr('Tạo thước phim', 'Create reel'),
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: AppType.headline,
-                    fontWeight: AppType.bold,
-                  ),
+                  style: AppText.h2,
                 ),
                 const SizedBox(width: 6),
                 Container(
@@ -243,10 +239,7 @@ class _ReelComposerScreenState extends ConsumerState<ReelComposerScreen> {
               _savedHint
                   ? tr('Bản nháp đã lưu', 'Draft saved')
                   : tr('Bản nháp tự động lưu', 'Draft auto-saves'),
-              style: TextStyle(
-                color: AppColors.textTertiary,
-                fontSize: AppType.small,
-              ),
+              style: AppText.caption,
             ),
           ],
         ),
@@ -402,10 +395,7 @@ class _PreviewCard extends StatelessWidget {
                       hasVideo
                           ? tr('Đã chọn video · nhấn để đổi', 'Video selected · tap to change')
                           : tr('Nhấn để chọn video', 'Tap to pick a video'),
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: AppType.label,
-                      ),
+                      style: AppText.label,
                     ),
                   ],
                 ),
@@ -422,10 +412,7 @@ class _PreviewCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   tr('Dọc 9:16', 'Vertical 9:16'),
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: AppType.small,
-                  ),
+                  style: AppText.caption,
                 ),
               ],
             ),
@@ -623,10 +610,7 @@ class _MusicSelector extends StatelessWidget {
                           t.artist,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: AppType.label,
-                          ),
+                          style: AppText.label,
                         ),
                       ],
                     ),

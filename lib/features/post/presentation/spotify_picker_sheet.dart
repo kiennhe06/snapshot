@@ -80,10 +80,7 @@ class _SpotifyPickerState extends ConsumerState<_SpotifyPicker> {
                     'Mẹo: mở Spotify → Chia sẻ → Sao chép liên kết bài hát, rồi dán vào đây.',
                     'Tip: in Spotify, Share → Copy song link, then paste here.',
                   ),
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: AppType.small,
-                  ),
+                  style: AppText.caption,
                 ),
               ),
             ),

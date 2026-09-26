@@ -478,10 +478,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   '${_caption.text.characters.length}/2200',
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: AppType.small,
-                  ),
+                  style: AppText.caption,
                 ),
               ),
             ),
@@ -1193,11 +1190,7 @@ Future<String?> _showAltTextDialog(
           children: [
             Text(
               title,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.title,
-                fontWeight: AppType.bold,
-              ),
+              style: AppText.h1,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppTextField(

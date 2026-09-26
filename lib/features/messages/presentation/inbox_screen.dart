@@ -350,10 +350,7 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
                 'Ghi chú hiển thị trên đầu tin nhắn của bạn bè · 24 giờ',
                 'Shown on top of your friends\' inbox · 24h',
               ),
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: AppType.label,
-              ),
+              style: AppText.label,
             ),
             const SizedBox(height: AppSpacing.md),
             // Note text box — only the text + counter, so nothing overlaps it.
@@ -417,10 +414,7 @@ class _NoteComposerSheetState extends ConsumerState<_NoteComposerSheet> {
                     'Chia sẻ với người bạn theo dõi',
                     'Shared with people you follow',
                   ),
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: AppType.label,
-                  ),
+                  style: AppText.label,
                 ),
               ],
             ),
