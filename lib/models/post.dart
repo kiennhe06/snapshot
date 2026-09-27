@@ -129,8 +129,15 @@ class Post {
       contributorIds.where((id) => id != authorId).toList();
 
   /// Cover image for the profile grid (thumb of the first media item).
-  String get coverUrl =>
-      media.isEmpty ? '' : (media.first.thumbUrl ?? media.first.url);
+  /// Falls back to the full [url] when the thumb is missing or blank — an
+  /// empty-string thumb (`""`) is treated as absent, not a valid empty cover.
+  String get coverUrl {
+    if (media.isEmpty) return '';
+    final first = media.first;
+    final thumb = first.thumbUrl;
+    if (thumb != null && thumb.isNotEmpty) return thumb;
+    return first.url;
+  }
 
   bool get isVideo => mediaType == 'video';
   bool get isCarousel => mediaType == 'carousel';

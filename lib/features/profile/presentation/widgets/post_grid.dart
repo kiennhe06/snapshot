@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
 import '../../../../core/utils/format.dart';
 import '../../../../models/post.dart';
+import '../../../../widgets/components/components.dart';
 import '../../../../widgets/empty_view.dart';
 import '../../../../widgets/motion/motion.dart';
 
@@ -139,16 +139,13 @@ class PostGridCell extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (post.coverUrl.isEmpty)
-            postCoverPlaceholder()
-          else
-            CachedNetworkImage(
-              imageUrl: post.coverUrl,
-              memCacheWidth: 400,
-              fit: BoxFit.cover,
-              placeholder: (_, _) => Container(color: AppColors.layer3),
-              errorWidget: (_, _, _) => postCoverPlaceholder(),
-            ),
+          // Grid cells are ~1/3 screen width; decode to a matching width to
+          // keep the image cache small (full-res covers would waste memory).
+          NetworkCover(
+            url: post.coverUrl,
+            memCacheWidth: 400,
+            placeholder: postCoverPlaceholder,
+          ),
           if (post.isVideo)
             const Positioned(
               top: 6,

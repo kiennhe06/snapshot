@@ -1,4 +1,5 @@
 // Barrel export for the custom "Moment" component library.
+export 'network_cover.dart';
 export 'app_badge.dart';
 export 'avatar_ring.dart';
 export 'app_bottom_nav.dart';

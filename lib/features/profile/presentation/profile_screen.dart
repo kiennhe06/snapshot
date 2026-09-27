@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -530,15 +529,11 @@ class _PinnedRow extends StatelessWidget {
                     child: SizedBox(
                       width: 48,
                       height: 48,
-                      child: p.coverUrl.isEmpty
-                          ? postCoverPlaceholder()
-                          : CachedNetworkImage(
-                              imageUrl: p.coverUrl,
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, _, _) => postCoverPlaceholder(),
-                            ),
+                      child: NetworkCover(
+                        url: p.coverUrl,
+                        memCacheWidth: 200,
+                        placeholder: postCoverPlaceholder,
+                      ),
                     ),
                   ),
                 ),
