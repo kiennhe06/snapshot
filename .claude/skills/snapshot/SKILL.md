@@ -14,7 +14,8 @@ Mạng xã hội chia sẻ ảnh/video kiểu Instagram, tên **Snapshot** (proj
 Cộng đồng sáng tạo nội dung, nhiếp ảnh, thương hiệu cá nhân. Hiện là **MVP có dữ liệu demo thật** (tài khoản seed) để trải nghiệm như app thật.
 
 ## Hiện trạng (tính đến commit `880074b`, 87 commits)
-Đã xong các luồng cốt lõi: **xác thực** (email/Google/OTP, 2FA, đa tài khoản), **feed** (Đang theo dõi/Yêu thích/Khám phá), **đăng bài** (ảnh/carousel/video + nhạc + tag + vị trí + hashtag), **hồ sơ**, **stories**, **reels**, **nhắn tin** (DM/nhóm/broadcast), **tương tác/thông báo**, **khám phá/tìm kiếm**, **cài đặt**. Có **design system** token-driven, **motion system** riêng, 2 skin sáng/tối, i18n VI/EN.
+Đã xong các luồng cốt lõi: **xác thực** (email/Google/OTP, 2FA, đa tài khoản), **feed** (Đang theo dõi/Yêu thích/Khám phá), **đăng bài** (ảnh/carousel/video + nhạc + tag + vị trí + hashtag), **hồ sơ**, **stories**, **reels**, **nhắn tin** (DM/nhóm/broadcast), **tương tác** (bình luận, lưu bài, quan hệ follow/chặn/hạn chế, ẩn từ khoá), **khám phá/tìm kiếm**, **cài đặt**. Có **design system** token-driven, **motion system** riêng, 2 skin sáng/tối, i18n VI/EN.
+**Chưa có** (xác nhận từ code): **thông báo đẩy FCM** (không có `firebase_messaging`) và **bảng tin hoạt động in-app** (không có màn/route notifications). Nav gồm 4 tab + nút tạo: Trang chủ · Khám phá · [+] · Reels · Cá nhân. Xem `references/future.md`.
 
 ## Kiến trúc 1 dòng
 Flutter + Riverpod (Notifier/StreamProvider/FutureProvider) + go_router; feature-first (`lib/features/<tên>/{data,providers,presentation}`); Firestore là backend realtime; **Cloudinary** lưu ảnh/video (KHÔNG dùng Firebase Storage). Chi tiết: `references/architecture.md`.

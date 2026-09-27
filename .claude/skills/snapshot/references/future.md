@@ -3,6 +3,12 @@
 > KHÔNG tự biến các mục dưới thành thay đổi code. Đề xuất → xác định impact → chờ quyết định nếu rủi ro lớn.
 > Nhãn: **[KNOWN]** có bằng chứng · **[RISK]** rủi ro tiềm tàng · **[IDEA]** suy đoán/đề xuất.
 
+## Chức năng còn THIẾU (feature gap — xác nhận từ code)
+- **[KNOWN] Không có thông báo đẩy (push/FCM)** — pubspec không có `firebase_messaging`. App social thường cần cái này.
+- **[KNOWN] Không có bảng tin hoạt động in-app** (notifications/activity: ai like/comment/follow mình) — không có màn hay route notifications; nav chỉ 4 tab + nút tạo. Đây là chức năng cốt lõi của app kiểu Instagram còn thiếu.
+- Các luồng đang có: xác thực, feed, đăng bài, hồ sơ, stories, reels, nhắn tin (DM/nhóm/broadcast), tương tác (bình luận/lưu/quan hệ/ẩn từ khoá), khám phá/tìm kiếm, cài đặt.
+> Feature `interactions` = comments + saved + relations (follow/block) + hidden words — KHÔNG phải notification center.
+
 ## Technical debt (hiện trạng)
 - **[KNOWN] Test gần như không có** — chỉ `test/widget_test.dart`. Không có unit/widget/integration test cho model, provider, repository. → Rủi ro regression cao khi sửa shared code.
 - **[KNOWN] Còn ~152 TextStyle/màu inline** rải rác (one-off) chưa chuyển hết sang token.

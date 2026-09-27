@@ -26,8 +26,8 @@ Sản phẩm phù hợp làm nền tảng cho **cộng đồng sáng tạo nội
 - **Bảng tin thông minh**: xem bài từ người đang theo dõi, danh sách yêu thích, hoặc khám phá nội dung mới.
 - **Khám phá**: tìm kiếm theo người dùng, hashtag, địa điểm; chủ đề thịnh hành và gợi ý người nên theo dõi.
 - **Tương tác thật**: thích, bình luận, lưu bài — số liệu phản ánh đúng hành vi người dùng.
-- **Nhắn tin trực tiếp** giữa các tài khoản.
-- **Thông báo** cho lượt thích, bình luận, người theo dõi mới.
+- **Nhắn tin trực tiếp** (DM/nhóm/broadcast) giữa các tài khoản.
+- **Quản lý quan hệ**: theo dõi, chặn, hạn chế, ẩn từ khoá.
 
 ### 🔐 Tài khoản & an toàn
 - **Đăng nhập linh hoạt**: email, Google, số điện thoại (OTP).
@@ -66,7 +66,8 @@ Sản phẩm phù hợp làm nền tảng cho **cộng đồng sáng tạo nội
 
 ## Trạng thái sản phẩm
 
-- ✅ **MVP hoàn chỉnh** các luồng cốt lõi: xác thực, bảng tin, đăng bài, hồ sơ, stories, khám phá, nhắn tin, reels, thông báo, cài đặt.
+- ✅ **MVP hoàn chỉnh** các luồng cốt lõi: xác thực, bảng tin, đăng bài, hồ sơ, stories, khám phá, nhắn tin, reels, cài đặt.
+- ⏳ **Chưa có**: thông báo đẩy (push/FCM) và bảng tin hoạt động trong app (activity feed) — xem `.claude/skills/snapshot/references/future.md`.
 - ✅ **Dữ liệu demo sẵn sàng** — có thể cài và trải nghiệm ngay như một ứng dụng thật.
 - 🎯 Sẵn sàng cho các bước tiếp theo: mở rộng tính năng, tuỳ biến thương hiệu, đưa lên cửa hàng ứng dụng.
 
@@ -79,7 +80,7 @@ Sản phẩm phù hợp làm nền tảng cho **cộng đồng sáng tạo nội
 
 ### Tech stack
 - **Flutter** (Dart), quản lý state bằng **Riverpod**, điều hướng **go_router**
-- **Firebase**: Authentication, Firestore, Cloud Messaging
+- **Firebase**: Authentication, Firestore (chưa dùng Cloud Messaging/Storage)
 - **Cloudinary** lưu trữ ảnh/video (upload trực tiếp, unsigned preset) — xem `lib/core/services/storage_service.dart`
 - Design system: `lib/core/design/` • Motion system: `lib/widgets/motion/`
 - Cấu trúc nhóm theo feature (`lib/features/...`), tách UI ↔ logic ↔ data
