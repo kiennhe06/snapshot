@@ -1,8 +1,3 @@
----
-name: snapshot-conventions
-description: "Quy ước code THỰC TẾ của Snapshot (không phải best practice chung chung). Dùng khi viết/sửa code để khớp phong cách hiện có: đặt tên, cấu trúc file/folder, model, repository, provider, xử lý lỗi, async, comment, i18n, commit. Ưu tiên quy ước của project hơn quy ước generic."
----
-
 # Snapshot — Coding conventions (theo code thật)
 
 > Nguyên tắc: **PROJECT ACTUAL CONVENTION > GENERIC CONVENTION**. Khớp code xung quanh (mật độ comment, cách đặt tên, idiom) thay vì áp best practice mặc định.
@@ -39,7 +34,7 @@ description: "Quy ước code THỰC TẾ của Snapshot (không phải best pra
 
 ## UI
 - `const` constructor ở mọi nơi có thể (perf). Widget nhỏ, tách widget con khi phức tạp.
-- Dùng token (`AppText`, `AppColors`, `AppSpacing`...) — **không TextStyle/màu inline** (đã có 2 đợt sweep giảm 245→152 inline TextStyle). Ảnh mạng dùng `NetworkCover`. Chi tiết: skill `snapshot-ui`.
+- Dùng token (`AppText`, `AppColors`, `AppSpacing`...) — **không TextStyle/màu inline** (đã có 2 đợt sweep giảm 245→152 inline TextStyle). Ảnh mạng dùng `NetworkCover`. Chi tiết: `references/ui.md`.
 - Điều hướng qua `go_router` + `Routes.*` (named routes), không hardcode path.
 
 ## Comment / doc
@@ -50,4 +45,4 @@ description: "Quy ước code THỰC TẾ của Snapshot (không phải best pra
 - Commit từng thay đổi logic; `flutter analyze` sạch trước khi commit; push `main`.
 
 ## Secret
-- **Không hardcode** API key/mật khẩu/secret trong code hay tài liệu commit. `lib/firebase_options.dart` bị gitignore; CI dùng stub. Xem skill `snapshot-anti-regression`.
+- **Không hardcode** API key/mật khẩu/secret trong code hay tài liệu commit. `lib/firebase_options.dart` bị gitignore; CI dùng stub. Xem `references/anti-regression.md`.

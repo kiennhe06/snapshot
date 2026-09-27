@@ -1,8 +1,3 @@
----
-name: snapshot-anti-regression
-description: "Hệ thống chống regression cho Snapshot: NEVER DO / ALWAYS DO có căn cứ từ project, bảng rủi ro theo loại thay đổi, phần dễ hỏng & behavior không được phá, và error forensics các lỗi đã gặp. Dùng trước khi sửa code dùng chung, refactor, hoặc đổi behavior/data."
----
-
 # Snapshot — Anti-Regression System
 
 ## NEVER DO AGAIN (có căn cứ từ project)

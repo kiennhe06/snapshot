@@ -1,8 +1,3 @@
----
-name: snapshot-decisions
-description: "Decision log + preference của người dùng + danh sách kiến thức KHÔNG nên lưu, cho Snapshot. Dùng để AI tương lai không vô tình 'sửa lại' những quyết định đã có chủ ý, làm việc đúng cách người dùng muốn, và không giữ lại thông tin lỗi thời."
----
-
 # Snapshot — Decision Log & Preferences
 
 ## Decision Log (quyết định có chủ ý — đừng tự đảo ngược)

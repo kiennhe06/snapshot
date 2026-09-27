@@ -1,8 +1,3 @@
----
-name: snapshot-architecture
-description: "Kiến trúc thực tế của Snapshot: folder structure feature-first, các module chính và dependency, data flow Firestore/Cloudinary, state management Riverpod, và các phần dễ gây regression nhất. Dùng khi cần hiểu code nằm ở đâu, thay đổi ảnh hưởng tới đâu, hoặc trước khi sửa module dùng chung."
----
-
 # Snapshot — Kiến trúc thực tế
 
 ## Công nghệ (từ `pubspec.yaml`)
@@ -46,7 +41,7 @@ Features: `auth, feed, post, profile, explore, stories, reels, messages, interac
 ## Module chính & dependency (đọc để biết impact)
 - `core/design/tokens.dart` — **mọi UI phụ thuộc**. Đổi token = ảnh hưởng toàn app.
 - `widgets/components/*` + `widgets/motion/*` — dùng chung nhiều màn. Sửa 1 component = kiểm mọi nơi dùng.
-- `models/post.dart` (`Post.coverUrl`, `isVideo`, `coAuthorIds`) — feed, grid, explore đều đọc. Xem skill `snapshot-anti-regression`.
+- `models/post.dart` (`Post.coverUrl`, `isVideo`, `coAuthorIds`) — feed, grid, explore đều đọc. Xem `references/anti-regression.md`.
 - `features/feed/providers/feed_providers.dart` — `FeedController` + `_applyAudience` lọc theo following/blocked/muted/visibility cho cả 3 feed (following/favorites/explore).
 - `core/i18n` — mọi text người dùng đi qua `tr()`.
 

@@ -1,8 +1,3 @@
----
-name: snapshot-future
-description: "Technical debt, rủi ro tương lai, cơ hội bị bỏ lỡ và ý tưởng đột phá cho Snapshot — CHỈ ĐỀ XUẤT, không tự triển khai. Phân biệt rõ KNOWN PROBLEM / POTENTIAL RISK / SPECULATIVE IDEA. Dùng khi bàn hướng phát triển hoặc khi phát hiện cơ hội cải tiến trong lúc làm task khác."
----
-
 # Snapshot — Future / Improvements (chỉ đề xuất)
 
 > KHÔNG tự biến các mục dưới thành thay đổi code. Đề xuất → xác định impact → chờ quyết định nếu rủi ro lớn.

@@ -1,8 +1,3 @@
----
-name: snapshot-ui
-description: "Design system thực tế của Snapshot: token màu/typography/spacing/radius/motion, component dùng chung, và phân biệt LOCKED (không tự đổi) vs FLEXIBLE (được đề xuất cải tiến). Dùng khi làm bất kỳ UI nào, thêm màn hình, hoặc review giao diện. Triết lý: less but better."
----
-
 # Snapshot — UI/UX Design System
 
 Nguồn chân lý: `lib/core/design/tokens.dart` (+ `display_theme.dart`, `motion.dart`). **Không dùng giá trị inline** — luôn qua token.

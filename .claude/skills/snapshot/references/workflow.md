@@ -1,8 +1,3 @@
----
-name: snapshot-workflow
-description: "Quy trình xử lý task cho Snapshot + master checklist (before/during/after coding, before refactor/shared-code/architecture change). Dùng cho MỌI task mới để làm đúng thứ tự và không bỏ sót bước kiểm chứng. Rút ra từ bài học thực tế của project."
----
-
 # Snapshot — Workflow & Master Checklist
 
 ## Quy trình chuẩn cho một task
@@ -15,7 +10,7 @@ NHẬN TASK
   → LÀM
   → flutter analyze (phải sạch)
   → BUILD + KIỂM THỬ TRÊN SIMULATOR (chụp màn hình xác nhận)
-  → REGRESSION CHECK (những vùng liên đới — xem snapshot-anti-regression)
+  → REGRESSION CHECK (những vùng liên đới — xem `references/anti-regression.md`)
   → COMMIT (Conventional Commits, tiếng Anh) → PUSH main
   → BÁO CÁO trung thực (làm gì, kết quả thật, còn gì chưa chắc)
 ```
@@ -24,7 +19,7 @@ NHẬN TASK
 ## Khi nào HỎI vs TỰ CHỦ (theo preference người dùng)
 - **Tự làm**: yêu cầu rõ; sửa bug; thay đổi nhỏ có thể kiểm chứng; commit+push khi xong (analyze sạch).
 - **Hỏi trước**: có ≥2 phương án hợp lý khác nhau về data/architecture; thay đổi dữ liệu chung (follow graph, counts) — từng bị guard "Modify Shared Resources" chặn; đổi UI đã chốt; bất kỳ việc rủi ro/khó hồi phục.
-- **Đề xuất, KHÔNG tự làm**: các cải tiến trong `snapshot-future`.
+- **Đề xuất, KHÔNG tự làm**: các cải tiến trong `references/future.md`.
 
 ## MASTER CHECKLIST
 
@@ -32,7 +27,7 @@ NHẬN TASK
 - [ ] Hiểu đúng yêu cầu (không suy diễn thêm phạm vi).
 - [ ] Đọc code thực tế của phần sẽ sửa (không dựa vào README/docs).
 - [ ] Nếu đụng model/provider/component/token dùng chung → search toàn bộ usage/caller.
-- [ ] Xác định đây là LOCKED hay FLEXIBLE (skill `snapshot-ui`).
+- [ ] Xác định đây là LOCKED hay FLEXIBLE (`references/ui.md`).
 
 ### DURING CODING
 - [ ] Thay đổi nhỏ nhất; giữ nguyên behavior không liên quan.

@@ -1,8 +1,3 @@
----
-name: snapshot-debugging
-description: "Playbook debug cho Snapshot + các pattern debug riêng của project (Flutter/Firebase/iOS simulator). Dùng khi có bug hiển thị, crash, dữ liệu sai, hoặc hành vi khác mong đợi. Nhấn mạnh: tìm root cause bằng cách so đường code, không đoán mò hạ tầng."
----
-
 # Snapshot — Debugging Playbook
 
 ## Quy trình 10 bước
