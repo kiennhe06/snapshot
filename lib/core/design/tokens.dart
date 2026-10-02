@@ -175,6 +175,47 @@ const AppPalette kNeonPalette = AppPalette(
   topHighlight: Color(0x40FFFFFF),
 );
 
+/// "LEGO" — bright plastic bricks on a warm light ground: red/blue brand,
+/// flat white "brick" surfaces, near-black outlines, plastic-sheen top. The
+/// chunky black border + block shadow come from component treatments (see
+/// [AppDepth.brickBorder] / [AppDepth.brickShadow]); the rounded Baloo 2 font
+/// is swapped in by the theme.
+const AppPalette kLegoPalette = AppPalette(
+  scaffold: Color(0xFFEBE7DC),
+  layer1: Color(0xFFFFFFFF),
+  layer2: Color(0xFFFFFFFF),
+  layer3: Color(0xFFE2DDD0),
+  layer5: Color(0xFFFFFFFF),
+  primary: Color(0xFFD3122A),
+  primaryBright: Color(0xFFEE3B3B),
+  primaryDeep: Color(0xFFA10E1E),
+  accent: Color(0xFF0A5BC4),
+  textPrimary: Color(0xFF18120F),
+  textSecondary: Color(0xFF574F47),
+  textTertiary: Color(0xFF8E857A),
+  success: Color(0xFF2E8B3D),
+  liveDot: Color(0xFFD3122A),
+  warn: Color(0xFFF5A300),
+  danger: Color(0xFFD3122A),
+  borderSubtle: Color(0xFF1A1512),
+  borderStrong: Color(0xFF000000),
+  cardTop: Color(0xFFFFFFFF),
+  cardBottom: Color(0xFFFFFFFF),
+  elevatedTop: Color(0xFFFFFFFF),
+  elevatedBottom: Color(0xFFF2EFE8),
+  sectionTop: Color(0xFFFFFFFF),
+  sectionBottom: Color(0xFFF6F3EC),
+  glowInner: Color(0xFFF3EFE4),
+  glowOuter: Color(0xFFEBE7DC),
+  shadowSoft: Color(0x1F000000),
+  shadowSoftLow: Color(0x14000000),
+  shadowMedium: Color(0x29000000),
+  shadowMediumLow: Color(0x1A000000),
+  shadowOverlay: Color(0x33000000),
+  brandGlowColor: Color(0x26000000),
+  topHighlight: Color(0x66FFFFFF),
+);
+
 /// The live palette. Swapped by [applyPalette]; the app re-keys its widget
 /// tree on change so every token re-reads.
 AppPalette _p = kLightPalette;
@@ -186,6 +227,10 @@ bool get isDarkDisplay => _p != kLightPalette;
 /// Whether the "Neon 3D" game skin is active. Components may add extra depth
 /// (bevel rim, glow, gloss) on top of the palette when this is true.
 bool get isNeonDisplay => _p == kNeonPalette;
+
+/// Whether the "LEGO" brick skin is active. Components add a chunky black
+/// outline + hard block shadow (see [AppDepth.brickBorder] / [brickShadow]).
+bool get isLegoDisplay => _p == kLegoPalette;
 
 /// Swap the live palette. Call before rebuilding the app tree.
 void applyPalette(AppPalette p) => _p = p;
@@ -534,5 +579,23 @@ abstract class AppDepth {
   /// Glow around an active icon/tab on the neon skin (empty elsewhere).
   static List<Shadow> get iconGlow => isNeonDisplay
       ? [Shadow(color: _p.primaryBright.withValues(alpha: 0.9), blurRadius: 14)]
+      : const [];
+
+  // ---- LEGO brick treatment (no-op on other skins) ----
+
+  /// The chunky near-black outline around a LEGO brick. Null elsewhere.
+  static Border? brickBorder({double width = 2.5}) =>
+      isLegoDisplay ? Border.all(color: const Color(0xFF17120F), width: width) : null;
+
+  /// The hard offset block shadow that makes a LEGO piece sit on the surface
+  /// (no blur). Empty elsewhere.
+  static List<BoxShadow> brickShadow({double dy = 4}) => isLegoDisplay
+      ? [
+          BoxShadow(
+            color: const Color(0xFF17120F),
+            offset: Offset(0, dy),
+            blurRadius: 0,
+          ),
+        ]
       : const [];
 }

@@ -80,8 +80,12 @@ class AppIconButton extends StatelessWidget {
     // (bevel rim + subtle fill + glow), like a game HUD key. Other skins keep
     // the flat transparent circle.
     final neon = isNeonDisplay;
+    final lego = isLegoDisplay;
     final iconColor =
-        color ?? (active ? AppColors.primaryBright : AppColors.textSecondary);
+        color ??
+        (active
+            ? (lego ? AppColors.onPrimary : AppColors.primaryBright)
+            : (lego ? AppColors.textPrimary : AppColors.textSecondary));
     final button = PressScale(
       onTap: onTap,
       child: Container(
@@ -108,6 +112,13 @@ class AppIconButton extends StatelessWidget {
                     offset: const Offset(0, 4),
                   ),
                 ],
+              )
+            : lego
+            ? BoxDecoration(
+                color: active ? AppColors.primary : AppColors.layer1,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: AppDepth.brickBorder(width: 2),
+                boxShadow: AppDepth.brickShadow(dy: 3),
               )
             : BoxDecoration(
                 shape: BoxShape.circle,

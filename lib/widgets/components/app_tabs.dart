@@ -75,6 +75,13 @@ class AppSegmentedTabs extends StatelessWidget {
                             ),
                           ],
                         )
+                      : isLegoDisplay
+                      ? BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: AppDepth.brickBorder(width: 2),
+                          boxShadow: AppDepth.brickShadow(dy: 2),
+                        )
                       : BoxDecoration(
                           color: AppColors.layer1,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -100,7 +107,7 @@ class AppSegmentedTabs extends StatelessWidget {
                       curve: AppMotion.standard,
                       style: TextStyle(
                         color: active
-                            ? (isNeonDisplay
+                            ? ((isNeonDisplay || isLegoDisplay)
                                   ? AppColors.onPrimary
                                   : AppColors.primary)
                             : AppColors.textSecondary,

@@ -20,6 +20,7 @@ class AppFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final neon = isNeonDisplay;
+    final lego = isLegoDisplay;
     return PressScale(
       onTap: onTap,
       child: Container(
@@ -29,29 +30,37 @@ class AppFilterChip extends StatelessWidget {
             ? AppDepth.sheen(BorderRadius.circular(AppRadius.pill))
             : null,
         decoration: BoxDecoration(
-          gradient: selected
+          gradient: selected && !lego
               ? LinearGradient(
                   colors: [AppColors.primaryBright, AppColors.primary],
                 )
-              : (neon ? AppGradients.elevated : null),
-          color: selected ? null : (neon ? null : AppColors.layer1),
+              : (neon && !selected ? AppGradients.elevated : null),
+          color: lego
+              ? (selected ? AppColors.primary : AppColors.layer1)
+              : (selected ? null : (neon ? null : AppColors.layer1)),
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(
-            color: selected
-                ? (neon
-                      ? AppColors.primaryBright.withValues(alpha: 0.6)
-                      : Colors.transparent)
-                : (neon ? AppColors.borderStrong : AppColors.borderSubtle),
-          ),
-          boxShadow: neon && selected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.4),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          border: lego
+              ? AppDepth.brickBorder(width: 2)
+              : Border.all(
+                  color: selected
+                      ? (neon
+                            ? AppColors.primaryBright.withValues(alpha: 0.6)
+                            : Colors.transparent)
+                      : (neon
+                            ? AppColors.borderStrong
+                            : AppColors.borderSubtle),
+                ),
+          boxShadow: lego
+              ? AppDepth.brickShadow(dy: 3)
+              : (neon && selected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.4),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null),
         ),
         child: Text(
           label,

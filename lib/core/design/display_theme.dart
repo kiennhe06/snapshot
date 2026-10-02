@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'tokens.dart';
 
 /// The skins the user can pick in Settings → Display.
-enum DisplaySkin { light, dark, neon }
+enum DisplaySkin { light, dark, neon, lego }
 
 /// The palette backing each skin. Kept here (not in tokens.dart) so the enum and
 /// its palettes stay together; tokens.dart only exposes [applyPalette].
@@ -12,6 +12,7 @@ AppPalette paletteFor(DisplaySkin skin) => switch (skin) {
   DisplaySkin.light => kLightPalette,
   DisplaySkin.dark => kDarkPalette,
   DisplaySkin.neon => kNeonPalette,
+  DisplaySkin.lego => kLegoPalette,
 };
 
 /// Human label for a skin (VI, EN).
@@ -19,6 +20,7 @@ AppPalette paletteFor(DisplaySkin skin) => switch (skin) {
   DisplaySkin.light => (vi: 'Sáng · Moment', en: 'Light · Moment'),
   DisplaySkin.dark => (vi: 'Tối · Nova', en: 'Dark · Nova'),
   DisplaySkin.neon => (vi: '3D Game · Neon', en: '3D Game · Neon'),
+  DisplaySkin.lego => (vi: 'LEGO · Gạch nhựa', en: 'LEGO · Bricks'),
 };
 
 /// Persisted display-skin controller. [App] watches this, applies the palette,

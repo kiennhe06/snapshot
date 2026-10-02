@@ -59,18 +59,25 @@ class AvatarRing extends StatelessWidget {
         : avatar;
 
     final isGradient = style == AvatarRingStyle.gradient;
+    final lego = isLegoDisplay;
     return Container(
       padding: EdgeInsets.all(ringWidth),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: isGradient
+        // LEGO: a solid brand ring with a black outline. Neon/others: gradient.
+        gradient: isGradient && !lego
             ? LinearGradient(
                 colors: [AppColors.primaryBright, AppColors.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : null,
-        color: style == AvatarRingStyle.solid ? AppColors.borderStrong : null,
+        color: isGradient && lego
+            ? AppColors.primary
+            : (style == AvatarRingStyle.solid ? AppColors.borderStrong : null),
+        border: lego && style != AvatarRingStyle.none
+            ? AppDepth.brickBorder(width: 2)
+            : null,
         // Neon skin: the active story ring glows (the "magic" story tray look).
         boxShadow: isGradient && isNeonDisplay
             ? [

@@ -54,6 +54,22 @@ class AppButton extends StatelessWidget {
             ],
           );
 
+    // LEGO: flat brick fill + black outline + hard block shadow (no gradient/
+    // glow). Neon: gradient + bevel + glow. Other skins: the original look.
+    final lego = isLegoDisplay;
+    final Border? brder = lego
+        ? ((isPrimary || isSecondary) ? AppDepth.brickBorder() : null)
+        : (isSecondary
+              ? Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.5),
+                  width: 1.5,
+                )
+              : (isPrimary ? AppDepth.controlEdge : null));
+    final List<BoxShadow>? shdw = disabled
+        ? null
+        : (lego
+              ? ((isPrimary || isSecondary) ? AppDepth.brickShadow() : null)
+              : (isPrimary ? AppDepth.controlLift : null));
     return Opacity(
       opacity: disabled && !isLoading ? 0.55 : 1,
       child: PressScale(
@@ -71,22 +87,19 @@ class AppButton extends StatelessWidget {
               ? AppDepth.sheen(BorderRadius.circular(AppRadius.pill))
               : null,
           decoration: BoxDecoration(
-            gradient: isPrimary
+            gradient: isPrimary && !lego
                 ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [AppColors.primaryBright, AppColors.primary],
                   )
                 : null,
-            color: isSecondary ? AppColors.layer2 : null,
+            color: isSecondary
+                ? AppColors.layer2
+                : (isPrimary && lego ? AppColors.primary : null),
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: isSecondary
-                ? Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.5),
-                    width: 1.5,
-                  )
-                : (isPrimary ? AppDepth.controlEdge : null),
-            boxShadow: isPrimary && !disabled ? AppDepth.controlLift : null,
+            border: brder,
+            boxShadow: shdw,
           ),
           child: content,
         ),

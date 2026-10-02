@@ -37,13 +37,16 @@ ThemeData buildAppTheme() {
     outlineVariant: AppColors.borderSubtle,
   );
 
+  final baseText = ThemeData(brightness: brightness).textTheme;
+  // LEGO skin uses a rounded, chunky toy font; other skins use Inter.
   final textTheme =
-      GoogleFonts.interTextTheme(
-        ThemeData(brightness: brightness).textTheme,
-      ).apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
-      );
+      (isLegoDisplay
+              ? GoogleFonts.baloo2TextTheme(baseText)
+              : GoogleFonts.interTextTheme(baseText))
+          .apply(
+            bodyColor: AppColors.textPrimary,
+            displayColor: AppColors.textPrimary,
+          );
 
   return ThemeData(
     useMaterial3: true,

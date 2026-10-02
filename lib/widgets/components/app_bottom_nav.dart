@@ -61,21 +61,25 @@ class AppBottomNav extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.layer1,
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(
-            color: isNeonDisplay
-                ? AppColors.borderStrong
-                : AppColors.borderSubtle,
-          ),
-          boxShadow: isNeonDisplay
-              ? [
-                  ...AppShadows.medium,
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.18),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : AppShadows.medium,
+          border: isLegoDisplay
+              ? AppDepth.brickBorder(width: 2.5)
+              : Border.all(
+                  color: isNeonDisplay
+                      ? AppColors.borderStrong
+                      : AppColors.borderSubtle,
+                ),
+          boxShadow: isLegoDisplay
+              ? AppDepth.brickShadow(dy: 5)
+              : (isNeonDisplay
+                    ? [
+                        ...AppShadows.medium,
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.18),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ]
+                    : AppShadows.medium),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -128,6 +132,13 @@ class AppBottomNav extends StatelessWidget {
                             ]
                           : null,
                     )
+                  : isLegoDisplay
+                  ? BoxDecoration(
+                      color: active ? AppColors.primary : AppColors.layer1,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: AppDepth.brickBorder(width: 2),
+                      boxShadow: AppDepth.brickShadow(dy: 3),
+                    )
                   : null,
               // The icon crossfades + pops the moment its tab becomes active.
               child: AnimatedSwitcher(
@@ -139,7 +150,7 @@ class AppBottomNav extends StatelessWidget {
                   active ? item.activeIcon : item.icon,
                   key: ValueKey(active),
                   size: AppIconSize.lg,
-                  color: color,
+                  color: isLegoDisplay && active ? AppColors.onPrimary : color,
                   shadows: active ? AppDepth.iconGlow : null,
                 ),
               ),
@@ -203,18 +214,27 @@ class AppBottomNav extends StatelessWidget {
               : null,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primaryBright, AppColors.primary],
-            ),
-            border: isNeonDisplay
-                ? Border.all(
-                    color: AppColors.primaryBright.withValues(alpha: 0.6),
-                    width: 1,
-                  )
-                : null,
-            boxShadow: isNeonDisplay ? AppDepth.controlLift : AppShadows.brandGlow,
+            gradient: isLegoDisplay
+                ? null
+                : LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.primaryBright, AppColors.primary],
+                  ),
+            color: isLegoDisplay ? AppColors.primary : null,
+            border: isLegoDisplay
+                ? AppDepth.brickBorder(width: 2.5)
+                : (isNeonDisplay
+                      ? Border.all(
+                          color: AppColors.primaryBright.withValues(alpha: 0.6),
+                          width: 1,
+                        )
+                      : null),
+            boxShadow: isLegoDisplay
+                ? AppDepth.brickShadow(dy: 4)
+                : (isNeonDisplay
+                      ? AppDepth.controlLift
+                      : AppShadows.brandGlow),
           ),
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
         ),

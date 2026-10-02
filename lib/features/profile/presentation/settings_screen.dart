@@ -127,6 +127,7 @@ IconData _skinIcon(DisplaySkin skin) => switch (skin) {
   DisplaySkin.light => Icons.light_mode_rounded,
   DisplaySkin.dark => Icons.dark_mode_rounded,
   DisplaySkin.neon => Icons.auto_awesome_rounded,
+  DisplaySkin.lego => Icons.widgets_rounded,
 };
 
 /// Bottom-sheet picker for the display skin. Tapping a skin applies it live.
@@ -206,10 +207,11 @@ class _SkinSwatch extends StatelessWidget {
     final List<Color> colors = switch (skin) {
       DisplaySkin.light => const [Color(0xFFFF7BA3), Color(0xFFEC4A73)],
       DisplaySkin.dark => const [Color(0xFF1A1A22), Color(0xFFB06BFF)],
-      DisplaySkin.neon => const [
-        Color(0xFF22E0FF),
-        Color(0xFF7A4CFF),
-        Color(0xFFFF3DF0),
+      DisplaySkin.neon => const [Color(0xFF28E6FF), Color(0xFF2B8CFF)],
+      DisplaySkin.lego => const [
+        Color(0xFFD3122A),
+        Color(0xFFF5C518),
+        Color(0xFF0A5BC4),
       ],
     };
     return Container(

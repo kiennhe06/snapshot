@@ -33,24 +33,29 @@ class AppGradientButton extends StatelessWidget {
           BorderRadius.circular(AppRadius.pill),
         ),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.accent,
-              AppColors.primary,
-              AppColors.primaryBright,
-            ],
-          ),
+          gradient: isLegoDisplay
+              ? null
+              : LinearGradient(
+                  colors: [
+                    AppColors.accent,
+                    AppColors.primary,
+                    AppColors.primaryBright,
+                  ],
+                ),
+          color: isLegoDisplay ? AppColors.primary : null,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: AppDepth.controlEdge,
-          boxShadow: isNeonDisplay
-              ? AppDepth.controlLift
-              : [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+          border: isLegoDisplay ? AppDepth.brickBorder() : AppDepth.controlEdge,
+          boxShadow: isLegoDisplay
+              ? AppDepth.brickShadow()
+              : (isNeonDisplay
+                    ? AppDepth.controlLift
+                    : [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]),
         ),
         child: loading
             ? const SizedBox(
