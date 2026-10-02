@@ -58,7 +58,10 @@ class _ReelsFeedScreenState extends ConsumerState<ReelsFeedScreen> {
     final state = ref.watch(reelsControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      // Sync the surround (letterbox + behind the floating nav) with the Neon
+      // skin's blue-black ground; keep pure black on light/dark where black
+      // bars around video are the right choice.
+      backgroundColor: isNeonDisplay ? AppColors.scaffold : Colors.black,
       body: Builder(
         builder: (_) {
           if (!state.initialized && state.isLoading) return const LoadingView();
@@ -152,8 +155,13 @@ class _ReelsFeedScreenState extends ConsumerState<ReelsFeedScreen> {
             height: 2.5,
             width: selected ? 20 : 0,
             decoration: BoxDecoration(
-              color: Colors.white,
+              // Brand-coloured active underline ties the reels tabs to the
+              // theme (cyan on Neon), like the home feed's segmented tabs.
+              color: AppColors.primaryBright,
               borderRadius: BorderRadius.circular(AppRadius.pill),
+              boxShadow: const [
+                BoxShadow(color: Colors.black45, blurRadius: 8),
+              ],
             ),
           ),
         ],
