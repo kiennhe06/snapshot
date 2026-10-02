@@ -19,7 +19,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final me = ref.watch(myProfileProvider).valueOrNull;
     final isPrivate = me?.isPrivate ?? false;
-    final isDark = ref.watch(displayThemeProvider) == DisplaySkin.dark;
+    final skin = ref.watch(displayThemeProvider);
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
 
     return AppScaffold(
@@ -110,24 +110,129 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _RowDivider(),
               _SettingRow(
-                icon: isDark
-                    ? Icons.dark_mode_rounded
-                    : Icons.light_mode_rounded,
+                icon: _skinIcon(skin),
                 label: tr('Giao diện', 'Display'),
-                subtitle: isDark
-                    ? tr('Tối · Nova', 'Dark · Nova')
-                    : tr('Sáng · Moment', 'Light · Moment'),
-                trailing: AppSwitch(
-                  value: isDark,
-                  onChanged: (v) => ref
-                      .read(displayThemeProvider.notifier)
-                      .set(v ? DisplaySkin.dark : DisplaySkin.light),
-                ),
+                subtitle: tr(skinLabel(skin).vi, skinLabel(skin).en),
+                onTap: () => _showSkinPicker(context, ref, skin),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+IconData _skinIcon(DisplaySkin skin) => switch (skin) {
+  DisplaySkin.light => Icons.light_mode_rounded,
+  DisplaySkin.dark => Icons.dark_mode_rounded,
+  DisplaySkin.neon => Icons.auto_awesome_rounded,
+};
+
+/// Bottom-sheet picker for the display skin. Tapping a skin applies it live.
+void _showSkinPicker(BuildContext context, WidgetRef ref, DisplaySkin current) {
+  showAppSheet<void>(
+    context,
+    builder: (sheetCtx) => AppSheetSurface(
+      title: tr('Chọn giao diện', 'Choose a look'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final s in DisplaySkin.values)
+            _SkinOption(
+              skin: s,
+              selected: s == current,
+              onTap: () {
+                ref.read(displayThemeProvider.notifier).set(s);
+                Navigator.of(sheetCtx).pop();
+              },
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SkinOption extends StatelessWidget {
+  const _SkinOption({
+    required this.skin,
+    required this.selected,
+    required this.onTap,
+  });
+  final DisplaySkin skin;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = skinLabel(skin);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            gradient: AppGradients.card,
+            borderRadius: AppRadius.brLg,
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.borderSubtle,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              _SkinSwatch(skin: skin),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: Text(tr(label.vi, label.en), style: AppText.h3)),
+              if (selected)
+                Icon(Icons.check_circle_rounded, color: AppColors.primary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small preview swatch per skin (fixed colours — a preview independent of the
+/// live palette, so the options read the same whatever skin is active).
+class _SkinSwatch extends StatelessWidget {
+  const _SkinSwatch({required this.skin});
+  final DisplaySkin skin;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Color> colors = switch (skin) {
+      DisplaySkin.light => const [Color(0xFFFF7BA3), Color(0xFFEC4A73)],
+      DisplaySkin.dark => const [Color(0xFF1A1A22), Color(0xFFB06BFF)],
+      DisplaySkin.neon => const [
+        Color(0xFF22E0FF),
+        Color(0xFF7A4CFF),
+        Color(0xFFFF3DF0),
+      ],
+    };
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: colors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: skin == DisplaySkin.neon
+            ? const [
+                BoxShadow(
+                  color: Color(0x807A5CFF),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
+      ),
+      child: Icon(_skinIcon(skin), color: Colors.white, size: AppIconSize.md),
     );
   }
 }

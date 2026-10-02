@@ -131,15 +131,57 @@ const AppPalette kDarkPalette = AppPalette(
   topHighlight: Color(0x14FFFFFF),
 );
 
-/// The live palette. Swapped by [applyDisplayTheme]; the app re-keys its widget
+/// "Neon 3D" — a game-UI skin: deep space surfaces with strong brand glow and a
+/// brighter top bevel, so the same card/shadow/gradient treatments read as
+/// glossy, lit, 3D panels. Reuses the existing depth recipe (gradient fill +
+/// glow + top highlight + deep shadow) — only the palette changes.
+const AppPalette kNeonPalette = AppPalette(
+  scaffold: Color(0xFF070610),
+  layer1: Color(0xFF151236),
+  layer2: Color(0xFF18153D),
+  layer3: Color(0xFF262157),
+  layer5: Color(0xFF1C1942),
+  primary: Color(0xFF8A7BFF),
+  primaryBright: Color(0xFF22E0FF),
+  primaryDeep: Color(0xFF5B3FD0),
+  accent: Color(0xFFFF3DF0),
+  textPrimary: Color(0xFFEDEFFF),
+  textSecondary: Color(0xFFABADE3),
+  textTertiary: Color(0xFF6F6DA6),
+  success: Color(0xFF35FFC2),
+  liveDot: Color(0xFFFF3DF0),
+  warn: Color(0xFFFFC24B),
+  danger: Color(0xFFFF5A78),
+  borderSubtle: Color(0xFF2B2764),
+  borderStrong: Color(0xFF4C41A6),
+  cardTop: Color(0xFF231F57),
+  cardBottom: Color(0xFF141230),
+  elevatedTop: Color(0xFF2B2670),
+  elevatedBottom: Color(0xFF181543),
+  sectionTop: Color(0xFF1B1843),
+  sectionBottom: Color(0xFF100E2A),
+  glowInner: Color(0xFF2B1A64),
+  glowOuter: Color(0xFF070610),
+  shadowSoft: Color(0x66000000),
+  shadowSoftLow: Color(0x40000000),
+  shadowMedium: Color(0x99000000),
+  shadowMediumLow: Color(0x55000000),
+  shadowOverlay: Color(0xB3000000),
+  // Stronger, cooler brand glow + brighter top sheen = the "lit 3D" feel.
+  brandGlowColor: Color(0x807A5CFF),
+  topHighlight: Color(0x33FFFFFF),
+);
+
+/// The live palette. Swapped by [applyPalette]; the app re-keys its widget
 /// tree on change so every token re-reads.
 AppPalette _p = kLightPalette;
 
-/// Whether the dark ("Nova") skin is active.
-bool get isDarkDisplay => _p == kDarkPalette;
+/// Whether a dark-surface skin is active (dark "Nova" or "Neon 3D") — used for
+/// system UI brightness. Only the light "Moment" skin is a light surface.
+bool get isDarkDisplay => _p != kLightPalette;
 
-/// Switch the active skin. Call before rebuilding the app tree.
-void applyDisplayTheme(bool dark) => _p = dark ? kDarkPalette : kLightPalette;
+/// Swap the live palette. Call before rebuilding the app tree.
+void applyPalette(AppPalette p) => _p = p;
 
 /// Surfaces + brand + text + semantic colours. All read from the live palette.
 abstract class AppColors {
