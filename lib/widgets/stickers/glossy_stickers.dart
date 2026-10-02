@@ -11,9 +11,15 @@ enum GlossySticker {
   heart,
   smile,
   loveEyes,
-  star,
-  fire,
+  boba,
+  bear,
   camera,
+  star,
+  like,
+  fire,
+  party,
+  haha,
+  flower,
   moon,
   hearts,
 }
@@ -76,9 +82,15 @@ String glossyStickerLabel(GlossySticker s) => switch (s) {
   GlossySticker.heart => 'Tim',
   GlossySticker.smile => 'Cười',
   GlossySticker.loveEyes => 'Mê',
-  GlossySticker.star => 'Ngôi sao',
-  GlossySticker.fire => 'Lửa',
+  GlossySticker.boba => 'Trà sữa',
+  GlossySticker.bear => 'Gấu',
   GlossySticker.camera => 'Máy ảnh',
+  GlossySticker.star => 'Ngôi sao',
+  GlossySticker.like => 'Like',
+  GlossySticker.fire => 'Lửa',
+  GlossySticker.party => 'Party',
+  GlossySticker.haha => 'Haha',
+  GlossySticker.flower => 'Hoa',
   GlossySticker.moon => 'Trăng',
   GlossySticker.hearts => 'Tim đôi',
 };
@@ -116,6 +128,18 @@ class _StickerPainter extends CustomPainter {
         _moon(canvas);
       case GlossySticker.hearts:
         _hearts(canvas);
+      case GlossySticker.boba:
+        _boba(canvas);
+      case GlossySticker.bear:
+        _bear(canvas);
+      case GlossySticker.like:
+        _like(canvas);
+      case GlossySticker.party:
+        _party(canvas);
+      case GlossySticker.haha:
+        _haha(canvas);
+      case GlossySticker.flower:
+        _flower(canvas);
     }
   }
 
@@ -191,14 +215,11 @@ class _StickerPainter extends CustomPainter {
       {List<Color>? colors}) {
     final path = _heartPath(cx, cy, s);
     final b = path.getBounds();
-    c.drawPath(
-      path,
-      _radial(
-        b,
-        colors ?? const [Color(0xFFFFC0D4), Color(0xFFFF6D94), Color(0xFFE83E6B)],
-        const [0, 0.55, 1],
-      ),
-    );
+    final cols = colors ??
+        const [Color(0xFFFFC0D4), Color(0xFFFF6D94), Color(0xFFE83E6B)];
+    // Stops must match the number of colors (2 → [0,1], 3 → [0,.55,1]).
+    final stops = cols.length == 2 ? const [0.0, 1.0] : const [0.0, 0.55, 1.0];
+    c.drawPath(path, _radial(b, cols, stops));
   }
 
   void _eyes(Canvas c, double y, {double dx = 0}) {
@@ -269,11 +290,14 @@ class _StickerPainter extends CustomPainter {
           ..strokeCap = StrokeCap.round,
       );
     } else {
-      _drawHeart(c, 124, 150, 0.42, colors: const [Color(0xFFFF8FB0), Color(0xFFFF4D79)]);
-      _drawHeart(c, 176, 150, 0.42, colors: const [Color(0xFFFF8FB0), Color(0xFFFF4D79)]);
+      final hb = 1 + 0.12 * m.sin(t * 2 * m.pi * 2); // heart-eyes beat
+      _withScale(c, const Offset(124, 150), hb, hb,
+          () => _drawHeart(c, 124, 150, 0.55, colors: const [Color(0xFFFF8FB0), Color(0xFFF42A5C)]));
+      _withScale(c, const Offset(176, 150), hb, hb,
+          () => _drawHeart(c, 176, 150, 0.55, colors: const [Color(0xFFFF8FB0), Color(0xFFF42A5C)]));
       final mouth = Path()
-        ..moveTo(124, 188)
-        ..quadraticBezierTo(150, 206, 176, 188);
+        ..moveTo(126, 192)
+        ..quadraticBezierTo(150, 210, 174, 192);
       c.drawPath(
         mouth,
         Paint()
@@ -479,6 +503,290 @@ class _StickerPainter extends CustomPainter {
       _drawHeart(c, 182, 128, 0.78,
           colors: const [Color(0xFFFFC0D4), Color(0xFFFF8AA3)]);
       _shine(c, 168, 108, 5);
+    });
+  }
+
+  void _boba(Canvas c) {
+    final s = 1 + 0.03 * m.sin(t * 2 * m.pi);
+    _withScale(c, const Offset(150, 180), s, s, () {
+      final cup = Path()
+        ..moveTo(110, 122)
+        ..lineTo(190, 122)
+        ..lineTo(182, 238)
+        ..quadraticBezierTo(180, 252, 166, 252)
+        ..lineTo(134, 252)
+        ..quadraticBezierTo(120, 252, 118, 238)
+        ..close();
+      final lidRect =
+          RRect.fromRectAndRadius(const Rect.fromLTWH(104, 106, 92, 22), const Radius.circular(9));
+      final lid = Path()..addRRect(lidRect);
+      final straw = Path()
+        ..addRRect(RRect.fromRectAndRadius(
+            const Rect.fromLTWH(150, 64, 16, 78), const Radius.circular(7)));
+      final sm = Matrix4.identity()
+        ..translateByDouble(157.0, 105.0, 0, 1)
+        ..rotateZ(0.2)
+        ..translateByDouble(-157.0, -105.0, 0, 1);
+      final strawT = straw.transform(sm.storage);
+      var sil = Path.combine(PathOperation.union, cup, lid);
+      sil = Path.combine(PathOperation.union, sil, strawT);
+      _dieCut(c, sil);
+      c.drawPath(strawT, Paint()..color = const Color(0xFFFF7D9A));
+      c.drawPath(
+          cup,
+          _radial(cup.getBounds(), const [Color(0xFFFFF6EA), Color(0xFFF3DCC0)],
+              const [0, 1]));
+      c.save();
+      c.clipPath(cup);
+      c.drawRect(const Rect.fromLTWH(104, 196, 96, 70),
+          Paint()..color = const Color(0xFFCAA06E).withValues(alpha: 0.6));
+      c.restore();
+      c.drawRRect(lidRect, Paint()..color = const Color(0xFFFF9DB5));
+      final pearl = Paint()..color = const Color(0xFF3A2B22);
+      for (final o in const [
+        Offset(132, 246), Offset(152, 250), Offset(170, 244),
+        Offset(144, 236), Offset(164, 236),
+      ]) {
+        c.drawCircle(o, 7, pearl);
+      }
+      _gloss(c, 126, 150, 16, 44);
+    });
+  }
+
+  void _bear(Canvas c) {
+    final dy = -8 * m.sin(t * 2 * m.pi).abs();
+    c.save();
+    c.translate(0, dy);
+    final earL = Path()..addOval(Rect.fromCircle(center: const Offset(104, 104), radius: 30));
+    final earR = Path()..addOval(Rect.fromCircle(center: const Offset(196, 104), radius: 30));
+    final face = Path()..addOval(Rect.fromCircle(center: const Offset(150, 158), radius: 92));
+    var sil = Path.combine(PathOperation.union, face, earL);
+    sil = Path.combine(PathOperation.union, sil, earR);
+    _dieCut(c, sil);
+    final fill = _radial(
+        Rect.fromCircle(center: const Offset(150, 150), radius: 104),
+        const [Color(0xFFD7A06A), Color(0xFFB07840), Color(0xFF875A2E)],
+        const [0, 0.6, 1]);
+    c.drawPath(earL, fill);
+    c.drawPath(earR, fill);
+    c.drawCircle(const Offset(104, 104), 15, Paint()..color = const Color(0xFFE9B887));
+    c.drawCircle(const Offset(196, 104), 15, Paint()..color = const Color(0xFFE9B887));
+    c.drawCircle(const Offset(150, 158), 92, fill);
+    _gloss(c, 120, 118, 42, 26);
+    c.drawOval(Rect.fromCenter(center: const Offset(150, 186), width: 80, height: 64),
+        Paint()..color = const Color(0xFFE4C196));
+    final bl = Paint()..color = const Color(0xFFFF8AA0).withValues(alpha: 0.6);
+    c.drawOval(Rect.fromCenter(center: const Offset(118, 184), width: 26, height: 16), bl);
+    c.drawOval(Rect.fromCenter(center: const Offset(182, 184), width: 26, height: 16), bl);
+    c.drawCircle(const Offset(126, 152), 10, Paint()..color = _ink);
+    c.drawCircle(const Offset(174, 152), 10, Paint()..color = _ink);
+    c.drawCircle(const Offset(123, 148), 3.3, Paint()..color = Colors.white);
+    c.drawCircle(const Offset(171, 148), 3.3, Paint()..color = Colors.white);
+    c.drawOval(Rect.fromCenter(center: const Offset(150, 176), width: 22, height: 16),
+        Paint()..color = _ink);
+    final mouth = Path()
+      ..moveTo(150, 184)
+      ..quadraticBezierTo(140, 194, 132, 186)
+      ..moveTo(150, 184)
+      ..quadraticBezierTo(160, 194, 168, 186);
+    c.drawPath(
+        mouth,
+        Paint()
+          ..color = _ink
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4
+          ..strokeCap = StrokeCap.round);
+    _shine(c, 116, 120, 7);
+    c.restore();
+  }
+
+  void _like(Canvas c) {
+    final dy = -6 * (0.5 + 0.5 * m.sin(t * 2 * m.pi));
+    c.save();
+    c.translate(0, dy);
+    final fist = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+          const Rect.fromLTWH(96, 150, 118, 96), const Radius.circular(22)));
+    final thumb = Path()
+      ..addRRect(RRect.fromRectAndCorners(
+        const Rect.fromLTWH(106, 92, 42, 84),
+        topLeft: const Radius.circular(21),
+        topRight: const Radius.circular(21),
+        bottomLeft: const Radius.circular(8),
+        bottomRight: const Radius.circular(8),
+      ));
+    final sil = Path.combine(PathOperation.union, fist, thumb);
+    _dieCut(c, sil);
+    c.drawPath(
+        sil,
+        _radial(const Rect.fromLTWH(96, 92, 118, 154),
+            const [Color(0xFFFFEEB0), Color(0xFFFFCF4D), Color(0xFFF3A51E)],
+            const [0, 0.55, 1]));
+    final ln = Paint()
+      ..color = const Color(0xFFE59A1E)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 3; i++) {
+      final x = 124.0 + i * 30;
+      c.drawLine(Offset(x, 174), Offset(x, 236), ln);
+    }
+    _gloss(c, 118, 120, 30, 14);
+    _shine(c, 112, 118, 6);
+    c.restore();
+  }
+
+  void _party(Canvas c) {
+    final rot = 0.05 * m.sin(t * 2 * m.pi * 3);
+    _withScaleRot(c, const Offset(150, 232), rot, () {
+      final cone = Path()
+        ..moveTo(150, 232)
+        ..lineTo(190, 114)
+        ..lineTo(224, 136)
+        ..close();
+      _dieCut(c, cone);
+      c.drawPath(
+          cone,
+          _radial(cone.getBounds(),
+              const [Color(0xFFFFEEB0), Color(0xFFFFCF4D), Color(0xFFF3A51E)],
+              const [0, 0.55, 1]));
+      c.drawPath(
+          Path()
+            ..moveTo(150, 232)
+            ..lineTo(190, 114)
+            ..lineTo(207, 125)
+            ..close(),
+          Paint()..color = const Color(0xFFF3A51E));
+    });
+    const items = [
+      [120, 86, 0xFFFF4D79, 0, 0.0],
+      [170, 80, 0xFF6FD3B8, 0, 0.5],
+      [196, 110, 0xFF9A86FF, 1, 0.9],
+      [104, 120, 0xFFFFCF4D, 1, 0.3],
+      [150, 70, 0xFFFF4D79, 2, 0.7],
+    ];
+    for (final it in items) {
+      final p = (t + (it[4] as double)) % 1.0;
+      final dy = 42 * p;
+      final op = (p < 0.15 ? p / 0.15 : 1 - (p - 0.15) / 0.85).clamp(0.0, 1.0);
+      final paint = Paint()..color = Color(it[2] as int).withValues(alpha: op);
+      c.save();
+      c.translate((it[0] as int).toDouble(), (it[1] as int).toDouble() + dy);
+      c.rotate(p * 2);
+      switch (it[3] as int) {
+        case 0:
+          c.drawRRect(
+              RRect.fromRectAndRadius(const Rect.fromLTWH(-6, -6, 12, 12),
+                  const Radius.circular(3)),
+              paint);
+        case 1:
+          c.drawCircle(Offset.zero, 6, paint);
+        default:
+          c.drawPath(
+              Path()
+                ..moveTo(0, -7)
+                ..lineTo(6, 5)
+                ..lineTo(-6, 5)
+                ..close(),
+              paint);
+      }
+      c.restore();
+    }
+  }
+
+  void _haha(Canvas c) {
+    final rot = 0.07 * m.sin(t * 2 * m.pi * 4);
+    _withScaleRot(c, const Offset(150, 160), rot, () {
+      final body = Path()
+        ..addOval(Rect.fromCircle(center: const Offset(150, 156), radius: 96));
+      _dieCut(c, body);
+      c.drawOval(
+          Rect.fromCircle(center: const Offset(150, 156), radius: 96),
+          _radial(Rect.fromCircle(center: const Offset(150, 156), radius: 96),
+              const [Color(0xFFFFEEB0), Color(0xFFFFCF4D), Color(0xFFF3A51E)],
+              const [0, 0.55, 1]));
+      _gloss(c, 118, 112, 46, 28);
+      _blushMarks(c);
+      final ep = Paint()
+        ..color = _ink
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 7
+        ..strokeCap = StrokeCap.round;
+      c.drawPath(
+          Path()
+            ..moveTo(104, 142)
+            ..quadraticBezierTo(122, 128, 140, 142),
+          ep);
+      c.drawPath(
+          Path()
+            ..moveTo(160, 142)
+            ..quadraticBezierTo(178, 128, 196, 142),
+          ep);
+      final mouth = Path()
+        ..moveTo(114, 180)
+        ..quadraticBezierTo(150, 224, 186, 180)
+        ..quadraticBezierTo(150, 196, 114, 180)
+        ..close();
+      c.drawPath(mouth, Paint()..color = _ink);
+      c.drawPath(
+          Path()
+            ..moveTo(126, 186)
+            ..quadraticBezierTo(150, 204, 174, 186),
+          Paint()..color = const Color(0xFFFF7D9A));
+      _shine(c, 112, 118, 8);
+    });
+    _tear(c, 86, 158, 0.0);
+    _tear(c, 214, 158, 0.5);
+  }
+
+  void _tear(Canvas c, double x, double y0, double phase) {
+    final p = (t + phase) % 1.0;
+    final y = y0 + 26 * p;
+    final op = (p < 0.2 ? p / 0.2 : 1 - (p - 0.2) / 0.8).clamp(0.0, 1.0);
+    c.save();
+    c.translate(x, y);
+    c.scale(x > 150 ? -1.0 : 1.0, 1.0);
+    c.drawPath(
+        Path()
+          ..moveTo(0, 0)
+          ..quadraticBezierTo(-9, 10, -3, 20)
+          ..quadraticBezierTo(6, 22, 6, 9)
+          ..quadraticBezierTo(5, 2, 0, 0)
+          ..close(),
+        Paint()..color = const Color(0xFF8FD6FF).withValues(alpha: op));
+    c.restore();
+  }
+
+  void _flower(Canvas c) {
+    final rot = 0.09 * m.sin(t * 2 * m.pi);
+    _withScaleRot(c, const Offset(150, 160), rot, () {
+      final petals = Path();
+      for (final a in const [0, 60, 120, 180, 240, 300]) {
+        final mx = Matrix4.identity()
+          ..translateByDouble(150.0, 150.0, 0, 1)
+          ..rotateZ(a * m.pi / 180)
+          ..translateByDouble(-150.0, -150.0, 0, 1);
+        final petal = Path()
+          ..addOval(Rect.fromCenter(
+              center: const Offset(150, 104), width: 44, height: 68));
+        petals.addPath(petal.transform(mx.storage), Offset.zero);
+      }
+      final center =
+          Path()..addOval(Rect.fromCircle(center: const Offset(150, 150), radius: 30));
+      final sil = Path.combine(PathOperation.union, petals, center);
+      _dieCut(c, sil);
+      c.drawPath(
+          petals,
+          _radial(const Rect.fromLTWH(98, 70, 104, 160),
+              const [Color(0xFFFFC0D4), Color(0xFFFF6D94), Color(0xFFE83E6B)],
+              const [0, 0.55, 1]));
+      c.drawCircle(
+          const Offset(150, 150),
+          30,
+          _radial(Rect.fromCircle(center: const Offset(150, 150), radius: 30),
+              const [Color(0xFFFFEEB0), Color(0xFFFFCF4D), Color(0xFFF3A51E)],
+              const [0, 0.55, 1]));
+      _shine(c, 140, 140, 7);
     });
   }
 }
