@@ -251,8 +251,13 @@ class _ReelPage extends ConsumerWidget {
         // Right actions
         Positioned(
           right: AppSpacing.md,
-          bottom: 96,
+          // Sit low, level with the caption, instead of floating mid-screen
+          // with dead space below.
+          bottom: AppSpacing.xxl,
           child: Column(
+            // Shrink-wrap so the cluster sits anchored at the bottom instead of
+            // stretching full-height and clumping the icons up top.
+            mainAxisSize: MainAxisSize.min,
             children: [
               _ReelLikeButton(post: post, uid: uid),
               _action(
