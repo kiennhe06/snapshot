@@ -7,8 +7,17 @@ import '../core/design/tokens.dart';
 /// signature look; this ThemeData keeps any not-yet-migrated Material widgets
 /// on-palette in the meantime.
 
-/// Playfair Display italic wordmark for the "Snapshot" brand.
+/// The "Snapshot" wordmark. Playfair Display italic on most skins; a chunky
+/// rounded Baloo 2 (matching the toy body font) on the LEGO skin.
 TextStyle brandWordmark(BuildContext context, {double size = 24}) {
+  if (isLegoDisplay) {
+    return GoogleFonts.baloo2(
+      fontSize: size * 1.04,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0.3,
+      color: AppColors.primary,
+    );
+  }
   return GoogleFonts.playfairDisplay(
     fontSize: size,
     fontWeight: FontWeight.w700,
