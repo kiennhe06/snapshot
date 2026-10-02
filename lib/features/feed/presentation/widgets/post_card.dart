@@ -549,6 +549,24 @@ class _HeartBurst extends StatelessWidget {
   }
 }
 
+/// On the LEGO skin, wraps an action icon in a white brick chip (black outline
+/// + block shadow) so it matches the top-bar + / ✉ chips. No-op elsewhere.
+Widget _legoIconChip(Widget child) {
+  if (!isLegoDisplay) return child;
+  return Container(
+    width: 42,
+    height: 42,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.layer1,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      border: AppDepth.brickBorder(width: 2),
+      boxShadow: AppDepth.brickShadow(dy: 3),
+    ),
+    child: child,
+  );
+}
+
 class _CountAction extends StatelessWidget {
   const _CountAction({
     required this.icon,
@@ -582,16 +600,18 @@ class _CountAction extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // The icon pops when its filled/outlined state flips (like/save).
-          AnimatedSwitcher(
-            duration: Motion.dur(context, AppMotion.base),
-            switchInCurve: AppMotion.overshoot,
-            transitionBuilder: (child, anim) =>
-                ScaleTransition(scale: anim, child: child),
-            child: Icon(
-              icon,
-              key: ValueKey('$icon-$iconColor'),
-              size: 26,
-              color: iconColor,
+          _legoIconChip(
+            AnimatedSwitcher(
+              duration: Motion.dur(context, AppMotion.base),
+              switchInCurve: AppMotion.overshoot,
+              transitionBuilder: (child, anim) =>
+                  ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                icon,
+                key: ValueKey('$icon-$iconColor'),
+                size: isLegoDisplay ? 22 : 26,
+                color: iconColor,
+              ),
             ),
           ),
           if (count != null) ...[
@@ -889,16 +909,18 @@ class _SaveButtonState extends ConsumerState<_SaveButton> {
         width: 44,
         height: 44,
         child: Center(
-          child: AnimatedSwitcher(
-            duration: Motion.dur(context, AppMotion.base),
-            switchInCurve: AppMotion.overshoot,
-            transitionBuilder: (child, anim) =>
-                ScaleTransition(scale: anim, child: child),
-            child: Icon(
-              saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-              key: ValueKey(saved),
-              size: AppIconSize.md,
-              color: saved ? AppColors.primary : AppColors.textSecondary,
+          child: _legoIconChip(
+            AnimatedSwitcher(
+              duration: Motion.dur(context, AppMotion.base),
+              switchInCurve: AppMotion.overshoot,
+              transitionBuilder: (child, anim) =>
+                  ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                key: ValueKey(saved),
+                size: AppIconSize.md,
+                color: saved ? AppColors.primary : AppColors.textSecondary,
+              ),
             ),
           ),
         ),
