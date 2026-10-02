@@ -29,6 +29,9 @@ class AppGradientButton extends StatelessWidget {
       child: Container(
         height: 56,
         alignment: Alignment.center,
+        foregroundDecoration: AppDepth.sheen(
+          BorderRadius.circular(AppRadius.pill),
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -38,13 +41,16 @@ class AppGradientButton extends StatelessWidget {
             ],
           ),
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          border: AppDepth.controlEdge,
+          boxShadow: isNeonDisplay
+              ? AppDepth.controlLift
+              : [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
         ),
         child: loading
             ? const SizedBox(

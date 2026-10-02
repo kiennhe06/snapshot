@@ -61,8 +61,21 @@ class AppBottomNav extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.layer1,
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: AppColors.borderSubtle),
-          boxShadow: AppShadows.medium,
+          border: Border.all(
+            color: isNeonDisplay
+                ? AppColors.borderStrong
+                : AppColors.borderSubtle,
+          ),
+          boxShadow: isNeonDisplay
+              ? [
+                  ...AppShadows.medium,
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.18),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : AppShadows.medium,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -98,6 +111,7 @@ class AppBottomNav extends StatelessWidget {
                 key: ValueKey(active),
                 size: AppIconSize.lg,
                 color: color,
+                shadows: active ? AppDepth.iconGlow : null,
               ),
             ),
             const SizedBox(height: 3),
@@ -141,6 +155,22 @@ class AppBottomNav extends StatelessWidget {
           width: 52,
           height: 52,
           alignment: Alignment.center,
+          // Glossy top sheen (neon only) over the round create button.
+          foregroundDecoration: isNeonDisplay
+              ? const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x59FFFFFF),
+                      Color(0x00FFFFFF),
+                      Color(0x1A000000),
+                    ],
+                    stops: [0, 0.5, 1],
+                  ),
+                )
+              : null,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
@@ -148,7 +178,13 @@ class AppBottomNav extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [AppColors.primaryBright, AppColors.primary],
             ),
-            boxShadow: AppShadows.brandGlow,
+            border: isNeonDisplay
+                ? Border.all(
+                    color: AppColors.primaryBright.withValues(alpha: 0.6),
+                    width: 1,
+                  )
+                : null,
+            boxShadow: isNeonDisplay ? AppDepth.controlLift : AppShadows.brandGlow,
           ),
           child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
         ),

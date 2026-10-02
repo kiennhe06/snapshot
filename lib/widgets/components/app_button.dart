@@ -65,6 +65,11 @@ class AppButton extends StatelessWidget {
           padding: fullWidth
               ? null
               : const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+          // Glossy top sheen on the neon skin (no-op elsewhere); only on filled
+          // variants so the ghost/secondary pills stay flat.
+          foregroundDecoration: isPrimary
+              ? AppDepth.sheen(BorderRadius.circular(AppRadius.pill))
+              : null,
           decoration: BoxDecoration(
             gradient: isPrimary
                 ? LinearGradient(
@@ -80,8 +85,8 @@ class AppButton extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.5),
                     width: 1.5,
                   )
-                : null,
-            boxShadow: isPrimary && !disabled ? AppShadows.brandGlow : null,
+                : (isPrimary ? AppDepth.controlEdge : null),
+            boxShadow: isPrimary && !disabled ? AppDepth.controlLift : null,
           ),
           child: content,
         ),

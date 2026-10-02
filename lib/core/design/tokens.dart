@@ -180,6 +180,10 @@ AppPalette _p = kLightPalette;
 /// system UI brightness. Only the light "Moment" skin is a light surface.
 bool get isDarkDisplay => _p != kLightPalette;
 
+/// Whether the "Neon 3D" game skin is active. Components may add extra depth
+/// (bevel rim, glow, gloss) on top of the palette when this is true.
+bool get isNeonDisplay => _p == kNeonPalette;
+
 /// Swap the live palette. Call before rebuilding the app tree.
 void applyPalette(AppPalette p) => _p = p;
 
@@ -480,4 +484,52 @@ abstract class AppBackground {
 
 abstract class AppDepth {
   static Color get topHighlight => _p.topHighlight;
+
+  /// Extra lift/glow under a raised brand control. On the Neon 3D skin this is
+  /// a strong cool glow plus a deep drop shadow (reads as a floating, lit 3D
+  /// button); on other skins it falls back to the normal brand glow so nothing
+  /// changes for Moment/Nova.
+  static List<BoxShadow> get controlLift => isNeonDisplay
+      ? [
+          BoxShadow(
+            color: _p.brandGlowColor,
+            blurRadius: 26,
+            spreadRadius: 1,
+            offset: const Offset(0, 6),
+          ),
+          const BoxShadow(
+            color: Color(0x73000000),
+            blurRadius: 16,
+            offset: Offset(0, 10),
+          ),
+        ]
+      : AppShadows.brandGlow;
+
+  /// Bright hairline edge on top of a raised control — the "bevel" rim. Neon
+  /// only (null elsewhere, so callers add it unconditionally).
+  static Border? get controlEdge => isNeonDisplay
+      ? Border.all(
+          color: _p.primaryBright.withValues(alpha: 0.6),
+          width: 1,
+        )
+      : null;
+
+  /// Glossy top sheen laid over a filled control (use as `foregroundDecoration`
+  /// so it doesn't clip the fill). Neon only — transparent elsewhere.
+  static BoxDecoration sheen(BorderRadius radius) => BoxDecoration(
+    borderRadius: radius,
+    gradient: isNeonDisplay
+        ? const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x59FFFFFF), Color(0x00FFFFFF), Color(0x1A000000)],
+            stops: [0, 0.5, 1],
+          )
+        : null,
+  );
+
+  /// Glow around an active icon/tab on the neon skin (empty elsewhere).
+  static List<Shadow> get iconGlow => isNeonDisplay
+      ? [Shadow(color: _p.primaryBright.withValues(alpha: 0.9), blurRadius: 14)]
+      : const [];
 }
