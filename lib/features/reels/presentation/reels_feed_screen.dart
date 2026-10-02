@@ -203,9 +203,50 @@ class _ReelPage extends ConsumerWidget {
             active: active,
             muted: muted,
             showProgress: true,
+            // Fill the screen (crop) so there are no letterbox bars.
+            fit: BoxFit.cover,
           )
         else
           const ColoredBox(color: Colors.black),
+
+        // Top + bottom scrims so the tabs/caption read over the video and the
+        // edges fade smoothly instead of a hard band.
+        const IgnorePointer(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              height: 170,
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x8C000000), Color(0x00000000)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const IgnorePointer(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: SizedBox(
+              height: 260,
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Color(0xB3000000), Color(0x00000000)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
 
         // Right actions
         Positioned(

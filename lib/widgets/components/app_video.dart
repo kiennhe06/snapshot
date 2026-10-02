@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -15,6 +17,7 @@ class AppVideo extends StatefulWidget {
     this.loop = true,
     this.showControls = true,
     this.showProgress = false,
+    this.blurBackground = false,
   });
 
   final String url;
@@ -23,6 +26,11 @@ class AppVideo extends StatefulWidget {
   final BoxFit fit;
   final bool loop;
   final bool showControls;
+
+  /// Fills the frame with a blurred, dimmed copy of the video behind a
+  /// `contain`-fit copy (Reels/Shorts style) — so a non-vertical source never
+  /// shows hard black letterbox bars.
+  final bool blurBackground;
 
   /// Draws a thin playback progress line pinned to the bottom edge.
   final bool showProgress;
@@ -118,15 +126,44 @@ class _AppVideoState extends State<AppVideo> {
         alignment: Alignment.center,
         fit: StackFit.expand,
         children: [
-          FittedBox(
-            fit: widget.fit,
-            clipBehavior: Clip.hardEdge,
-            child: SizedBox(
-              width: c.value.size.width,
-              height: c.value.size.height,
-              child: VideoPlayer(c),
+          if (widget.blurBackground) ...[
+            // Blurred, dimmed fill so a non-vertical source has no black bars.
+            ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+              child: FittedBox(
+                fit: BoxFit.cover,
+                clipBehavior: Clip.hardEdge,
+                child: SizedBox(
+                  width: c.value.size.width,
+                  height: c.value.size.height,
+                  child: VideoPlayer(c),
+                ),
+              ),
             ),
-          ),
+            const DecoratedBox(
+              decoration: BoxDecoration(color: Color(0x40000000)),
+              child: SizedBox.expand(),
+            ),
+            // The crisp, full video on top.
+            FittedBox(
+              fit: BoxFit.contain,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: c.value.size.width,
+                height: c.value.size.height,
+                child: VideoPlayer(c),
+              ),
+            ),
+          ] else
+            FittedBox(
+              fit: widget.fit,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: c.value.size.width,
+                height: c.value.size.height,
+                child: VideoPlayer(c),
+              ),
+            ),
           if (_showPause)
             const Icon(
               Icons.play_arrow_rounded,
