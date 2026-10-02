@@ -8,6 +8,7 @@ import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../widgets/components/components.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../stickers/presentation/sticker_gallery_screen.dart';
 import '../providers/profile_providers.dart';
 
 /// Grouped account settings (Concept B, level 2): privacy, security and app
@@ -114,6 +115,16 @@ class SettingsScreen extends ConsumerWidget {
                 label: tr('Giao diện', 'Display'),
                 subtitle: tr(skinLabel(skin).vi, skinLabel(skin).en),
                 onTap: () => _showSkinPicker(context, ref, skin),
+              ),
+              const _RowDivider(),
+              _SettingRow(
+                icon: Icons.emoji_emotions_outlined,
+                label: tr('Sticker (xem thử)', 'Stickers (preview)'),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const StickerGalleryScreen(),
+                  ),
+                ),
               ),
             ],
           ),
