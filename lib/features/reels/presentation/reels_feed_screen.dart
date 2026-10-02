@@ -425,21 +425,17 @@ class _ReelPage extends ConsumerWidget {
         onTap: onTap,
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 30,
-              shadows: const [Shadow(color: Colors.black45, blurRadius: 8)],
-            ),
+            _reelIconChip(icon, color),
             if (label != null)
               Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   label,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: AppType.small,
                     fontWeight: AppType.bold,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
                   ),
                 ),
               ),
@@ -476,6 +472,57 @@ class _ReelPage extends ConsumerWidget {
           ),
         ),
       ],
+    ),
+  );
+}
+
+/// A reels right-rail action icon in a skin-aware chip: a LEGO brick chip, a
+/// Neon glass chip, or a translucent dark pill (so white icons stay readable
+/// over any video) on the other skins.
+Widget _reelIconChip(IconData icon, Color baseColor) {
+  final lego = isLegoDisplay;
+  final neon = isNeonDisplay;
+  var iconColor = baseColor;
+  if (lego && baseColor == Colors.white) iconColor = const Color(0xFF17120F);
+  final BoxDecoration deco;
+  if (lego) {
+    deco = BoxDecoration(
+      color: AppColors.layer1,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      border: AppDepth.brickBorder(width: 2),
+      boxShadow: AppDepth.brickShadow(dy: 3),
+    );
+  } else if (neon) {
+    deco = BoxDecoration(
+      gradient: AppGradients.elevated,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      border: Border.all(color: AppColors.borderStrong),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.3),
+          blurRadius: 14,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  } else {
+    deco = BoxDecoration(
+      color: Colors.black.withValues(alpha: 0.32),
+      shape: BoxShape.circle,
+    );
+  }
+  return Container(
+    width: 48,
+    height: 48,
+    alignment: Alignment.center,
+    decoration: deco,
+    child: Icon(
+      icon,
+      color: iconColor,
+      size: 26,
+      shadows: (lego || neon)
+          ? null
+          : const [Shadow(color: Colors.black45, blurRadius: 6)],
     ),
   );
 }
@@ -517,20 +564,19 @@ class _ReelLikeButtonState extends ConsumerState<_ReelLikeButton> {
         },
         child: Column(
           children: [
-            Icon(
+            _reelIconChip(
               liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              color: liked ? AppColors.primary : Colors.white,
-              size: 30,
-              shadows: const [Shadow(color: Colors.black45, blurRadius: 8)],
+              liked ? AppColors.primary : Colors.white,
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.only(top: 4),
               child: Text(
                 formatCount(count < 0 ? 0 : count),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: AppType.small,
                   fontWeight: AppType.bold,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
                 ),
               ),
             ),
