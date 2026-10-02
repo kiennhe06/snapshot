@@ -100,18 +100,48 @@ class AppBottomNav extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // The icon crossfades + pops the moment its tab becomes active.
-            AnimatedSwitcher(
-              duration: motion,
-              switchInCurve: AppMotion.overshoot,
-              transitionBuilder: (child, anim) =>
-                  ScaleTransition(scale: anim, child: child),
-              child: Icon(
-                active ? item.activeIcon : item.icon,
-                key: ValueKey(active),
-                size: AppIconSize.lg,
-                color: color,
-                shadows: active ? AppDepth.iconGlow : null,
+            // On the Neon 3D skin each icon sits in its own raised chip (game
+            // HUD key); other skins show the bare icon.
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              foregroundDecoration: isNeonDisplay
+                  ? AppDepth.sheen(BorderRadius.circular(AppRadius.sm))
+                  : null,
+              decoration: isNeonDisplay
+                  ? BoxDecoration(
+                      gradient: AppGradients.elevated,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: Border.all(
+                        color: active
+                            ? AppColors.primary.withValues(alpha: 0.75)
+                            : AppColors.borderStrong,
+                      ),
+                      boxShadow: active
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
+                    )
+                  : null,
+              // The icon crossfades + pops the moment its tab becomes active.
+              child: AnimatedSwitcher(
+                duration: motion,
+                switchInCurve: AppMotion.overshoot,
+                transitionBuilder: (child, anim) =>
+                    ScaleTransition(scale: anim, child: child),
+                child: Icon(
+                  active ? item.activeIcon : item.icon,
+                  key: ValueKey(active),
+                  size: AppIconSize.lg,
+                  color: color,
+                  shadows: active ? AppDepth.iconGlow : null,
+                ),
               ),
             ),
             const SizedBox(height: 3),

@@ -76,23 +76,50 @@ class AppIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // On the Neon 3D skin every icon sits in a raised rounded-square chip
+    // (bevel rim + subtle fill + glow), like a game HUD key. Other skins keep
+    // the flat transparent circle.
+    final neon = isNeonDisplay;
+    final iconColor =
+        color ?? (active ? AppColors.primaryBright : AppColors.textSecondary);
     final button = PressScale(
       onTap: onTap,
       child: Container(
         width: 44,
         height: 44,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: active
-              ? AppColors.primary.withValues(alpha: 0.16)
-              : AppColors.layer2.withValues(alpha: 0.0),
-        ),
+        foregroundDecoration: neon
+            ? AppDepth.sheen(BorderRadius.circular(AppRadius.sm))
+            : null,
+        decoration: neon
+            ? BoxDecoration(
+                gradient: AppGradients.elevated,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(
+                  color: active
+                      ? AppColors.primary.withValues(alpha: 0.75)
+                      : AppColors.borderStrong,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (active ? AppColors.primary : Colors.black)
+                        .withValues(alpha: active ? 0.35 : 0.4),
+                    blurRadius: active ? 16 : 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              )
+            : BoxDecoration(
+                shape: BoxShape.circle,
+                color: active
+                    ? AppColors.primary.withValues(alpha: 0.16)
+                    : AppColors.layer2.withValues(alpha: 0.0),
+              ),
         child: Icon(
           icon,
           size: size,
-          color:
-              color ?? (active ? AppColors.primary : AppColors.textSecondary),
+          color: iconColor,
+          shadows: neon && active ? AppDepth.iconGlow : null,
         ),
       ),
     );
