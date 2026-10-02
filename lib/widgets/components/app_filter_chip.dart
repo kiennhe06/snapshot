@@ -19,22 +19,39 @@ class AppFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final neon = isNeonDisplay;
     return PressScale(
       onTap: onTap,
       child: Container(
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        foregroundDecoration: neon && selected
+            ? AppDepth.sheen(BorderRadius.circular(AppRadius.pill))
+            : null,
         decoration: BoxDecoration(
           gradient: selected
               ? LinearGradient(
                   colors: [AppColors.primaryBright, AppColors.primary],
                 )
-              : null,
-          color: selected ? null : AppColors.layer1,
+              : (neon ? AppGradients.elevated : null),
+          color: selected ? null : (neon ? null : AppColors.layer1),
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
-            color: selected ? Colors.transparent : AppColors.borderSubtle,
+            color: selected
+                ? (neon
+                      ? AppColors.primaryBright.withValues(alpha: 0.6)
+                      : Colors.transparent)
+                : (neon ? AppColors.borderStrong : AppColors.borderSubtle),
           ),
+          boxShadow: neon && selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.4),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,

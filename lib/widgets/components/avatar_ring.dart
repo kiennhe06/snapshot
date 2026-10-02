@@ -58,11 +58,12 @@ class AvatarRing extends StatelessWidget {
           )
         : avatar;
 
+    final isGradient = style == AvatarRingStyle.gradient;
     return Container(
       padding: EdgeInsets.all(ringWidth),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: style == AvatarRingStyle.gradient
+        gradient: isGradient
             ? LinearGradient(
                 colors: [AppColors.primaryBright, AppColors.primary],
                 begin: Alignment.topLeft,
@@ -70,6 +71,16 @@ class AvatarRing extends StatelessWidget {
               )
             : null,
         color: style == AvatarRingStyle.solid ? AppColors.borderStrong : null,
+        // Neon skin: the active story ring glows (the "magic" story tray look).
+        boxShadow: isGradient && isNeonDisplay
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.55),
+                  blurRadius: 12,
+                  spreadRadius: 0.5,
+                ),
+              ]
+            : null,
       ),
       child: inner,
     );

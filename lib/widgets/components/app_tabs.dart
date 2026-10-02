@@ -50,11 +50,36 @@ class AppSegmentedTabs extends StatelessWidget {
               child: FractionallySizedBox(
                 widthFactor: 1 / n,
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.layer1,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    boxShadow: AppShadows.soft,
-                  ),
+                  foregroundDecoration: isNeonDisplay
+                      ? AppDepth.sheen(BorderRadius.circular(AppRadius.pill))
+                      : null,
+                  decoration: isNeonDisplay
+                      ? BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primaryBright,
+                              AppColors.primary,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: AppColors.primaryBright.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        )
+                      : BoxDecoration(
+                          color: AppColors.layer1,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          boxShadow: AppShadows.soft,
+                        ),
                 ),
               ),
             ),
@@ -75,7 +100,9 @@ class AppSegmentedTabs extends StatelessWidget {
                       curve: AppMotion.standard,
                       style: TextStyle(
                         color: active
-                            ? AppColors.primary
+                            ? (isNeonDisplay
+                                  ? AppColors.onPrimary
+                                  : AppColors.primary)
                             : AppColors.textSecondary,
                         fontSize: AppType.body,
                         fontWeight: active ? AppType.bold : AppType.medium,
