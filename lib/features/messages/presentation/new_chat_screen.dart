@@ -76,10 +76,28 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
   @override
   Widget build(BuildContext context) {
     final me = ref.watch(authStateProvider).valueOrNull?.uid;
-    // When searching, list anyone; otherwise suggest people you follow.
-    final AsyncValue<List<AppUser>> source = _query.trim().isEmpty
-        ? ref.watch(followingUsersProvider)
-        : ref.watch(userSearchProvider(_query.trim()));
+    final qq = _query.trim().toLowerCase();
+    // DM: search anyone (or suggest people you follow). Group/Channel: only
+    // friends — people who follow you back (mutual follow).
+    final AsyncValue<List<AppUser>> source;
+    if (_multi) {
+      final friends = ref.watch(mutualFriendsProvider);
+      source = qq.isEmpty
+          ? friends
+          : friends.whenData(
+              (list) => list
+                  .where(
+                    (u) =>
+                        u.username.toLowerCase().contains(qq) ||
+                        u.displayName.toLowerCase().contains(qq),
+                  )
+                  .toList(),
+            );
+    } else {
+      source = qq.isEmpty
+          ? ref.watch(followingUsersProvider)
+          : ref.watch(userSearchProvider(_query.trim()));
+    }
 
     return AppScaffold(
       topBar: AppTopBar(
@@ -132,21 +150,34 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
             child: AsyncValueView<List<AppUser>>(
               value: source,
               onRetry: () => ref.invalidate(
-                _query.trim().isEmpty
-                    ? followingUsersProvider
-                    : userSearchProvider(_query.trim()),
+                _multi
+                    ? mutualFriendsProvider
+                    : (_query.trim().isEmpty
+                          ? followingUsersProvider
+                          : userSearchProvider(_query.trim())),
               ),
               loading: const ListRowsSkeleton(),
       builder: (all) {
                 final users = all.where((u) => u.uid != me).toList();
                 if (users.isEmpty) {
-                  return EmptyView(
-                    message: _query.trim().isEmpty
+                  final String msg;
+                  if (_multi) {
+                    msg = qq.isEmpty
                         ? tr(
-                            'Tìm theo tên người dùng để bắt đầu trò chuyện.',
-                            'Search a username to start chatting.',
+                            'Chỉ bạn bè (theo dõi lẫn nhau) mới thêm được vào nhóm.\nHãy theo dõi nhau trước.',
+                            'Only friends (who follow each other) can be added.\nFollow each other first.',
                           )
-                        : tr('Không tìm thấy người dùng.', 'No users found.'),
+                        : tr('Không tìm thấy bạn bè.', 'No friends found.');
+                  } else {
+                    msg = qq.isEmpty
+                        ? tr(
+                            'Tìm theo tên để bắt đầu trò chuyện.',
+                            'Search a name to start chatting.',
+                          )
+                        : tr('Không tìm thấy người dùng.', 'No users found.');
+                  }
+                  return EmptyView(
+                    message: msg,
                     icon: Icons.people_outline_rounded,
                   );
                 }

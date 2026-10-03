@@ -67,6 +67,26 @@ final followingUsersProvider = FutureProvider.autoDispose<List<AppUser>>((
   return users;
 });
 
+/// "Friends" — people you follow who also follow you back (mutual follow).
+/// Used as the member pool for groups/channels.
+final mutualFriendsProvider = FutureProvider.autoDispose<List<AppUser>>((
+  ref,
+) async {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return const [];
+  final followRepo = ref.watch(followRepositoryProvider);
+  final following = (await followRepo.watchFollowingIds(uid).first).toSet();
+  final followers = (await followRepo.watchFollowerIds(uid).first).toSet();
+  final mutual = following.intersection(followers);
+  final repo = ref.watch(userRepositoryProvider);
+  final users = <AppUser>[];
+  for (final id in mutual) {
+    final u = await repo.getUser(id);
+    if (u != null) users.add(u);
+  }
+  return users;
+});
+
 /// Resolved follower/following list for any user. Key: (uid, followers?).
 final followListProvider = FutureProvider.autoDispose
     .family<List<AppUser>, ({String uid, bool followers})>((ref, arg) async {
