@@ -11,17 +11,31 @@ class SearchRepository {
 
   final FirebaseFirestore _db;
 
-  /// Prefix search on username (case-insensitive; usernames are stored lower).
+  /// Finds people by name: matches anyone whose username OR display name
+  /// contains [query] (case-insensitive). Firestore has no substring/OR query,
+  /// so for this app's scale we fetch a capped set and filter client-side;
+  /// start-of-name matches rank first.
   Future<List<AppUser>> searchUsers(String query) async {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return const [];
-    final snap = await _db
-        .collection('users')
-        .where('username', isGreaterThanOrEqualTo: q)
-        .where('username', isLessThan: '$q')
-        .limit(20)
-        .get();
-    return snap.docs.map((d) => AppUser.fromMap(d.data())).toList();
+    final snap = await _db.collection('users').limit(300).get();
+    final matches = snap.docs
+        .map((d) => AppUser.fromMap(d.data()))
+        .where(
+          (u) =>
+              u.username.toLowerCase().contains(q) ||
+              u.displayName.toLowerCase().contains(q),
+        )
+        .toList();
+    bool startsWith(AppUser u) =>
+        u.username.toLowerCase().startsWith(q) ||
+        u.displayName.toLowerCase().startsWith(q);
+    matches.sort((a, b) {
+      final r = (startsWith(b) ? 1 : 0).compareTo(startsWith(a) ? 1 : 0);
+      if (r != 0) return r;
+      return a.username.compareTo(b.username);
+    });
+    return matches.take(30).toList();
   }
 
   /// Posts carrying a given hashtag (exact tag, without '#').
