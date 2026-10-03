@@ -861,98 +861,71 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     if (_items.isEmpty) {
       return PressScale(
         onTap: _addMediaSheet,
-        child: AspectRatio(
-          aspectRatio: 4 / 5,
-          child: CustomPaint(
-            painter: _DashedBorderPainter(
-              color: AppColors.primary.withValues(alpha: 0.45),
-              radius: AppRadius.lg,
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
+            color: AppColors.primary.withValues(alpha: 0.30),
+            radius: AppRadius.lg,
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.xl,
             ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.brLg,
-                gradient: RadialGradient(
-                  center: const Alignment(0, -0.35),
-                  radius: 1.05,
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.10),
-                    AppColors.layer2,
-                  ],
-                  stops: const [0, 0.85],
+            decoration: BoxDecoration(
+              color: AppColors.layer2,
+              borderRadius: AppRadius.brLg,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Compact camera chip.
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppGradients.card,
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.30),
+                    ),
+                    boxShadow: AppShadows.soft,
+                  ),
+                  child: Icon(
+                    Icons.add_a_photo_rounded,
+                    size: 26,
+                    color: AppColors.primary,
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  tr('Thêm ảnh hoặc video', 'Add photo or video'),
+                  style: AppText.h3.copyWith(fontWeight: AppType.bold),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
                   children: [
-                    // Glowing camera chip.
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppGradients.card,
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.35),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.22),
-                            blurRadius: 24,
-                            spreadRadius: -4,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.add_a_photo_rounded,
-                        size: 36,
-                        color: AppColors.primary,
-                      ),
+                    _quickPick(
+                      Icons.photo_library_rounded,
+                      tr('Thư viện', 'Library'),
+                      _pickImages,
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      tr('Thêm ảnh hoặc video', 'Add photo or video'),
-                      style: AppText.h2,
+                    _quickPick(
+                      Icons.photo_camera_rounded,
+                      tr('Camera', 'Camera'),
+                      () => _capture(isVideo: false),
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      tr(
-                        'Chạm để chọn từ thư viện,\nhoặc chụp / quay mới.',
-                        'Tap to pick from your library,\nor capture something new.',
-                      ),
-                      textAlign: TextAlign.center,
-                      style: AppText.label.copyWith(
-                        color: AppColors.textTertiary,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.sm,
-                      children: [
-                        _quickPick(
-                          Icons.photo_library_rounded,
-                          tr('Thư viện', 'Library'),
-                          _pickImages,
-                        ),
-                        _quickPick(
-                          Icons.photo_camera_rounded,
-                          tr('Camera', 'Camera'),
-                          () => _capture(isVideo: false),
-                        ),
-                        _quickPick(
-                          Icons.videocam_rounded,
-                          tr('Video', 'Video'),
-                          _pickVideo,
-                        ),
-                      ],
+                    _quickPick(
+                      Icons.videocam_rounded,
+                      tr('Video', 'Video'),
+                      _pickVideo,
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
         ),
