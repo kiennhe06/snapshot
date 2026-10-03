@@ -93,6 +93,17 @@ class StoryRepository {
         });
   }
 
+  /// All of a user's stories ever posted (including expired), newest first —
+  /// the personal story archive. Single-field equality keeps it index-free;
+  /// ordering is done client-side.
+  Stream<List<Story>> watchArchivedStories(String uid) {
+    return _stories.where('authorId', isEqualTo: uid).snapshots().map((snap) {
+      final list = snap.docs.map((d) => Story.fromMap(d.data())).toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
+  }
+
   Future<Story?> getStory(String storyId) async {
     final snap = await _stories.doc(storyId).get();
     final data = snap.data();

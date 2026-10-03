@@ -48,6 +48,7 @@ class Routes {
   static const String editPost = '/edit-post';
   static const String drafts = '/drafts';
   static const String archive = '/archive';
+  static const String storyArchive = '/story-archive';
 
   // Phase 5 — Interactions
   static const String saved = '/saved';

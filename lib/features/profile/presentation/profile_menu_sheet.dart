@@ -61,6 +61,11 @@ class _ProfileMenu extends ConsumerWidget {
             onTap: () => _go(context, Routes.archive),
           ),
           _MenuRow(
+            icon: Icons.auto_stories_rounded,
+            label: tr('Kho lưu trữ tin', 'Stories archive'),
+            onTap: () => _go(context, Routes.storyArchive),
+          ),
+          _MenuRow(
             icon: Icons.edit_note_rounded,
             label: tr('Bản nháp', 'Drafts'),
             count: draftCount,

@@ -14,6 +14,14 @@ final highlightRepositoryProvider = Provider<HighlightRepository>(
   (ref) => HighlightRepository(),
 );
 
+/// The current user's full story archive (every story ever posted, newest
+/// first, including expired ones).
+final storyArchiveProvider = StreamProvider.autoDispose<List<Story>>((ref) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return Stream.value(const []);
+  return ref.watch(storyRepositoryProvider).watchArchivedStories(uid);
+});
+
 /// A per-author tray of active stories for the ring row.
 class StoryTray {
   const StoryTray({required this.authorId, required this.stories});

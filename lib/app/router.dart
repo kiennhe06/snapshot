@@ -21,6 +21,7 @@ import '../features/post/presentation/edit_post_screen.dart';
 import '../models/post.dart';
 import '../models/post_draft.dart';
 import '../features/profile/presentation/archive_screen.dart';
+import '../features/stories/presentation/story_archive_screen.dart';
 import '../features/profile/presentation/change_password_screen.dart';
 import '../features/profile/presentation/edit_profile_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
@@ -121,6 +122,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: Routes.drafts, builder: (_, _) => const DraftsScreen()),
       GoRoute(path: Routes.archive, builder: (_, _) => const ArchiveScreen()),
+      GoRoute(
+        path: Routes.storyArchive,
+        builder: (_, _) => const StoryArchiveScreen(),
+      ),
       GoRoute(path: Routes.saved, builder: (_, _) => const SavedScreen()),
       GoRoute(
         path: Routes.hiddenWords,
