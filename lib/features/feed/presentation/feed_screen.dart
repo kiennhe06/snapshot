@@ -11,6 +11,7 @@ import '../../../widgets/empty_view.dart';
 import '../../../widgets/error_view.dart';
 import '../../../widgets/motion/motion.dart';
 import '../../stories/presentation/widgets/story_ring.dart';
+import '../data/interest_repository.dart';
 import '../providers/feed_providers.dart';
 import 'widgets/feed_skeleton.dart';
 import 'widgets/post_card.dart';
@@ -192,6 +193,16 @@ class _FeedListState extends ConsumerState<_FeedList>
     // Leading story tray (Following only) scrolls away with the posts.
     final headerCount = widget.showStories ? 1 : 0;
 
+    // Gently personalize the Following timeline (recency stays dominant);
+    // Favorites stays chronological.
+    final posts = widget.kind == FeedKind.following
+        ? rankFeed(
+            state.posts,
+            ref.watch(interestProfileProvider).valueOrNull ??
+                const InterestProfile(),
+          )
+        : state.posts;
+
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: RefreshIndicator(
@@ -200,7 +211,7 @@ class _FeedListState extends ConsumerState<_FeedList>
         onRefresh: _refresh,
         child: ListView.builder(
           padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-          itemCount: headerCount + state.posts.length + 1,
+          itemCount: headerCount + posts.length + 1,
           itemBuilder: (_, i) {
             if (widget.showStories && i == 0) {
               return const Column(
@@ -212,7 +223,7 @@ class _FeedListState extends ConsumerState<_FeedList>
               );
             }
             final postIndex = i - headerCount;
-            if (postIndex == state.posts.length) {
+            if (postIndex == posts.length) {
               return Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Center(
@@ -232,7 +243,7 @@ class _FeedListState extends ConsumerState<_FeedList>
                 ),
               );
             }
-            final post = state.posts[postIndex];
+            final post = posts[postIndex];
             final firstTime = _entered.add(post.postId);
             return MotionEntrance(
               index: postIndex,

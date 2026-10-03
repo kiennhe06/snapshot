@@ -1,3 +1,5 @@
+import 'dart:math' as m;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../models/post.dart';
@@ -16,6 +18,21 @@ class InterestProfile {
   final Map<String, double> hashtags;
 
   bool get isEmpty => authors.isEmpty && hashtags.isEmpty;
+
+  /// Multiplies every weight by [factor] and drops anything that falls below
+  /// [floor] — used to decay old interests so fresh behaviour wins.
+  InterestProfile scaled(double factor, {double floor = 0.5}) {
+    Map<String, double> s(Map<String, double> src) {
+      final out = <String, double>{};
+      src.forEach((k, v) {
+        final nv = v * factor;
+        if (nv.abs() >= floor) out[k] = nv;
+      });
+      return out;
+    }
+
+    return InterestProfile(authors: s(authors), hashtags: s(hashtags));
+  }
 
   /// How well a candidate post matches this profile. Higher = more relevant.
   double scoreFor(Post p) {
@@ -49,9 +66,36 @@ class InterestRepository {
   DocumentReference<Map<String, dynamic>> _doc(String uid) =>
       _db.collection('users').doc(uid).collection('meta').doc('interests');
 
+  // Time decay: every few days the whole profile is scaled down, so stale
+  // interests fade and new trends surface faster. Applied lazily on read.
+  static const int _decayEveryDays = 3;
+  static const double _decayFactor = 0.8;
+
   Future<InterestProfile> get(String uid) async {
     final snap = await _doc(uid).get();
-    return InterestProfile.fromMap(snap.data());
+    final data = snap.data();
+    if (data == null) return const InterestProfile();
+    var profile = InterestProfile.fromMap(data);
+    if (profile.isEmpty) return profile;
+
+    final decayedAt = (data['decayedAt'] as Timestamp?)?.toDate();
+    final days = decayedAt == null
+        ? 0
+        : DateTime.now().difference(decayedAt).inDays;
+    if (decayedAt == null || days >= _decayEveryDays) {
+      final factor = decayedAt == null
+          ? 1.0
+          : m.pow(_decayFactor, days / _decayEveryDays).toDouble();
+      if (factor < 1.0) profile = profile.scaled(factor);
+      // Persist the decayed weights + reset the clock (full overwrite so
+      // pruned keys are removed). Fire-and-forget.
+      _doc(uid).set({
+        'authors': profile.authors,
+        'hashtags': profile.hashtags,
+        'decayedAt': FieldValue.serverTimestamp(),
+      }).catchError((_) {});
+    }
+    return profile;
   }
 
   /// Adds [weight] to the author and hashtags of [post]. Deep-merges with
@@ -126,4 +170,19 @@ List<Post> rankByInterest(List<Post> posts, InterestProfile profile) {
 
   final ranked = [...posts]..sort((a, b) => score(b).compareTo(score(a)));
   return ranked;
+}
+
+/// Gentle re-rank for the Home (Following) timeline: recency stays dominant so
+/// the feed still reads as "newest first", with only a small nudge toward the
+/// authors/topics the viewer engages with.
+List<Post> rankFeed(List<Post> posts, InterestProfile profile) {
+  if (posts.isEmpty || profile.isEmpty) return posts;
+  final now = DateTime.now();
+  double score(Post p) {
+    final ageHours = now.difference(p.createdAt).inHours.toDouble();
+    final recency = 1.0 / (1.0 + ageHours / 24.0);
+    return recency * 3.0 + profile.scoreFor(p) * 0.5;
+  }
+
+  return [...posts]..sort((a, b) => score(b).compareTo(score(a)));
 }

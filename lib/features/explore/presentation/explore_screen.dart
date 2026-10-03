@@ -8,6 +8,7 @@ import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/core/utils/format.dart';
 import 'package:snapshot/widgets/components/components.dart';
 import '../../../core/constants.dart';
+import '../../feed/presentation/widgets/post_card.dart';
 import '../../../models/app_user.dart';
 import '../../../models/post.dart';
 import '../../auth/providers/auth_providers.dart';
@@ -458,8 +459,19 @@ class _ExploreTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PressScale(
-      onTap: () =>
-          context.push('${Routes.userProfile}/${post.authorId}'),
+      // Tapping a Discover tile opens the post itself (not the author's
+      // profile) — the full card with media, caption and actions.
+      onTap: () => showAppSheet<void>(
+        context,
+        builder: (_) => AppSheetSurface(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: PostCard(post: post),
+            ),
+          ),
+        ),
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: AspectRatio(
