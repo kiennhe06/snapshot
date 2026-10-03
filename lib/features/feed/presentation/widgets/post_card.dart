@@ -503,7 +503,13 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
       _optimistic = null;
     }
     final liked = _optimistic ?? serverLiked;
-    final count = post.likesCount +
+    // Use the live like count so the number is right even when this post came
+    // from a stale snapshot (Explore grid, shared card, etc.).
+    final baseCount =
+        ref.watch(likesCountProvider(post.postId)).valueOrNull ??
+        post.likesCount;
+    final count =
+        baseCount +
         (_optimistic != null && _optimistic != serverLiked
             ? (_optimistic! ? 1 : -1)
             : 0);

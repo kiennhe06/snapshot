@@ -106,6 +106,14 @@ class FeedRepository {
         .map((s) => s.exists);
   }
 
+  /// Live like count for a post — so the number stays correct even when the
+  /// post object shown came from a stale snapshot (e.g. the Explore grid).
+  Stream<int> watchLikesCount(String postId) {
+    return _posts.doc(postId).snapshots().map(
+      (s) => (s.data()?['likesCount'] as num?)?.toInt() ?? 0,
+    );
+  }
+
   /// Toggles a like and keeps likesCount in sync in one transaction.
   Future<void> toggleLike(String postId, String uid) async {
     final likeRef = _posts.doc(postId).collection('likes').doc(uid);

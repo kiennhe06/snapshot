@@ -68,6 +68,15 @@ final isLikedProvider = StreamProvider.autoDispose.family<bool, String>((
   return ref.watch(feedRepositoryProvider).watchIsLiked(postId, uid);
 });
 
+/// Live like count for a post (keeps the number correct even for posts shown
+/// from a stale snapshot).
+final likesCountProvider = StreamProvider.autoDispose.family<int, String>((
+  ref,
+  postId,
+) {
+  return ref.watch(feedRepositoryProvider).watchLikesCount(postId);
+});
+
 /// Which audience a feed shows.
 enum FeedKind { following, favorites, explore }
 
