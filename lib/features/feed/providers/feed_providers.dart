@@ -117,12 +117,29 @@ final feedControllerProvider =
 class FeedController extends FamilyNotifier<FeedState, FeedKind> {
   late FeedKind _kind;
 
+  /// Every post fetched this session, before the audience filter — kept so we
+  /// can re-filter reactively when favorite/follow/mute/block lists change.
+  final List<Post> _raw = [];
+
   @override
   FeedState build(FeedKind arg) {
     _kind = arg;
+    // Re-filter immediately when any audience list changes, so favoriting,
+    // following, muting or blocking takes effect without waiting for a reload.
+    ref.listen(favoriteIdsProvider, (_, _) => _reapplyAudience());
+    ref.listen(followingIdsProvider, (_, _) => _reapplyAudience());
+    ref.listen(blockedIdsProvider, (_, _) => _reapplyAudience());
+    ref.listen(mutedIdsProvider, (_, _) => _reapplyAudience());
     // Kick off the first page after the notifier is constructed.
     Future.microtask(loadMore);
     return const FeedState();
+  }
+
+  /// Recomputes the visible posts from the raw pool so a fresh
+  /// favorite/follow/mute/block is reflected right away.
+  void _reapplyAudience() {
+    if (_raw.isEmpty) return;
+    state = state.copyWith(posts: _applyAudience(_raw));
   }
 
   FeedRepository get _repo => ref.read(feedRepositoryProvider);
@@ -137,19 +154,22 @@ class FeedController extends FamilyNotifier<FeedState, FeedKind> {
 
     try {
       var cursor = state.cursor;
-      final collected = <Post>[];
       var hasMore = true;
       var guard = 0;
-      while (collected.length < want && hasMore && guard < 6) {
+      final before = _applyAudience(_raw).length;
+      // Keep paging until at least [want] NEW posts pass the audience filter.
+      while (_applyAudience(_raw).length - before < want &&
+          hasMore &&
+          guard < 6) {
         guard++;
         final page = await _repo.fetchPage(startAfter: cursor);
-        collected.addAll(_applyAudience(page.posts));
+        _raw.addAll(page.posts);
         cursor = page.nextCursor;
         hasMore = page.hasMore;
       }
 
       state = state.copyWith(
-        posts: [...state.posts, ...collected],
+        posts: _applyAudience(_raw),
         cursor: cursor,
         hasMore: hasMore,
         isLoading: false,
@@ -162,6 +182,7 @@ class FeedController extends FamilyNotifier<FeedState, FeedKind> {
   }
 
   Future<void> refresh() async {
+    _raw.clear();
     state = const FeedState();
     await loadMore();
   }

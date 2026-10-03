@@ -389,6 +389,13 @@ class _PostCardState extends ConsumerState<PostCard>
                   targetUid: post.authorId,
                   favorite: !isFav,
                 );
+            showAppToast(
+              context,
+              isFav
+                  ? tr('Đã bỏ khỏi Yêu thích.', 'Removed from Favorites.')
+                  : tr('Đã thêm vào Yêu thích.', 'Added to Favorites.'),
+              type: AppToastType.success,
+            );
           }
         },
       ),
