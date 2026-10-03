@@ -15,6 +15,7 @@ import '../../messages/presentation/share_to_chat_sheet.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/loading_view.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../feed/data/interest_repository.dart';
 import '../../feed/providers/feed_providers.dart';
 import '../../interactions/presentation/comments_screen.dart';
 import '../../interactions/providers/interaction_providers.dart';
@@ -91,6 +92,17 @@ class _ReelsFeedScreenState extends ConsumerState<ReelsFeedScreen> {
                   setState(() => _index = i);
                   // Scrolling to another reel returns to immersive full-screen.
                   ref.read(reelsChromeProvider.notifier).hide();
+                  // Learn from what the viewer actually lands on.
+                  final uid = ref.read(authStateProvider).valueOrNull?.uid;
+                  if (uid != null && i < state.posts.length) {
+                    ref
+                        .read(interestRepositoryProvider)
+                        .record(
+                          uid: uid,
+                          post: state.posts[i],
+                          weight: InterestWeight.view,
+                        );
+                  }
                   if (i >= state.posts.length - 2) {
                     ref.read(reelsControllerProvider.notifier).loadMore();
                   }
@@ -308,6 +320,13 @@ class _ReelPage extends ConsumerWidget {
                     ref
                         .read(saveRepositoryProvider)
                         .toggleSave(uid: uid, postId: post.postId);
+                    ref
+                        .read(interestRepositoryProvider)
+                        .record(
+                          uid: uid,
+                          post: post,
+                          weight: InterestWeight.save,
+                        );
                   }
                 },
               ),
@@ -410,6 +429,13 @@ class _ReelPage extends ConsumerWidget {
                           ref
                               .read(followRepositoryProvider)
                               .follow(currentUid: uid, targetUid: post.authorId);
+                          ref
+                              .read(interestRepositoryProvider)
+                              .record(
+                                uid: uid,
+                                post: post,
+                                weight: InterestWeight.follow,
+                              );
                         }
                       },
                       child: Container(
@@ -615,6 +641,12 @@ class _ReelLikeButtonState extends ConsumerState<_ReelLikeButton> {
           HapticFeedback.lightImpact();
           setState(() => _optimistic = !liked);
           ref.read(feedRepositoryProvider).toggleLike(post.postId, uid);
+          // Only a new like is a positive signal.
+          if (!liked) {
+            ref
+                .read(interestRepositoryProvider)
+                .record(uid: uid, post: post, weight: InterestWeight.like);
+          }
         },
         child: Column(
           children: [

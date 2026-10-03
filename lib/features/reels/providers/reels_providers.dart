@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/post.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../feed/data/feed_repository.dart';
+import '../../feed/data/interest_repository.dart';
 import '../../feed/providers/feed_providers.dart';
 import '../../interactions/providers/interaction_providers.dart';
 
@@ -83,10 +84,41 @@ class ReelsController extends Notifier<ReelsState> {
     state = state.copyWith(isLoading: true);
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     final blocked = ref.read(blockedIdsProvider).valueOrNull ?? const [];
-    final following = _tab == ReelsTab.following
-        ? (ref.read(followingIdsProvider).valueOrNull ?? const [])
-        : const <String>[];
 
+    // "For you": pull a candidate pool once, then order it by the learned
+    // interest profile instead of pure recency. The pool is capped for cost;
+    // scaling to ranked pagination is a later step.
+    if (_tab == ReelsTab.forYou) {
+      final pool = <Post>[];
+      DateTime? cursor;
+      var hasMore = true;
+      var guard = 0;
+      while (pool.length < 40 && hasMore && guard < 8) {
+        guard++;
+        final page = await _repo.fetchPage(startAfter: cursor, pageSize: 20);
+        pool.addAll(
+          page.posts.where(
+            (p) =>
+                p.isVideo && p.authorId != uid && !blocked.contains(p.authorId),
+          ),
+        );
+        cursor = page.nextCursor;
+        hasMore = page.hasMore;
+      }
+      final profile = uid == null
+          ? const InterestProfile()
+          : await ref.read(interestRepositoryProvider).get(uid);
+      state = state.copyWith(
+        posts: rankByInterest(pool, profile),
+        hasMore: false,
+        isLoading: false,
+        initialized: true,
+      );
+      return;
+    }
+
+    // "Following": chronological, paginated.
+    final following = ref.read(followingIdsProvider).valueOrNull ?? const [];
     var cursor = state.cursor;
     final collected = <Post>[];
     var hasMore = true;
@@ -100,7 +132,7 @@ class ReelsController extends Notifier<ReelsState> {
               p.isVideo &&
               p.authorId != uid &&
               !blocked.contains(p.authorId) &&
-              (_tab == ReelsTab.forYou || following.contains(p.authorId)),
+              following.contains(p.authorId),
         ),
       );
       cursor = page.nextCursor;

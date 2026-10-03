@@ -21,6 +21,7 @@ import '../../../interactions/providers/interaction_providers.dart';
 import '../../../messages/presentation/share_to_chat_sheet.dart';
 import '../../../../models/chat.dart';
 import '../../../profile/providers/profile_providers.dart';
+import '../../data/interest_repository.dart';
 import '../../providers/feed_providers.dart';
 
 /// A feed post as a custom depth card: author header, media carousel, like/
@@ -57,6 +58,9 @@ class _PostCardState extends ConsumerState<PostCard>
         ref.read(isLikedProvider(widget.post.postId)).valueOrNull ?? false;
     if (!liked && uid != null) {
       ref.read(feedRepositoryProvider).toggleLike(widget.post.postId, uid);
+      ref
+          .read(interestRepositoryProvider)
+          .record(uid: uid, post: widget.post, weight: InterestWeight.like);
     }
   }
 
@@ -511,6 +515,11 @@ class _LikeButtonState extends ConsumerState<_LikeButton> {
         Motion.toggle();
         setState(() => _optimistic = !liked);
         ref.read(feedRepositoryProvider).toggleLike(post.postId, uid);
+        if (!liked) {
+          ref
+              .read(interestRepositoryProvider)
+              .record(uid: uid, post: post, weight: InterestWeight.like);
+        }
       },
     );
   }

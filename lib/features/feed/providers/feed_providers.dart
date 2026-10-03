@@ -5,9 +5,15 @@ import '../../auth/providers/auth_providers.dart';
 import '../../interactions/providers/interaction_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../data/feed_repository.dart';
+import '../data/interest_repository.dart';
 
 final feedRepositoryProvider = Provider<FeedRepository>(
   (ref) => FeedRepository(),
+);
+
+/// Per-user interest profile store (behaviour tracking + "For you" ranking).
+final interestRepositoryProvider = Provider<InterestRepository>(
+  (ref) => InterestRepository(),
 );
 
 /// Top hashtags across recent posts (real, counted client-side). Used for the
