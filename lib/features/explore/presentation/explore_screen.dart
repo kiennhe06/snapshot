@@ -11,6 +11,7 @@ import '../../../core/constants.dart';
 import '../../../models/app_user.dart';
 import '../../../models/post.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../feed/data/interest_repository.dart';
 import '../../feed/providers/feed_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/search_providers.dart';
@@ -69,6 +70,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final explore = ref.watch(feedControllerProvider(FeedKind.explore));
     final suggested = ref.watch(suggestedUsersProvider);
     final trending = _trending(explore.posts);
+    // Personalize the Discover grid by the learned interest profile (falls back
+    // to popularity + recency when the profile is still empty). Trending stays
+    // global on purpose.
+    final profile =
+        ref.watch(interestProfileProvider).valueOrNull ??
+        const InterestProfile();
+    final discoverPosts = rankByInterest(explore.posts, profile);
 
     return AppScaffold(
       topBar: AppTopBar(titleWidget: _searchBar()),
@@ -106,7 +114,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 Icons.auto_awesome_rounded,
               ),
             ),
-            SliverToBoxAdapter(child: _masonry(explore.posts)),
+            SliverToBoxAdapter(child: _masonry(discoverPosts)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl),

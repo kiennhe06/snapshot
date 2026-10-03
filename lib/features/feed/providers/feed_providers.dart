@@ -16,6 +16,16 @@ final interestRepositoryProvider = Provider<InterestRepository>(
   (ref) => InterestRepository(),
 );
 
+/// The current user's learned interest profile, loaded once per view. Used to
+/// rank discovery surfaces (Explore grid, For-you reels).
+final interestProfileProvider = FutureProvider.autoDispose<InterestProfile>((
+  ref,
+) async {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return const InterestProfile();
+  return ref.read(interestRepositoryProvider).get(uid);
+});
+
 /// Top hashtags across recent posts (real, counted client-side). Used for the
 /// composer's hashtag suggestions.
 final trendingHashtagsProvider = FutureProvider.autoDispose<List<String>>((
