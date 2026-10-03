@@ -64,6 +64,14 @@ class ReelsController extends Notifier<ReelsState> {
   ReelsTab _tab = ReelsTab.forYou;
   ReelsTab get tab => _tab;
 
+  // "For you" ranked pagination: candidates are fetched in batches, each batch
+  // is ranked by interest and appended to this buffer, then served a page at a
+  // time — so already-shown reels never reorder.
+  final List<Post> _forYouBuffer = [];
+  final Set<String> _seen = {};
+  InterestProfile? _profile;
+  bool _poolHasMore = true;
+
   @override
   ReelsState build() {
     Future.microtask(loadMore);
@@ -85,32 +93,41 @@ class ReelsController extends Notifier<ReelsState> {
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     final blocked = ref.read(blockedIdsProvider).valueOrNull ?? const [];
 
-    // "For you": pull a candidate pool once, then order it by the learned
-    // interest profile instead of pure recency. The pool is capped for cost;
-    // scaling to ranked pagination is a later step.
+    // "For you": ranked pagination. Refill the ranked buffer from a fresh
+    // candidate batch when it runs low, then serve the next page from it.
     if (_tab == ReelsTab.forYou) {
-      final pool = <Post>[];
-      DateTime? cursor;
-      var hasMore = true;
-      var guard = 0;
-      while (pool.length < 40 && hasMore && guard < 8) {
-        guard++;
-        final page = await _repo.fetchPage(startAfter: cursor, pageSize: 20);
-        pool.addAll(
-          page.posts.where(
-            (p) =>
-                p.isVideo && p.authorId != uid && !blocked.contains(p.authorId),
-          ),
-        );
-        cursor = page.nextCursor;
-        hasMore = page.hasMore;
+      if (_forYouBuffer.length < want && _poolHasMore) {
+        _profile ??= uid == null
+            ? const InterestProfile()
+            : await ref.read(interestRepositoryProvider).get(uid);
+        final batch = <Post>[];
+        var cursor = state.cursor;
+        var hasMore = true;
+        var guard = 0;
+        while (batch.length < 30 && hasMore && guard < 6) {
+          guard++;
+          final page = await _repo.fetchPage(startAfter: cursor, pageSize: 20);
+          batch.addAll(
+            page.posts.where(
+              (p) =>
+                  p.isVideo &&
+                  p.authorId != uid &&
+                  !blocked.contains(p.authorId) &&
+                  _seen.add(p.postId),
+            ),
+          );
+          cursor = page.nextCursor;
+          hasMore = page.hasMore;
+        }
+        _forYouBuffer.addAll(rankByInterest(batch, _profile!));
+        _poolHasMore = hasMore;
+        state = state.copyWith(cursor: cursor);
       }
-      final profile = uid == null
-          ? const InterestProfile()
-          : await ref.read(interestRepositoryProvider).get(uid);
+      final take = _forYouBuffer.take(want).toList();
+      _forYouBuffer.removeRange(0, take.length);
       state = state.copyWith(
-        posts: rankByInterest(pool, profile),
-        hasMore: false,
+        posts: [...state.posts, ...take],
+        hasMore: _forYouBuffer.isNotEmpty || _poolHasMore,
         isLoading: false,
         initialized: true,
       );
@@ -148,6 +165,10 @@ class ReelsController extends Notifier<ReelsState> {
   }
 
   Future<void> refresh() async {
+    _forYouBuffer.clear();
+    _seen.clear();
+    _profile = null;
+    _poolHasMore = true;
     state = const ReelsState();
     await loadMore();
   }
