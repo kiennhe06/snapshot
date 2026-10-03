@@ -86,10 +86,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 currentIndex: _index,
                 onTap: (i) {
                   if (i != _index) HapticFeedback.selectionClick();
-                  // Entering Reels starts immersive (nav hidden).
-                  if (i == _reelsIndex) {
-                    ref.read(reelsChromeProvider.notifier).hide();
-                  }
                   setState(() => _index = i);
                 },
                 onCreate: () => context.push(Routes.createPost),

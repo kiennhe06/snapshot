@@ -207,9 +207,12 @@ class _ReelPage extends ConsumerWidget {
             showProgress: true,
             // Fill the screen (crop) so there are no letterbox bars.
             fit: BoxFit.cover,
-            // Tapping (which also pauses) reveals the bottom nav so the viewer
-            // can leave; tapping again resumes and hides it for full-screen.
-            onTap: () => ref.read(reelsChromeProvider.notifier).toggle(),
+            // Keep the bottom nav in sync with playback: hidden while playing
+            // (full-screen), revealed when paused so the viewer can leave.
+            onPlayingChanged: (playing) {
+              final chrome = ref.read(reelsChromeProvider.notifier);
+              playing ? chrome.hide() : chrome.show();
+            },
           )
         else
           const ColoredBox(color: Colors.black),

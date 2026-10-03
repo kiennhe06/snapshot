@@ -15,7 +15,6 @@ class ReelsChrome extends Notifier<bool> {
 
   void show() => state = true;
   void hide() => state = false;
-  void toggle() => state = !state;
 }
 
 final reelsChromeProvider = NotifierProvider<ReelsChrome, bool>(

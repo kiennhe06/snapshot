@@ -18,7 +18,7 @@ class AppVideo extends StatefulWidget {
     this.showControls = true,
     this.showProgress = false,
     this.blurBackground = false,
-    this.onTap,
+    this.onPlayingChanged,
   });
 
   final String url;
@@ -28,9 +28,11 @@ class AppVideo extends StatefulWidget {
   final bool loop;
   final bool showControls;
 
-  /// Called on every tap, in addition to the built-in play/pause toggle.
-  /// Lets the host (e.g. Reels) reveal/hide surrounding chrome on tap.
-  final VoidCallback? onTap;
+  /// Reports the playing state whenever it changes by autoplay or a tap, so the
+  /// host (e.g. Reels) can keep surrounding chrome in sync — nav shown while
+  /// paused, hidden while playing. Never desyncs because it mirrors the real
+  /// controller state instead of a blind toggle.
+  final ValueChanged<bool>? onPlayingChanged;
 
   /// Fills the frame with a blurred, dimmed copy of the video behind a
   /// `contain`-fit copy (Reels/Shorts style) — so a non-vertical source never
@@ -62,7 +64,10 @@ class _AppVideoState extends State<AppVideo> {
       await c.initialize();
       await c.setLooping(widget.loop);
       await c.setVolume(widget.muted ? 0 : 1);
-      if (widget.active) await c.play();
+      if (widget.active) {
+        await c.play();
+        widget.onPlayingChanged?.call(true);
+      }
       if (mounted) setState(() => _ready = true);
     } catch (_) {
       if (mounted) setState(() => _ready = false);
@@ -105,6 +110,7 @@ class _AppVideoState extends State<AppVideo> {
         _showPause = false;
       }
     });
+    widget.onPlayingChanged?.call(c.value.isPlaying);
   }
 
   @override
@@ -126,12 +132,7 @@ class _AppVideoState extends State<AppVideo> {
       );
     }
     return GestureDetector(
-      onTap: (widget.showControls || widget.onTap != null)
-          ? () {
-              if (widget.showControls) _toggle();
-              widget.onTap?.call();
-            }
-          : null,
+      onTap: widget.showControls ? _toggle : null,
       child: Stack(
         alignment: Alignment.center,
         fit: StackFit.expand,
