@@ -11,6 +11,8 @@ import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/motion/motion.dart';
+import '../../../widgets/stickers/glossy_stickers.dart';
+import '../../../widgets/stickers/sticker_message.dart';
 import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -95,6 +97,28 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   void _startReply(Comment c) {
     setState(() => _replyingTo = c);
     _focus.requestFocus();
+  }
+
+  /// Opens the sticker keyboard and posts the chosen sticker as a comment.
+  Future<void> _pickSticker() async {
+    final s = await showStickerPicker(context);
+    if (s == null) return;
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return;
+    setState(() => _sending = true);
+    try {
+      await ref
+          .read(commentRepositoryProvider)
+          .addComment(
+            postId: _postId,
+            uid: uid,
+            text: stickerToken(s),
+            parentId: _replyingTo?.parentId ?? _replyingTo?.commentId,
+          );
+      setState(() => _replyingTo = null);
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
   }
 
   void _insertEmoji(String e) {
@@ -203,6 +227,7 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
             replyingTo: _replyingTo,
             onSend: _send,
             onEmoji: _insertEmoji,
+            onSticker: _pickSticker,
             onCancelReply: () => setState(() => _replyingTo = null),
           ),
         ],
@@ -581,10 +606,16 @@ class _CommentRow extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  comment.text,
-                  style: AppText.h3.copyWith(fontWeight: AppType.regular),
-                ),
+                if (parseSticker(comment.text) case final sticker?)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: GlossyStickerView(sticker, size: compact ? 76 : 96),
+                  )
+                else
+                  Text(
+                    comment.text,
+                    style: AppText.h3.copyWith(fontWeight: AppType.regular),
+                  ),
                 const SizedBox(height: AppSpacing.xs),
                 PressScale(
                   onTap: onReply,
@@ -723,6 +754,7 @@ class _Composer extends ConsumerWidget {
     required this.replyingTo,
     required this.onSend,
     required this.onEmoji,
+    required this.onSticker,
     required this.onCancelReply,
   });
 
@@ -733,6 +765,7 @@ class _Composer extends ConsumerWidget {
   final Comment? replyingTo;
   final VoidCallback onSend;
   final void Function(String) onEmoji;
+  final VoidCallback onSticker;
   final VoidCallback onCancelReply;
 
   static const _emojis = ['❤️', '🔥', '☕', '😍', '👏', '✨', '🙌'];
@@ -756,23 +789,44 @@ class _Composer extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Quick-emoji strip
+            // Sticker button + quick-emoji strip
             SizedBox(
               height: 34,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
-                  for (final e in _emojis)
-                    PressScale(
-                      onTap: () => onEmoji(e),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: 2,
-                        ),
-                        child: Text(e, style: const TextStyle(fontSize: 22)),
+                  PressScale(
+                    onTap: onSticker,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.xs),
+                      child: Icon(
+                        Icons.emoji_emotions_outlined,
+                        size: 26,
+                        color: AppColors.primary,
                       ),
                     ),
+                  ),
+                  Container(width: 1, height: 20, color: AppColors.borderSubtle),
+                  Expanded(
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        for (final e in _emojis)
+                          PressScale(
+                            onTap: () => onEmoji(e),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: 2,
+                              ),
+                              child: Text(
+                                e,
+                                style: const TextStyle(fontSize: 22),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -7,6 +7,8 @@ import '../../../../core/i18n/i18n.dart';
 import '../../../../models/chat.dart';
 import '../../../../models/post.dart';
 import '../../../../widgets/components/components.dart';
+import '../../../../widgets/stickers/glossy_stickers.dart';
+import '../../../../widgets/stickers/sticker_message.dart';
 import '../../../feed/presentation/widgets/post_card.dart';
 import '../../../profile/providers/profile_providers.dart';
 import '../../providers/message_providers.dart';
@@ -125,9 +127,17 @@ class MessageBubble extends ConsumerWidget {
     );
   }
 
+  /// A bare sticker (no bubble chrome) when the message is just one sticker.
+  GlossySticker? get _sticker =>
+      (!message.deleted && message.type == MessageType.text)
+      ? parseSticker(message.text)
+      : null;
+
   Widget _bubble(BuildContext context, WidgetRef ref, bool mine) {
-    final bg = mine ? null : AppColors.layer2;
-    final gradient = mine
+    // Stickers float on their own — no bubble, gradient, border or shadow.
+    final sticker = _sticker;
+    final bg = (mine || sticker != null) ? null : AppColors.layer2;
+    final gradient = (mine && sticker == null)
         ? LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -145,18 +155,22 @@ class MessageBubble extends ConsumerWidget {
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.72,
       ),
-      padding: _padded(message.type)
-          ? const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            )
-          : const EdgeInsets.all(4),
+      padding: sticker != null
+          ? EdgeInsets.zero
+          : (_padded(message.type)
+                ? const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  )
+                : const EdgeInsets.all(4)),
       decoration: BoxDecoration(
         color: bg,
         gradient: gradient,
         borderRadius: radius,
-        border: mine ? null : Border.all(color: AppColors.borderSubtle),
-        boxShadow: AppShadows.soft,
+        border: (mine || sticker != null)
+            ? null
+            : Border.all(color: AppColors.borderSubtle),
+        boxShadow: sticker != null ? null : AppShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +214,7 @@ class MessageBubble extends ConsumerWidget {
   Widget _replyQuote(bool mine) {
     final r = replyTo!;
     final preview = switch (r.type) {
-      MessageType.text => r.text ?? '',
+      MessageType.text => stickerPreviewOr(r.text),
       MessageType.image => '📷 ${tr('Ảnh', 'Photo')}',
       MessageType.video => '🎥 Video',
       MessageType.voice => '🎙️ ${tr('Thoại', 'Voice')}',
@@ -263,6 +277,10 @@ class MessageBubble extends ConsumerWidget {
 
     switch (message.type) {
       case MessageType.text:
+        final sticker = _sticker;
+        if (sticker != null) {
+          return GlossyStickerView(sticker, size: 120);
+        }
         return Text(
           message.text ?? '',
           style: AppText.h3.copyWith(color: fg, fontWeight: AppType.regular),

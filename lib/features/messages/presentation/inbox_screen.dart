@@ -16,6 +16,7 @@ import '../../../widgets/empty_view.dart';
 import '../../../widgets/motion/motion.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
+import '../../../widgets/stickers/sticker_message.dart';
 import '../providers/message_providers.dart';
 import 'chat_screen.dart';
 import 'new_chat_screen.dart';
@@ -810,7 +811,7 @@ class _ChatRow extends ConsumerWidget {
         ),
       );
     }
-    final raw = chat.lastText ?? '';
+    final raw = stickerPreviewOr(chat.lastText);
     final text = raw.isEmpty
         ? tr('Nhấn để trò chuyện', 'Tap to chat')
         : '${senderPrefix ?? ''}$raw';

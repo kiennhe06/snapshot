@@ -14,6 +14,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../models/chat.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
+import '../../../widgets/stickers/sticker_message.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/message_providers.dart';
@@ -101,6 +102,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       text: text,
       replyToId: reply?.messageId,
     );
+    _scrollToBottom();
+  }
+
+  Future<void> _sendSticker() async {
+    final me = _me;
+    if (me == null) return;
+    final s = await showStickerPicker(context);
+    if (s == null) return;
+    final reply = _replyTo;
+    setState(() => _replyTo = null);
+    await ref
+        .read(chatRepositoryProvider)
+        .sendText(
+          chatId: widget.chatId,
+          senderId: me,
+          text: stickerToken(s),
+          replyToId: reply?.messageId,
+        );
     _scrollToBottom();
   }
 
@@ -283,7 +302,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _replyBanner() {
     final r = _replyTo!;
     final preview = switch (r.type) {
-      MessageType.text => r.text ?? '',
+      MessageType.text => stickerPreviewOr(r.text),
       MessageType.image => '📷 ${tr('Ảnh', 'Photo')}',
       MessageType.video => '🎥 Video',
       MessageType.voice => '🎙️ ${tr('Tin nhắn thoại', 'Voice')}',
@@ -394,6 +413,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             AppIconButton(
               icon: Icons.add_circle_outline_rounded,
               onTap: _sending ? null : _attachMenu,
+            ),
+            AppIconButton(
+              icon: Icons.emoji_emotions_outlined,
+              onTap: _sending ? null : _sendSticker,
             ),
             Expanded(
               child: Container(
@@ -685,7 +708,7 @@ class _PinnedBar extends ConsumerWidget {
     if (pinned.isEmpty) return const SizedBox.shrink();
     final top = pinned.first;
     final preview = switch (top.type) {
-      MessageType.text => top.text ?? '',
+      MessageType.text => stickerPreviewOr(top.text),
       MessageType.image => '📷 ${tr('Ảnh', 'Photo')}',
       MessageType.video => '🎥 Video',
       MessageType.voice => '🎙️ ${tr('Tin nhắn thoại', 'Voice')}',
