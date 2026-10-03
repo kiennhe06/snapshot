@@ -14,6 +14,7 @@ import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/empty_view.dart';
 import '../../../widgets/motion/motion.dart';
+import '../../ai/presentation/ai_chat_screen.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../../../widgets/stickers/sticker_message.dart';
@@ -111,6 +112,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
+              const _AiAssistantEntry(),
               if (me != null) _NotesStrip(me: me),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -190,6 +192,81 @@ class _FilterBar extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pinned entry to the AI assistant, always at the top of the inbox.
+class _AiAssistantEntry extends StatelessWidget {
+  const _AiAssistantEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    return PressScale(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AiChatScreen()),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.xs,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Snapshot AI',
+                        style: AppText.h3.copyWith(fontWeight: AppType.heavy),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      AppTag(tr('Trợ lý', 'Assistant')),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    tr(
+                      'Viết caption, hashtag, ý tưởng — hỏi mình nhé',
+                      'Captions, hashtags, ideas — just ask',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.label.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+          ],
+        ),
       ),
     );
   }

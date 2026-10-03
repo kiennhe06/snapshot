@@ -59,10 +59,15 @@ service cloud.firestore {
         allow write: if signedIn() && request.auth.uid == uid;
       }
 
-      // Inbox note — owner writes, anyone signed in can view.
+      // Inbox note + AI memory — owner writes, anyone signed in can view.
       match /meta/{docId} {
         allow read: if signedIn();
         allow write: if signedIn() && request.auth.uid == uid;
+      }
+
+      // AI assistant conversation — strictly private to the owner.
+      match /aiMessages/{messageId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
       }
     }
 
