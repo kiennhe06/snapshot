@@ -7,9 +7,8 @@ import '../../../widgets/components/components.dart';
 import 'widgets/post_card.dart';
 
 /// A page-snapped post feed opened from a grid: one post per page as its own
-/// independent card. Opens on the tapped post and swipes both ways — up for the
-/// next post, down for the previous — through the whole list, like Instagram's
-/// post view. Tall posts scroll inside their own page.
+/// independent card. Opens on the tapped post and swipes through the whole list
+/// — up for the next post, down for the previous.
 class PostDetailScreen extends StatefulWidget {
   const PostDetailScreen({
     super.key,
@@ -51,23 +50,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         title: widget.title ?? tr('Bài viết', 'Posts'),
         showBack: true,
       ),
+      // No inner scroll view: a nested same-axis scrollable would swallow the
+      // drag and the page would never flip. Each page holds the post centred;
+      // tall posts simply scroll the page itself.
       body: PageView.builder(
         controller: _controller,
         scrollDirection: Axis.vertical,
         itemCount: widget.posts.length,
         itemBuilder: (_, i) => SafeArea(
           top: false,
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
               AppSpacing.sm,
               AppSpacing.md,
               AppSpacing.md,
             ),
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: PostCard(post: widget.posts[i]),
-            ),
+            physics: const NeverScrollableScrollPhysics(),
+            child: PostCard(post: widget.posts[i]),
           ),
         ),
       ),
