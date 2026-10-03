@@ -92,6 +92,7 @@ class ReelsController extends Notifier<ReelsState> {
     state = state.copyWith(isLoading: true);
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
     final blocked = ref.read(blockedIdsProvider).valueOrNull ?? const [];
+    final muted = ref.read(mutedIdsProvider).valueOrNull ?? const [];
 
     // "For you": ranked pagination. Refill the ranked buffer from a fresh
     // candidate batch when it runs low, then serve the next page from it.
@@ -113,6 +114,7 @@ class ReelsController extends Notifier<ReelsState> {
                   p.isVideo &&
                   p.authorId != uid &&
                   !blocked.contains(p.authorId) &&
+                  !muted.contains(p.authorId) &&
                   _seen.add(p.postId),
             ),
           );
@@ -149,6 +151,7 @@ class ReelsController extends Notifier<ReelsState> {
               p.isVideo &&
               p.authorId != uid &&
               !blocked.contains(p.authorId) &&
+              !muted.contains(p.authorId) &&
               following.contains(p.authorId),
         ),
       );

@@ -61,22 +61,15 @@ final savedPostsProvider = StreamProvider.autoDispose
     });
 
 // Relations
-final _relStream = <String>['blocked', 'muted', 'restricted'];
-
 final blockedIdsProvider = StreamProvider.autoDispose<List<String>>((ref) {
   final uid = ref.watch(authStateProvider).valueOrNull?.uid;
   if (uid == null) return Stream.value(const []);
-  return ref.watch(relationRepositoryProvider).watchIds(uid, _relStream[0]);
+  return ref.watch(relationRepositoryProvider).watchIds(uid, 'blocked');
 });
 final mutedIdsProvider = StreamProvider.autoDispose<List<String>>((ref) {
   final uid = ref.watch(authStateProvider).valueOrNull?.uid;
   if (uid == null) return Stream.value(const []);
-  return ref.watch(relationRepositoryProvider).watchIds(uid, _relStream[1]);
-});
-final restrictedIdsProvider = StreamProvider.autoDispose<List<String>>((ref) {
-  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
-  if (uid == null) return Stream.value(const []);
-  return ref.watch(relationRepositoryProvider).watchIds(uid, _relStream[2]);
+  return ref.watch(relationRepositoryProvider).watchIds(uid, 'muted');
 });
 
 final hiddenWordsProvider = StreamProvider.autoDispose<List<String>>((ref) {

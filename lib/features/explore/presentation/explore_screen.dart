@@ -349,7 +349,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
               const Spacer(),
               PressScale(
-                onTap: () {},
+                onTap: _openSearch,
                 child: Text(
                   tr('Xem tất cả', 'See all'),
                   style: AppText.label.copyWith(color: AppColors.primary, fontWeight: AppType.bold),

@@ -27,11 +27,14 @@ final storyTraysProvider = StreamProvider.autoDispose<List<StoryTray>>((ref) {
   final uid = ref.watch(authStateProvider).valueOrNull?.uid;
   final following = ref.watch(followingIdsProvider).valueOrNull ?? const [];
   final blocked = ref.watch(blockedIdsProvider).valueOrNull ?? const [];
+  final muted = ref.watch(mutedIdsProvider).valueOrNull ?? const [];
   if (uid == null) return Stream.value(const []);
 
   return ref.watch(storyRepositoryProvider).watchActiveStories().map((stories) {
     bool visible(Story s) {
-      if (blocked.contains(s.authorId)) return false;
+      if (blocked.contains(s.authorId) || muted.contains(s.authorId)) {
+        return false;
+      }
       final audienceOk = s.authorId == uid || following.contains(s.authorId);
       if (!audienceOk) return false;
       if (s.closeFriendsOnly && s.authorId != uid) {

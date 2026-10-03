@@ -253,22 +253,38 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
           label: c.pinned
               ? tr('Bỏ ghim', 'Unpin')
               : tr('Ghim bình luận', 'Pin comment'),
-          onTap: () => ref
-              .read(commentRepositoryProvider)
-              .setPinned(
-                postId: _postId,
-                commentId: c.commentId,
-                pinned: !c.pinned,
-              ),
+          onTap: () {
+            ref
+                .read(commentRepositoryProvider)
+                .setPinned(
+                  postId: _postId,
+                  commentId: c.commentId,
+                  pinned: !c.pinned,
+                );
+            showAppToast(
+              context,
+              c.pinned
+                  ? tr('Đã bỏ ghim.', 'Unpinned.')
+                  : tr('Đã ghim bình luận.', 'Comment pinned.'),
+              type: AppToastType.success,
+            );
+          },
         ),
       if (isMine || _iAmPostAuthor)
         AppMenuAction(
           icon: Icons.delete_outline_rounded,
           label: tr('Xoá bình luận', 'Delete comment'),
           destructive: true,
-          onTap: () => ref
-              .read(commentRepositoryProvider)
-              .deleteComment(postId: _postId, comment: c),
+          onTap: () {
+            ref
+                .read(commentRepositoryProvider)
+                .deleteComment(postId: _postId, comment: c);
+            showAppToast(
+              context,
+              tr('Đã xoá bình luận.', 'Comment deleted.'),
+              type: AppToastType.success,
+            );
+          },
         ),
       if (!isMine)
         AppMenuAction(

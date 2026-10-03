@@ -372,8 +372,6 @@ class _PostCardState extends ConsumerState<PostCard>
     final muted = (ref.read(mutedIdsProvider).valueOrNull ?? const []).contains(
       post.authorId,
     );
-    final restricted = (ref.read(restrictedIdsProvider).valueOrNull ?? const [])
-        .contains(post.authorId);
     final rel = ref.read(relationRepositoryProvider);
 
     showAppMenu(context, [
@@ -401,22 +399,6 @@ class _PostCardState extends ConsumerState<PostCard>
       ),
       if (!isMine) ...[
         AppMenuAction(
-          icon: restricted ? Icons.shield : Icons.shield_outlined,
-          label: restricted
-              ? tr('Bỏ hạn chế', 'Unrestrict')
-              : tr('Hạn chế (Restrict)', 'Restrict'),
-          onTap: () {
-            if (uid != null) {
-              rel.setRelation(
-                uid: uid,
-                kind: 'restricted',
-                targetUid: post.authorId,
-                on: !restricted,
-              );
-            }
-          },
-        ),
-        AppMenuAction(
           icon: muted ? Icons.volume_up_rounded : Icons.volume_off_rounded,
           label: muted
               ? tr('Bỏ tắt tiếng', 'Unmute')
@@ -428,6 +410,13 @@ class _PostCardState extends ConsumerState<PostCard>
                 kind: 'muted',
                 targetUid: post.authorId,
                 on: !muted,
+              );
+              showAppToast(
+                context,
+                muted
+                    ? tr('Đã bỏ tắt tiếng.', 'Unmuted.')
+                    : tr('Đã tắt tiếng. Ẩn bài của họ.', 'Muted. Their posts are hidden.'),
+                type: AppToastType.success,
               );
             }
           },
@@ -445,6 +434,13 @@ class _PostCardState extends ConsumerState<PostCard>
                 kind: 'blocked',
                 targetUid: post.authorId,
                 on: !blocked,
+              );
+              showAppToast(
+                context,
+                blocked
+                    ? tr('Đã bỏ chặn.', 'Unblocked.')
+                    : tr('Đã chặn người này.', 'Blocked this person.'),
+                type: AppToastType.success,
               );
             }
           },
