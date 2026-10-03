@@ -6,6 +6,22 @@ import '../../feed/data/feed_repository.dart';
 import '../../feed/providers/feed_providers.dart';
 import '../../interactions/providers/interaction_providers.dart';
 
+/// Whether the app's bottom nav is shown while the Reels tab is active.
+/// Reels plays immersive (nav hidden) by default; tapping a reel reveals the
+/// nav so the viewer can switch tabs, and tapping again hides it.
+class ReelsChrome extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void show() => state = true;
+  void hide() => state = false;
+  void toggle() => state = !state;
+}
+
+final reelsChromeProvider = NotifierProvider<ReelsChrome, bool>(
+  ReelsChrome.new,
+);
+
 /// Paginated vertical reels feed state (video posts, newest first).
 class ReelsState {
   const ReelsState({

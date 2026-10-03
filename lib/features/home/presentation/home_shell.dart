@@ -11,6 +11,7 @@ import '../../explore/presentation/explore_screen.dart';
 import '../../feed/presentation/feed_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../reels/presentation/reels_feed_screen.dart';
+import '../../reels/providers/reels_providers.dart';
 
 /// Main shell with the custom bottom navigation (no Material NavigationBar).
 class HomeShell extends ConsumerStatefulWidget {
@@ -46,8 +47,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     ),
   ];
 
+  static const int _reelsIndex = 2;
+
   @override
   Widget build(BuildContext context) {
+    // On the Reels tab the video plays full-screen: the nav hides unless the
+    // viewer taps to reveal it.
+    final reelsChrome = ref.watch(reelsChromeProvider);
+    final hideNav = _index == _reelsIndex && !reelsChrome;
+
     return Scaffold(
       backgroundColor: AppColors.scaffold,
       // IndexedStack keeps each tab's state; the custom bottom nav animates.
@@ -60,15 +68,33 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ProfileScreen(),
         ],
       ),
-      bottomNavigationBar: AppBottomNav(
-        items: _items,
-        currentIndex: _index,
-        onTap: (i) {
-          if (i != _index) HapticFeedback.selectionClick();
-          setState(() => _index = i);
-        },
-        onCreate: () => context.push(Routes.createPost),
-        createLabel: tr('Đăng bài', 'Post'),
+      // Slide the nav out of view for immersive Reels, keep it reserved for
+      // every other tab. AnimatedSwitcher gives it a soft slide.
+      bottomNavigationBar: AnimatedSwitcher(
+        duration: AppMotion.base,
+        switchInCurve: AppMotion.emphasized,
+        switchOutCurve: AppMotion.standard,
+        transitionBuilder: (child, anim) => SizeTransition(
+          sizeFactor: anim,
+          alignment: Alignment.topCenter,
+          child: FadeTransition(opacity: anim, child: child),
+        ),
+        child: hideNav
+            ? const SizedBox.shrink()
+            : AppBottomNav(
+                items: _items,
+                currentIndex: _index,
+                onTap: (i) {
+                  if (i != _index) HapticFeedback.selectionClick();
+                  // Entering Reels starts immersive (nav hidden).
+                  if (i == _reelsIndex) {
+                    ref.read(reelsChromeProvider.notifier).hide();
+                  }
+                  setState(() => _index = i);
+                },
+                onCreate: () => context.push(Routes.createPost),
+                createLabel: tr('Đăng bài', 'Post'),
+              ),
       ),
     );
   }

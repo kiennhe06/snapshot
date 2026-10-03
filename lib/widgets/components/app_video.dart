@@ -18,6 +18,7 @@ class AppVideo extends StatefulWidget {
     this.showControls = true,
     this.showProgress = false,
     this.blurBackground = false,
+    this.onTap,
   });
 
   final String url;
@@ -26,6 +27,10 @@ class AppVideo extends StatefulWidget {
   final BoxFit fit;
   final bool loop;
   final bool showControls;
+
+  /// Called on every tap, in addition to the built-in play/pause toggle.
+  /// Lets the host (e.g. Reels) reveal/hide surrounding chrome on tap.
+  final VoidCallback? onTap;
 
   /// Fills the frame with a blurred, dimmed copy of the video behind a
   /// `contain`-fit copy (Reels/Shorts style) — so a non-vertical source never
@@ -121,7 +126,12 @@ class _AppVideoState extends State<AppVideo> {
       );
     }
     return GestureDetector(
-      onTap: widget.showControls ? _toggle : null,
+      onTap: (widget.showControls || widget.onTap != null)
+          ? () {
+              if (widget.showControls) _toggle();
+              widget.onTap?.call();
+            }
+          : null,
       child: Stack(
         alignment: Alignment.center,
         fit: StackFit.expand,

@@ -89,6 +89,8 @@ class _ReelsFeedScreenState extends ConsumerState<ReelsFeedScreen> {
                 itemCount: state.posts.length,
                 onPageChanged: (i) {
                   setState(() => _index = i);
+                  // Scrolling to another reel returns to immersive full-screen.
+                  ref.read(reelsChromeProvider.notifier).hide();
                   if (i >= state.posts.length - 2) {
                     ref.read(reelsControllerProvider.notifier).loadMore();
                   }
@@ -205,6 +207,9 @@ class _ReelPage extends ConsumerWidget {
             showProgress: true,
             // Fill the screen (crop) so there are no letterbox bars.
             fit: BoxFit.cover,
+            // Tapping (which also pauses) reveals the bottom nav so the viewer
+            // can leave; tapping again resumes and hides it for full-screen.
+            onTap: () => ref.read(reelsChromeProvider.notifier).toggle(),
           )
         else
           const ColoredBox(color: Colors.black),
