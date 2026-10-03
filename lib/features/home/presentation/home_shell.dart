@@ -10,6 +10,7 @@ import '../../../widgets/components/app_bottom_nav.dart';
 import '../../explore/presentation/explore_screen.dart';
 import '../../feed/presentation/feed_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
+import '../../reels/presentation/reel_composer_screen.dart';
 import '../../reels/presentation/reels_feed_screen.dart';
 import '../../reels/providers/reels_providers.dart';
 
@@ -88,8 +89,21 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                   if (i != _index) HapticFeedback.selectionClick();
                   setState(() => _index = i);
                 },
-                onCreate: () => context.push(Routes.createPost),
-                createLabel: tr('Đăng bài', 'Post'),
+                // On the Reels tab, create a reel; everywhere else, a post.
+                onCreate: () {
+                  if (_index == _reelsIndex) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ReelComposerScreen(),
+                      ),
+                    );
+                  } else {
+                    context.push(Routes.createPost);
+                  }
+                },
+                createLabel: _index == _reelsIndex
+                    ? tr('Tạo Reel', 'New reel')
+                    : tr('Đăng bài', 'Post'),
               ),
       ),
     );
