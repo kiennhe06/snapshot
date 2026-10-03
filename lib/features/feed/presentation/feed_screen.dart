@@ -63,11 +63,8 @@ class _FeedScreenState extends State<FeedScreen>
               style: brandWordmark(context, size: 26),
             ),
             actions: [
-              AppIconButton(
-                icon: Icons.add_box_outlined,
-                tooltip: tr('Đăng bài', 'Post'),
-                onTap: () => context.push(Routes.createPost),
-              ),
+              // Post creation lives on the center nav button; keep only
+              // Messages here to avoid a duplicate create entry point.
               AppIconButton(
                 icon: Icons.mail_outline_rounded,
                 tooltip: tr('Tin nhắn', 'Messages'),
