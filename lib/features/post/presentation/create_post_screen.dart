@@ -17,8 +17,10 @@ import '../../../models/app_user.dart';
 import '../../../models/post_draft.dart';
 import '../../../models/spotify_track.dart';
 import 'spotify_picker_sheet.dart';
+import '../../ai/providers/ai_providers.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../explore/providers/search_providers.dart';
+import '../../feed/data/interest_repository.dart';
 import '../../feed/providers/feed_providers.dart';
 import '../../profile/data/post_repository.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -220,6 +222,29 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   Future<void> _addMediaSheet() => _addFromGallery();
   Future<void> _pickImages() => _addFromGallery();
   Future<void> _pickVideo() => _addFromGallery(type: RequestType.video);
+
+  /// Opens the AI caption suggestions sheet, grounded on the first photo (if
+  /// any) and whatever the user has typed so far.
+  void _openAiCaptions() {
+    File? image;
+    for (final m in _items) {
+      if (!m.isVideo) {
+        image = m.file;
+        break;
+      }
+    }
+    showAppSheet<void>(
+      context,
+      builder: (_) => _AiCaptionSheet(
+        image: image,
+        note: _caption.text,
+        onPick: (caption) {
+          setState(() => _caption.text = caption);
+          _markChanged();
+        },
+      ),
+    );
+  }
 
   Future<void> _capture({required bool isVideo}) async {
     final picker = ImagePicker();
@@ -445,12 +470,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ),
             Padding(
               padding: const EdgeInsets.only(top: 4, right: AppSpacing.sm),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '${_caption.text.characters.length}/2200',
-                  style: AppText.caption,
-                ),
+              child: Row(
+                children: [
+                  _AiCaptionButton(onTap: _openAiCaptions),
+                  const Spacer(),
+                  Text(
+                    '${_caption.text.characters.length}/2200',
+                    style: AppText.caption,
+                  ),
+                ],
               ),
             ),
             _captionSuggestions(),
@@ -1326,6 +1354,190 @@ class _DraftStatus extends StatelessWidget {
             label,
             style: AppText.label.copyWith(color: AppColors.textTertiary),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small "AI caption" trigger shown under the caption field.
+class _AiCaptionButton extends StatelessWidget {
+  const _AiCaptionButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: AppColors.primary),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.auto_awesome_rounded,
+              size: 15,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              tr('Gợi ý caption', 'Suggest caption'),
+              style: AppText.label.copyWith(
+                color: AppColors.primary,
+                fontWeight: AppType.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom sheet that asks Gemini for a few caption options (reading the first
+/// photo when there is one) and lets the user drop one into the composer.
+class _AiCaptionSheet extends ConsumerStatefulWidget {
+  const _AiCaptionSheet({
+    required this.image,
+    required this.note,
+    required this.onPick,
+  });
+  final File? image;
+  final String note;
+  final ValueChanged<String> onPick;
+
+  @override
+  ConsumerState<_AiCaptionSheet> createState() => _AiCaptionSheetState();
+}
+
+class _AiCaptionSheetState extends ConsumerState<_AiCaptionSheet> {
+  bool _loading = true;
+  Object? _error;
+  List<String> _captions = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _generate();
+  }
+
+  Future<void> _generate() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final memory = ref.read(aiMemoryProvider).valueOrNull ?? const [];
+      final interests =
+          ref.read(interestProfileProvider).valueOrNull ??
+          const InterestProfile();
+      final captions = await ref
+          .read(aiRepositoryProvider)
+          .suggestCaptions(
+            image: widget.image,
+            note: widget.note,
+            memory: memory,
+            interests: interests,
+          );
+      if (mounted) {
+        setState(() {
+          _captions = captions;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e;
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSheetSurface(
+      title: tr('Gợi ý caption', 'Caption suggestions'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_loading)
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    widget.image != null
+                        ? tr('Đang xem ảnh và viết…', 'Looking at your photo…')
+                        : tr('Đang nghĩ caption…', 'Thinking of captions…'),
+                    style: AppText.label.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (_error != null)
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                children: [
+                  Text(
+                    tr(
+                      'Không tạo được gợi ý. Kiểm tra kết nối và thử lại.',
+                      'Couldn\'t generate suggestions. Check your connection and retry.',
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    label: tr('Thử lại', 'Retry'),
+                    variant: AppButtonVariant.secondary,
+                    onPressed: _generate,
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            for (final c in _captions)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: PressScale(
+                  onTap: () {
+                    widget.onPick(c);
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.layer2,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.borderSubtle),
+                    ),
+                    child: Text(c, style: AppText.body),
+                  ),
+                ),
+              ),
+            const SizedBox(height: AppSpacing.xs),
+            AppButton(
+              label: tr('Tạo lại', 'Regenerate'),
+              variant: AppButtonVariant.ghost,
+              onPressed: _generate,
+            ),
+          ],
         ],
       ),
     );

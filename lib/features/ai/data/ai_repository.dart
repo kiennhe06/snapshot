@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 
@@ -184,5 +186,73 @@ class AiRepository {
       throw Exception('Empty AI response');
     }
     return text;
+  }
+
+  /// Suggests a few caption options for a new post. When [image] is given, the
+  /// model looks at the photo so captions are actually about it; otherwise it
+  /// works from [note] and the user's interests. Returns distinct captions.
+  Future<List<String>> suggestCaptions({
+    File? image,
+    String? note,
+    required List<String> memory,
+    required InterestProfile interests,
+  }) async {
+    final model = FirebaseAI.googleAI().generativeModel(
+      model: _modelName,
+      systemInstruction: Content.system(
+        '${_systemInstruction(memory: memory, interests: interests)}\n'
+        'Bây giờ hãy đóng vai người viết caption Instagram.',
+      ),
+      generationConfig: GenerationConfig(
+        temperature: 0.95,
+        maxOutputTokens: 512,
+      ),
+    );
+
+    final hint = (note ?? '').trim();
+    final prompt = StringBuffer()
+      ..writeln(
+        'Viết 3 caption khác nhau cho một bài đăng mạng xã hội, bằng ngôn ngữ '
+        'của người dùng (mặc định tiếng Việt).',
+      )
+      ..writeln(
+        'Mỗi caption ngắn gọn, có cảm xúc/cá tính, kèm 2-4 hashtag phù hợp ở '
+        'cuối.',
+      )
+      ..writeln(
+        'Trả về ĐÚNG 3 dòng, mỗi dòng là một caption hoàn chỉnh. KHÔNG đánh số, '
+        'KHÔNG thêm lời dẫn, KHÔNG dùng dấu gạch đầu dòng.',
+      );
+    if (hint.isNotEmpty) prompt.writeln('Gợi ý từ người dùng: "$hint".');
+
+    final GenerateContentResponse response;
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      response = await model.generateContent([
+        Content.multi([
+          TextPart(prompt.toString()),
+          InlineDataPart(_mimeFor(image.path), bytes),
+        ]),
+      ]);
+    } else {
+      response = await model.generateContent([Content.text(prompt.toString())]);
+    }
+
+    final text = response.text?.trim() ?? '';
+    final lines = text
+        .split('\n')
+        .map((l) => l.replaceFirst(RegExp(r'^\s*(\d+[\).\-]|[-*•])\s*'), '').trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    if (lines.isEmpty) throw Exception('Empty caption response');
+    return lines.take(3).toList();
+  }
+
+  String _mimeFor(String path) {
+    final p = path.toLowerCase();
+    if (p.endsWith('.png')) return 'image/png';
+    if (p.endsWith('.webp')) return 'image/webp';
+    if (p.endsWith('.heic')) return 'image/heic';
+    return 'image/jpeg';
   }
 }
