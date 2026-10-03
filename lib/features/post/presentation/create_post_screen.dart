@@ -863,30 +863,96 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         onTap: _addMediaSheet,
         child: AspectRatio(
           aspectRatio: 4 / 5,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.layer3,
-              borderRadius: AppRadius.brLg,
-              border: Border.all(color: AppColors.borderStrong, width: 1.5),
+          child: CustomPaint(
+            painter: _DashedBorderPainter(
+              color: AppColors.primary.withValues(alpha: 0.45),
+              radius: AppRadius.lg,
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add_a_photo_outlined,
-                  size: 42,
-                  color: AppColors.primary,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.brLg,
+                gradient: RadialGradient(
+                  center: const Alignment(0, -0.35),
+                  radius: 1.05,
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.10),
+                    AppColors.layer2,
+                  ],
+                  stops: const [0, 0.85],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  tr('Thêm ảnh hoặc video', 'Add photo or video'),
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: AppType.body,
-                    fontWeight: AppType.medium,
-                  ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Glowing camera chip.
+                    Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppGradients.card,
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.35),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.22),
+                            blurRadius: 24,
+                            spreadRadius: -4,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.add_a_photo_rounded,
+                        size: 36,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      tr('Thêm ảnh hoặc video', 'Add photo or video'),
+                      style: AppText.h2,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      tr(
+                        'Chạm để chọn từ thư viện,\nhoặc chụp / quay mới.',
+                        'Tap to pick from your library,\nor capture something new.',
+                      ),
+                      textAlign: TextAlign.center,
+                      style: AppText.label.copyWith(
+                        color: AppColors.textTertiary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        _quickPick(
+                          Icons.photo_library_rounded,
+                          tr('Thư viện', 'Library'),
+                          _pickImages,
+                        ),
+                        _quickPick(
+                          Icons.photo_camera_rounded,
+                          tr('Camera', 'Camera'),
+                          () => _capture(isVideo: false),
+                        ),
+                        _quickPick(
+                          Icons.videocam_rounded,
+                          tr('Video', 'Video'),
+                          _pickVideo,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -1028,6 +1094,37 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     );
   }
 
+  /// A quick-action pill inside the empty dropzone that jumps straight to one
+  /// source (library / camera / video) instead of the full picker menu.
+  Widget _quickPick(IconData icon, String label, VoidCallback onTap) {
+    return PressScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.layer1,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: AppShadows.soft,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: AppIconSize.sm, color: AppColors.primary),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppText.label.copyWith(fontWeight: AppType.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _mediaPill(String text) => Container(
     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
     decoration: BoxDecoration(
@@ -1115,6 +1212,50 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       ),
     );
   }
+}
+
+/// Paints a rounded-rectangle border out of rounded dashes — the "dropzone"
+/// look for the empty media picker.
+class _DashedBorderPainter extends CustomPainter {
+  _DashedBorderPainter({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  static const double _dash = 7;
+  static const double _gap = 5;
+  static const double _stroke = 1.8;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(radius),
+    );
+    final source = Path()..addRRect(rrect);
+    final dashed = Path();
+    for (final metric in source.computeMetrics()) {
+      var dist = 0.0;
+      while (dist < metric.length) {
+        final next = dist + _dash;
+        dashed.addPath(
+          metric.extractPath(dist, next.clamp(0, metric.length)),
+          Offset.zero,
+        );
+        dist = next + _gap;
+      }
+    }
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(dashed, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter old) =>
+      old.color != color || old.radius != radius;
 }
 
 /// Small pill badge showing a selection count (hidden when zero).
