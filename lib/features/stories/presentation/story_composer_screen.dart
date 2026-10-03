@@ -40,6 +40,19 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   bool _closeFriends = false;
   bool _loading = false;
   SpotifyTrack? _track;
+  bool _autoPicked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Open the photo library straight away so making a story is one tap, the
+    // way people expect — the source menu stays as a fallback if they cancel.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_autoPicked || !mounted) return;
+      _autoPicked = true;
+      _pick(source: ImageSource.gallery, video: false);
+    });
+  }
 
   Future<void> _pick({required ImageSource source, required bool video}) async {
     final picker = ImagePicker();
