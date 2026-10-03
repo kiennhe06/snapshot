@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 import '../../../core/design/motion.dart';
 import '../../../core/design/tokens.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../../models/app_user.dart';
 import '../../../models/comment.dart';
 import '../../../models/post.dart';
-import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
 import '../../../widgets/motion/motion.dart';
 import '../../../widgets/stickers/glossy_stickers.dart';
@@ -149,6 +149,35 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
     );
   }
 
+  /// Expanded height of the collapsing media header.
+  double _headerMaxExtent(BuildContext context) {
+    final s = MediaQuery.of(context).size;
+    return (s.width * 0.82).clamp(220.0, s.height * 0.45);
+  }
+
+  /// Opens the post media full-screen (zoomable photo, or the video playing).
+  void _openMediaViewer(BuildContext context) {
+    final post = widget.post;
+    final url = post.media.isNotEmpty ? post.media.first.url : post.coverUrl;
+    if (url.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: post.isVideo
+                ? AppVideo(url: url, active: true)
+                : InteractiveViewer(child: CachedNetworkImage(imageUrl: url)),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final commentsAsync = ref.watch(commentsProvider(_postId));
@@ -158,73 +187,125 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
       topBar: AppTopBar(title: tr('Bình luận', 'Comments'), showBack: true),
       body: Column(
         children: [
-          _ContextHeader(post: widget.post, commentsAsync: commentsAsync),
-          _SortBar(
-            byLikes: _sortByLikes,
-            onChanged: (v) => setState(() => _sortByLikes = v),
-          ),
           Expanded(
-            child: AsyncValueView<List<Comment>>(
-              value: commentsAsync,
-              onRetry: () => ref.invalidate(commentsProvider(_postId)),
-              builder: (all) {
-                final visible = all.where((c) => !_hidden(c, hiddenWords));
-                final roots = visible.where((c) => !c.isReply).toList()
-                  ..sort((a, b) {
-                    if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
-                    if (_sortByLikes && a.likesCount != b.likesCount) {
-                      return b.likesCount.compareTo(a.likesCount);
-                    }
-                    return b.createdAt.compareTo(a.createdAt);
-                  });
-                final repliesByParent = <String, List<Comment>>{};
-                for (final c in visible.where((c) => c.isReply)) {
-                  repliesByParent.putIfAbsent(c.parentId!, () => []).add(c);
-                }
-                for (final list in repliesByParent.values) {
-                  list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-                }
-
-                if (roots.isEmpty) {
-                  return EmptyView(
-                    message: tr(
-                      'Chưa có bình luận nào.\nHãy bắt đầu cuộc trò chuyện!',
-                      'No comments yet.\nStart the conversation!',
-                    ),
-                    icon: Icons.mode_comment_outlined,
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.only(
-                    top: AppSpacing.sm,
-                    bottom: AppSpacing.lg,
+            child: CustomScrollView(
+              slivers: [
+                // Collapsing media header: the photo/video stays visible while
+                // reading comments and shrinks into a slim strip on scroll.
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _MediaHeaderDelegate(
+                    post: widget.post,
+                    author: ref
+                        .watch(userProfileProvider(widget.post.authorId))
+                        .valueOrNull,
+                    count:
+                        commentsAsync.valueOrNull?.length ??
+                        widget.post.commentsCount,
+                    minExtent: 60,
+                    maxExtent: _headerMaxExtent(context),
+                    onOpenMedia: () => _openMediaViewer(context),
                   ),
-                  itemCount: roots.length,
-                  itemBuilder: (_, i) {
-                    final root = roots[i];
-                    final replies =
-                        repliesByParent[root.commentId] ?? const [];
-                    final showReplies = _expanded.contains(root.commentId);
-                    return MotionEntrance(
-                      index: i,
-                      animate: _enteredComments.add(root.commentId),
-                      child: _Thread(
-                        root: root,
-                        replies: replies,
-                        postAuthorId: widget.post.authorId,
-                        showReplies: showReplies,
-                        onToggleReplies: () => setState(() {
-                          showReplies
-                              ? _expanded.remove(root.commentId)
-                              : _expanded.add(root.commentId);
-                        }),
-                        onReply: _startReply,
-                        onMenu: _menu,
+                ),
+                SliverToBoxAdapter(
+                  child: _SortBar(
+                    byLikes: _sortByLikes,
+                    onChanged: (v) => setState(() => _sortByLikes = v),
+                  ),
+                ),
+                ...commentsAsync.when(
+                  loading: () => const [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSpacing.xxxl),
+                        child: Center(child: CircularProgressIndicator()),
                       ),
-                    );
+                    ),
+                  ],
+                  error: (_, _) => [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EmptyView(
+                        message: tr(
+                          'Không tải được bình luận.',
+                          'Could not load comments.',
+                        ),
+                        icon: Icons.error_outline_rounded,
+                      ),
+                    ),
+                  ],
+                  data: (all) {
+                    final visible = all.where((c) => !_hidden(c, hiddenWords));
+                    final roots = visible.where((c) => !c.isReply).toList()
+                      ..sort((a, b) {
+                        if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
+                        if (_sortByLikes && a.likesCount != b.likesCount) {
+                          return b.likesCount.compareTo(a.likesCount);
+                        }
+                        return b.createdAt.compareTo(a.createdAt);
+                      });
+                    final repliesByParent = <String, List<Comment>>{};
+                    for (final c in visible.where((c) => c.isReply)) {
+                      repliesByParent
+                          .putIfAbsent(c.parentId!, () => [])
+                          .add(c);
+                    }
+                    for (final list in repliesByParent.values) {
+                      list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+                    }
+
+                    if (roots.isEmpty) {
+                      return [
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: EmptyView(
+                            message: tr(
+                              'Chưa có bình luận nào.\nHãy bắt đầu cuộc trò chuyện!',
+                              'No comments yet.\nStart the conversation!',
+                            ),
+                            icon: Icons.mode_comment_outlined,
+                          ),
+                        ),
+                      ];
+                    }
+                    return [
+                      SliverPadding(
+                        padding: const EdgeInsets.only(
+                          top: AppSpacing.sm,
+                          bottom: AppSpacing.lg,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate((_, i) {
+                            final root = roots[i];
+                            final replies =
+                                repliesByParent[root.commentId] ?? const [];
+                            final showReplies = _expanded.contains(
+                              root.commentId,
+                            );
+                            return MotionEntrance(
+                              index: i,
+                              animate: _enteredComments.add(root.commentId),
+                              child: _Thread(
+                                root: root,
+                                replies: replies,
+                                postAuthorId: widget.post.authorId,
+                                showReplies: showReplies,
+                                onToggleReplies: () => setState(() {
+                                  showReplies
+                                      ? _expanded.remove(root.commentId)
+                                      : _expanded.add(root.commentId);
+                                }),
+                                onReply: _startReply,
+                                onMenu: _menu,
+                              ),
+                            );
+                          }, childCount: roots.length),
+                        ),
+                      ),
+                    ];
                   },
-                );
-              },
+                ),
+              ],
             ),
           ),
           _Composer(
@@ -312,51 +393,83 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
   }
 }
 
-/// Slim context strip: the post thumbnail + caption + a live comment count, so
-/// the screen opens with content instead of an empty header.
-class _ContextHeader extends ConsumerWidget {
-  const _ContextHeader({required this.post, required this.commentsAsync});
+/// Collapsing media header for the comments screen: the post photo/video shows
+/// large at the top and cross-fades into a slim thumbnail strip as the reader
+/// scrolls down — so the media and caption stay visible while reading.
+class _MediaHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _MediaHeaderDelegate({
+    required this.post,
+    required this.author,
+    required this.count,
+    required this.minExtent,
+    required this.maxExtent,
+    required this.onOpenMedia,
+  });
+
   final Post post;
-  final AsyncValue<List<Comment>> commentsAsync;
+  final AppUser? author;
+  final int count;
+  @override
+  final double minExtent;
+  @override
+  final double maxExtent;
+  final VoidCallback onOpenMedia;
+
+  String get _name => author != null && author!.username.isNotEmpty
+      ? '@${author!.username}'
+      : tr('Bình luận', 'Comments');
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final count = commentsAsync.valueOrNull?.length ?? post.commentsCount;
-    final author = ref.watch(userProfileProvider(post.authorId)).valueOrNull;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.md,
-        AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
-      ),
-      child: Row(
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) {
+    final range = maxExtent - minExtent;
+    final t = range <= 0 ? 1.0 : (shrinkOffset / range).clamp(0.0, 1.0);
+    return Material(
+      color: AppColors.scaffold,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: post.coverUrl.isEmpty
-                ? Container(
-                    width: 40,
-                    height: 40,
-                    color: AppColors.layer3,
-                    child: Icon(
-                      Icons.image_outlined,
-                      size: AppIconSize.md,
-                      color: AppColors.textTertiary,
-                    ),
-                  )
-                : CachedNetworkImage(
-                    imageUrl: post.coverUrl,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                  ),
+          if (t < 0.99)
+            Opacity(opacity: 1 - t, child: _expanded(context)),
+          if (t > 0.01)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Opacity(opacity: t, child: _collapsed(context)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _expanded(BuildContext context) {
+    return GestureDetector(
+      onTap: onOpenMedia,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ColoredBox(color: AppColors.layer2),
+          if (post.coverUrl.isNotEmpty)
+            CachedNetworkImage(imageUrl: post.coverUrl, fit: BoxFit.cover),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.center,
+                colors: [Color(0xB3000000), Color(0x00000000)],
+              ),
+            ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
+          if (post.isVideo)
+            const Center(
+              child: Icon(
+                Icons.play_circle_fill_rounded,
+                color: Colors.white,
+                size: 56,
+              ),
+            ),
+          Positioned(
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            bottom: AppSpacing.md,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -365,43 +478,37 @@ class _ContextHeader extends ConsumerWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        author != null && author.username.isNotEmpty
-                            ? '@${author.username}'
-                            : (count > 0
-                                  ? tr('$count bình luận', '$count comments')
-                                  : tr('Bình luận', 'Comments')),
+                        _name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppText.h3.copyWith(fontWeight: AppType.bold),
+                        style: AppText.h3.copyWith(
+                          color: Colors.white,
+                          fontWeight: AppType.bold,
+                        ),
                       ),
                     ),
                     if (author?.isVerified == true) ...[
                       const SizedBox(width: 4),
-                      Icon(
+                      const Icon(
                         Icons.verified_rounded,
                         size: AppIconSize.sm,
-                        color: AppColors.accent,
+                        color: Colors.white,
                       ),
                     ],
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      count > 0 ? '· $count' : '',
-                      style: TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: AppType.label,
-                        fontWeight: AppType.medium,
-                      ),
-                    ),
                   ],
                 ),
                 if (post.caption.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 1),
+                    padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       post.caption,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.label.copyWith(color: AppColors.textTertiary),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: AppType.label,
+                        height: 1.3,
+                      ),
                     ),
                   ),
               ],
@@ -411,6 +518,105 @@ class _ContextHeader extends ConsumerWidget {
       ),
     );
   }
+
+  Widget _collapsed(BuildContext context) {
+    return GestureDetector(
+      onTap: onOpenMedia,
+      child: Container(
+        height: minExtent,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.scaffold,
+          border: Border(bottom: BorderSide(color: AppColors.borderSubtle)),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    post.coverUrl.isEmpty
+                        ? ColoredBox(color: AppColors.layer3)
+                        : CachedNetworkImage(
+                            imageUrl: post.coverUrl,
+                            fit: BoxFit.cover,
+                          ),
+                    if (post.isVideo)
+                      const Center(
+                        child: Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.h3.copyWith(fontWeight: AppType.bold),
+                        ),
+                      ),
+                      if (author?.isVerified == true) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.verified_rounded,
+                          size: AppIconSize.sm,
+                          color: AppColors.accent,
+                        ),
+                      ],
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        count > 0 ? '· $count' : '',
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: AppType.label,
+                          fontWeight: AppType.medium,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (post.caption.isNotEmpty)
+                    Text(
+                      post.caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.label.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _MediaHeaderDelegate old) =>
+      old.post.postId != post.postId ||
+      old.count != count ||
+      old.author?.uid != author?.uid ||
+      old.minExtent != minExtent ||
+      old.maxExtent != maxExtent;
 }
 
 /// Sort control: newest first or most liked first.
