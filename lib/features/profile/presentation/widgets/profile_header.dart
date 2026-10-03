@@ -18,6 +18,7 @@ class ProfileHeader extends StatelessWidget {
     this.isFollowing = false,
     this.onEditProfile,
     this.onToggleFollow,
+    this.onMessage,
     this.onShowQr,
     this.onChangeAvatar,
   });
@@ -28,6 +29,9 @@ class ProfileHeader extends StatelessWidget {
   final bool isFollowing;
   final VoidCallback? onEditProfile;
   final VoidCallback? onToggleFollow;
+
+  /// Opens a direct message with this user (other profiles only).
+  final VoidCallback? onMessage;
   final VoidCallback? onShowQr;
 
   /// Tapping the owner's avatar picks a new photo and uploads it immediately.
@@ -137,6 +141,18 @@ class ProfileHeader extends StatelessWidget {
                         onPressed: onToggleFollow,
                       ),
               ),
+              if (!isMe) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: AppButton(
+                    label: tr('Nhắn tin', 'Message'),
+                    variant: AppButtonVariant.secondary,
+                    icon: Icons.chat_bubble_outline_rounded,
+                    height: 46,
+                    onPressed: onMessage,
+                  ),
+                ),
+              ],
               const SizedBox(width: AppSpacing.sm),
               AppIconButton(
                 icon: Icons.qr_code_rounded,

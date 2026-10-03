@@ -34,17 +34,24 @@ class ChatRepository {
   Future<String> openDm(String me, String other) async {
     final id = _dmId(me, other);
     final ref = _chats.doc(id);
-    final snap = await ref.get();
-    if (!snap.exists) {
-      await ref.set(
-        Chat(
-          chatId: id,
-          type: ChatType.dm,
-          memberIds: [me, other],
-          lastAt: DateTime.now(),
-        ).toMap()..['lastAt'] = FieldValue.serverTimestamp(),
-      );
+    // A read of a not-yet-created DM is denied by the membership rule (there is
+    // no document to evaluate membership against), so a plain get() would throw
+    // for a brand-new conversation. Treat a failed/absent read as "create it".
+    try {
+      final snap = await ref.get();
+      if (snap.exists) return id;
+    } catch (_) {
+      // Fall through to create.
     }
+    await ref.set(
+      Chat(
+        chatId: id,
+        type: ChatType.dm,
+        memberIds: [me, other],
+        lastAt: DateTime.now(),
+      ).toMap()..['lastAt'] = FieldValue.serverTimestamp(),
+      SetOptions(merge: true),
+    );
     return id;
   }
 

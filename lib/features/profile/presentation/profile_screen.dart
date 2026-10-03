@@ -14,6 +14,8 @@ import '../../../models/post.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../messages/presentation/chat_screen.dart';
+import '../../messages/providers/message_providers.dart';
 import '../../feed/presentation/widgets/post_card.dart';
 import '../../stories/presentation/widgets/highlights_row.dart';
 import '../providers/profile_providers.dart';
@@ -123,6 +125,7 @@ class _ProfileBody extends ConsumerWidget {
           isFollowing: isFollowing,
           onEditProfile: () => context.push(Routes.editProfile),
           onToggleFollow: () => _toggleFollow(ref, isFollowing),
+          onMessage: isMe ? null : () => _openChat(context, ref),
           onShowQr: () => context.push('${Routes.qrNametag}?uid=${user.uid}'),
           onChangeAvatar: () => _changeAvatar(context, ref),
         ),
@@ -231,6 +234,29 @@ class _ProfileBody extends ConsumerWidget {
       await repo.unfollow(currentUid: myUid, targetUid: user.uid);
     } else {
       await repo.follow(currentUid: myUid, targetUid: user.uid);
+    }
+  }
+
+  /// Opens (or creates) a direct message with this user and navigates to it.
+  Future<void> _openChat(BuildContext context, WidgetRef ref) async {
+    final myUid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (myUid == null) return;
+    final nav = Navigator.of(context);
+    try {
+      final chatId = await ref
+          .read(chatRepositoryProvider)
+          .openDm(myUid, user.uid);
+      nav.push(
+        MaterialPageRoute<void>(builder: (_) => ChatScreen(chatId: chatId)),
+      );
+    } catch (_) {
+      if (context.mounted) {
+        showAppToast(
+          context,
+          tr('Không mở được tin nhắn.', 'Could not open chat.'),
+          type: AppToastType.error,
+        );
+      }
     }
   }
 }
