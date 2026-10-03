@@ -27,6 +27,8 @@ dependencies:
 
   # Media picking + editing + caching
   image_picker: ^1.1.2
+  # In-app gallery grid (Create story picker) — reads device photos/videos.
+  photo_manager: ^3.6.4
   image_cropper: ^8.0.2
   image: ^4.3.0
   path_provider: ^2.1.5

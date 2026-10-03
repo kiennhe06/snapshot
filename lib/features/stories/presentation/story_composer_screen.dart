@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/design/tokens.dart';
@@ -40,18 +42,46 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   bool _closeFriends = false;
   bool _loading = false;
   SpotifyTrack? _track;
-  bool _autoPicked = false;
+
+  // In-app gallery grid state.
+  List<AssetEntity> _assets = [];
+  bool _loadingAssets = true;
+  PermissionState? _perm;
 
   @override
   void initState() {
     super.initState();
-    // Open the photo library straight away so making a story is one tap, the
-    // way people expect — the source menu stays as a fallback if they cancel.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_autoPicked || !mounted) return;
-      _autoPicked = true;
-      _pick(source: ImageSource.gallery, video: false);
-    });
+    _loadAssets();
+  }
+
+  /// Reads recent photos/videos from the device so the Create-story screen can
+  /// show them as an in-app grid (like Instagram/Facebook) instead of bouncing
+  /// to the system picker.
+  Future<void> _loadAssets() async {
+    final ps = await PhotoManager.requestPermissionExtend();
+    if (!mounted) return;
+    _perm = ps;
+    if (ps.isAuth || ps.hasAccess) {
+      final albums = await PhotoManager.getAssetPathList(
+        onlyAll: true,
+        type: RequestType.common,
+      );
+      if (albums.isNotEmpty) {
+        final recent = await albums.first.getAssetListPaged(page: 0, size: 90);
+        if (mounted) setState(() => _assets = recent);
+      }
+    }
+    if (mounted) setState(() => _loadingAssets = false);
+  }
+
+  Future<void> _useAsset(AssetEntity asset) async {
+    final f = await asset.file;
+    if (f != null && mounted) {
+      setState(() {
+        _file = f;
+        _isVideo = asset.type == AssetType.video;
+      });
+    }
   }
 
   Future<void> _pick({required ImageSource source, required bool video}) async {
@@ -159,7 +189,13 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                         Icons.close_rounded,
                         color: Colors.white,
                       ),
-                      onPressed: () => Navigator.of(context).maybePop(),
+                      // Return to the gallery grid to pick a different item
+                      // instead of leaving the composer entirely.
+                      onPressed: () => setState(() {
+                        _file = null;
+                        _stickers.clear();
+                        _track = null;
+                      }),
                     ),
                     const Spacer(),
                     IconButton(
@@ -261,113 +297,214 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
 
   Widget _picker() {
     return AppScaffold(
-      topBar: AppTopBar(title: tr('Tạo tin', 'Create story'), showBack: true),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xl,
-          vertical: AppSpacing.xxl,
+      topBar: AppTopBar(
+        title: tr('Tạo tin', 'Create story'),
+        showBack: true,
+        actions: [
+          AppIconButton(
+            icon: Icons.photo_camera_rounded,
+            tooltip: tr('Chụp ảnh', 'Take a photo'),
+            onTap: () => _pick(source: ImageSource.camera, video: false),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+        ],
+      ),
+      body: _loadingAssets
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: AppIconSize.sm,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          widget.addYoursPrompt != null
+                              ? '${tr('Thử thách', 'Challenge')}: ${widget.addYoursPrompt}'
+                              : tr(
+                                  'Tin của bạn biến mất sau 24 giờ',
+                                  'Your story disappears after 24 hours',
+                                ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.label.copyWith(
+                            color: widget.addYoursPrompt != null
+                                ? AppColors.primary
+                                : AppColors.textTertiary,
+                            fontWeight: widget.addYoursPrompt != null
+                                ? AppType.bold
+                                : AppType.regular,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(child: _galleryBody()),
+              ],
+            ),
+    );
+  }
+
+  Widget _galleryBody() {
+    final ps = _perm;
+    if (ps != null && !ps.isAuth && !ps.hasAccess) {
+      return _permissionDenied();
+    }
+    return Column(
+      children: [
+        if (ps != null && !ps.isAuth && ps.hasAccess) _limitedBanner(),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(2),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 3,
+              crossAxisSpacing: 3,
+            ),
+            itemCount: _assets.length + 1,
+            itemBuilder: (_, i) {
+              if (i == 0) return _cameraTile();
+              final asset = _assets[i - 1];
+              return _AssetThumb(
+                key: ValueKey(asset.id),
+                asset: asset,
+                onTap: () => _useAsset(asset),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _cameraTile() {
+    return PressScale(
+      onTap: () => _pick(source: ImageSource.camera, video: false),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.primaryBright, AppColors.primary],
+          ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: AppSpacing.xxl),
-            // Hero: glowing story ring.
-            Center(
-              child: Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.accent, AppColors.primary],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.5),
-                      blurRadius: 36,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: Colors.white,
-                  size: 42,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              tr('Chia sẻ khoảnh khắc', 'Share a moment'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: AppType.title,
-                fontWeight: AppType.heavy,
-              ),
+            const Icon(
+              Icons.photo_camera_rounded,
+              color: Colors.white,
+              size: 30,
             ),
             const SizedBox(height: 6),
             Text(
-              tr(
-                'Tin của bạn sẽ tự biến mất sau 24 giờ',
-                'Your story disappears after 24 hours',
+              tr('Camera', 'Camera'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: AppType.label,
+                fontWeight: AppType.bold,
               ),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: AppType.subhead,
-              ),
-            ),
-            if (widget.addYoursPrompt != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Text(
-                  '${tr('Thử thách', 'Challenge')}: ${widget.addYoursPrompt}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: AppType.bold,
-                    fontSize: AppType.label,
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.xxl),
-            _SourceTile(
-              icon: Icons.photo_library_rounded,
-              label: tr('Chọn ảnh/video', 'Pick photo/video'),
-              subtitle: tr('Từ thư viện của bạn', 'From your library'),
-              primary: true,
-              onTap: () => _pick(source: ImageSource.gallery, video: false),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _SourceTile(
-              icon: Icons.photo_camera_rounded,
-              label: tr('Chụp ảnh mới', 'Take a photo'),
-              subtitle: tr('Dùng camera', 'Use the camera'),
-              onTap: () => _pick(source: ImageSource.camera, video: false),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _SourceTile(
-              icon: Icons.videocam_rounded,
-              label: tr('Chọn video', 'Pick video'),
-              subtitle: tr('Từ thư viện của bạn', 'From your library'),
-              onTap: () => _pick(source: ImageSource.gallery, video: true),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _limitedBanner() {
+    return Container(
+      width: double.infinity,
+      color: AppColors.layer2,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              tr(
+                'Chỉ một số ảnh được chia sẻ với ứng dụng.',
+                'Only some photos are shared with the app.',
+              ),
+              style: AppText.label.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+          PressScale(
+            onTap: () async {
+              await PhotoManager.presentLimited();
+              _setLoadingAndReload();
+            },
+            child: Text(
+              tr('Quản lý', 'Manage'),
+              style: AppText.label.copyWith(
+                color: AppColors.primary,
+                fontWeight: AppType.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _permissionDenied() {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.photo_library_outlined,
+            size: 48,
+            color: AppColors.textTertiary,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            tr(
+              'Cho phép truy cập ảnh để chọn\nảnh/video ngay trong ứng dụng.',
+              'Allow photo access to pick media\nright inside the app.',
+            ),
+            textAlign: TextAlign.center,
+            style: AppText.h3.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: AppType.regular,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppButton(
+            label: tr('Mở cài đặt', 'Open settings'),
+            fullWidth: false,
+            onPressed: () => PhotoManager.openSetting(),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppButton(
+            label: tr('Chọn từ thư viện', 'Pick from library'),
+            variant: AppButtonVariant.ghost,
+            fullWidth: false,
+            onPressed: () => _pick(source: ImageSource.gallery, video: false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _setLoadingAndReload() {
+    setState(() => _loadingAssets = true);
+    _loadAssets();
   }
 
   void _addStickerMenu() {
@@ -637,95 +774,84 @@ class _ComposerMusicChip extends StatelessWidget {
   }
 }
 
-/// A full-width source option row: tinted icon, label + subtitle, chevron.
-/// [primary] paints the brand gradient for the recommended action.
-class _SourceTile extends StatelessWidget {
-  const _SourceTile({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.onTap,
-    this.primary = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final String subtitle;
+/// One gallery cell: the asset thumbnail, with a duration badge for videos.
+class _AssetThumb extends StatefulWidget {
+  const _AssetThumb({super.key, required this.asset, required this.onTap});
+  final AssetEntity asset;
   final VoidCallback onTap;
-  final bool primary;
+
+  @override
+  State<_AssetThumb> createState() => _AssetThumbState();
+}
+
+class _AssetThumbState extends State<_AssetThumb> {
+  Uint8List? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final data = await widget.asset.thumbnailDataWithSize(
+      const ThumbnailSize.square(300),
+    );
+    if (mounted) setState(() => _bytes = data);
+  }
+
+  String _dur(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final fg = primary ? Colors.white : AppColors.textPrimary;
+    final isVideo = widget.asset.type == AssetType.video;
     return PressScale(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          gradient: primary
-              ? LinearGradient(
-                  colors: [AppColors.primaryBright, AppColors.primary],
-                )
-              : null,
-          color: primary ? null : AppColors.layer1,
-          borderRadius: AppRadius.brLg,
-          border: Border.all(
-            color: primary ? Colors.transparent : AppColors.borderSubtle,
+      onTap: widget.onTap,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ColoredBox(
+            color: AppColors.layer2,
+            child: _bytes == null
+                ? const SizedBox.shrink()
+                : Image.memory(_bytes!, fit: BoxFit.cover),
           ),
-          boxShadow: primary ? AppShadows.soft : null,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: primary
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Icon(
-                icon,
-                color: primary ? Colors.white : AppColors.primary,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: fg,
-                      fontSize: AppType.subhead,
-                      fontWeight: AppType.bold,
+          if (isVideo)
+            Positioned(
+              right: 5,
+              bottom: 5,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 12,
                     ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: primary
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textSecondary,
-                      fontSize: AppType.label,
+                    const SizedBox(width: 2),
+                    Text(
+                      _dur(widget.asset.videoDuration),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: AppType.small,
+                        fontWeight: AppType.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: primary
-                  ? Colors.white.withValues(alpha: 0.9)
-                  : AppColors.textTertiary,
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
