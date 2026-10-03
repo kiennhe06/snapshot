@@ -365,7 +365,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             itemCount: users.length,
             itemBuilder: (_, i) => _SuggestionCard(
               user: users[i],
-              onDismiss: () => setState(() => _dismissed.add(users[i].uid)),
+              onDismiss: () {
+                setState(() => _dismissed.add(users[i].uid));
+                // "Not interested" — a small negative so we stop pushing them.
+                final uid = ref.read(authStateProvider).valueOrNull?.uid;
+                if (uid != null) {
+                  ref
+                      .read(interestRepositoryProvider)
+                      .bumpAuthor(
+                        uid: uid,
+                        authorId: users[i].uid,
+                        weight: InterestWeight.dismiss,
+                      );
+                }
+              },
             ),
           ),
         ),

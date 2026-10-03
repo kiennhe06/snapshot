@@ -69,6 +69,25 @@ class InterestRepository {
     for (final t in post.hashtags.take(8)) {
       tags[t] = FieldValue.increment(weight);
     }
+    return _write(uid, authors, tags);
+  }
+
+  /// Adds [weight] to a single author (positive or negative) — e.g. a negative
+  /// bump when the user dismisses a suggested account.
+  Future<void> bumpAuthor({
+    required String uid,
+    required String authorId,
+    required double weight,
+  }) {
+    if (authorId.isEmpty || authorId == uid) return Future.value();
+    return _write(uid, {authorId: FieldValue.increment(weight)}, const {});
+  }
+
+  Future<void> _write(
+    String uid,
+    Map<String, Object> authors,
+    Map<String, Object> tags,
+  ) {
     final data = <String, Object>{};
     if (authors.isNotEmpty) data['authors'] = authors;
     if (tags.isNotEmpty) data['hashtags'] = tags;
@@ -81,9 +100,12 @@ class InterestRepository {
 /// Signal weights — stronger intent earns a bigger bump (and faster learning).
 abstract class InterestWeight {
   static const double view = 1; // a reel scrolled into view
+  static const double comment = 2;
+  static const double share = 2;
   static const double like = 3;
   static const double save = 4;
   static const double follow = 6;
+  static const double dismiss = -4; // "not interested" in a suggested account
 }
 
 /// Ranks candidate posts by interest score, keeping a little freshness and a

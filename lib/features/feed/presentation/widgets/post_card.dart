@@ -270,7 +270,7 @@ class _PostCardState extends ConsumerState<PostCard>
                   ]),
                 ),
                 const Spacer(),
-                _SaveButton(uid: uid, postId: post.postId),
+                _SaveButton(uid: uid, post: post),
               ],
             ),
           ),
@@ -886,9 +886,9 @@ class _FollowChipState extends ConsumerState<_FollowChip> {
 
 /// Save/bookmark button with optimistic UI + a bookmark fill that pops on tap.
 class _SaveButton extends ConsumerStatefulWidget {
-  const _SaveButton({required this.uid, required this.postId});
+  const _SaveButton({required this.uid, required this.post});
   final String? uid;
-  final String postId;
+  final Post post;
 
   @override
   ConsumerState<_SaveButton> createState() => _SaveButtonState();
@@ -900,7 +900,7 @@ class _SaveButtonState extends ConsumerState<_SaveButton> {
   @override
   Widget build(BuildContext context) {
     final server =
-        ref.watch(isSavedProvider(widget.postId)).valueOrNull ?? false;
+        ref.watch(isSavedProvider(widget.post.postId)).valueOrNull ?? false;
     if (_optimistic != null && _optimistic == server) _optimistic = null;
     final saved = _optimistic ?? server;
 
@@ -912,7 +912,12 @@ class _SaveButtonState extends ConsumerState<_SaveButton> {
         setState(() => _optimistic = !saved);
         ref
             .read(saveRepositoryProvider)
-            .toggleSave(uid: uid, postId: widget.postId);
+            .toggleSave(uid: uid, postId: widget.post.postId);
+        if (!saved) {
+          ref
+              .read(interestRepositoryProvider)
+              .record(uid: uid, post: widget.post, weight: InterestWeight.save);
+        }
       },
       child: SizedBox(
         width: 44,

@@ -291,7 +291,17 @@ class _ReelPage extends ConsumerWidget {
               _action(
                 icon: Icons.send_outlined,
                 color: Colors.white,
-                onTap: () => showAppMenu(context, [
+                onTap: () {
+                  if (uid != null) {
+                    ref
+                        .read(interestRepositoryProvider)
+                        .record(
+                          uid: uid,
+                          post: post,
+                          weight: InterestWeight.share,
+                        );
+                  }
+                  showAppMenu(context, [
                   AppMenuAction(
                     icon: Icons.mail_outline_rounded,
                     label: tr('Gửi trong tin nhắn', 'Send in message'),
@@ -308,7 +318,8 @@ class _ReelPage extends ConsumerWidget {
                       'Snapshot reel: snapshot://user/${post.authorId}',
                     ),
                   ),
-                ]),
+                  ]);
+                },
               ),
               _action(
                 icon: isSaved

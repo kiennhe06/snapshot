@@ -15,6 +15,8 @@ import '../../../widgets/stickers/glossy_stickers.dart';
 import '../../../widgets/stickers/sticker_message.dart';
 import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../feed/data/interest_repository.dart';
+import '../../feed/providers/feed_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/interaction_providers.dart';
 
@@ -87,6 +89,9 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
             text: text,
             parentId: _replyingTo?.parentId ?? _replyingTo?.commentId,
           );
+      ref
+          .read(interestRepositoryProvider)
+          .record(uid: uid, post: widget.post, weight: InterestWeight.comment);
       _input.clear();
       setState(() => _replyingTo = null);
     } finally {
@@ -115,6 +120,9 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
             text: stickerToken(s),
             parentId: _replyingTo?.parentId ?? _replyingTo?.commentId,
           );
+      ref
+          .read(interestRepositoryProvider)
+          .record(uid: uid, post: widget.post, weight: InterestWeight.comment);
       setState(() => _replyingTo = null);
     } finally {
       if (mounted) setState(() => _sending = false);
