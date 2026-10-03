@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:snapshot/core/design/tokens.dart';
 import 'package:snapshot/core/i18n/i18n.dart';
 import 'package:snapshot/widgets/components/components.dart';
+import 'package:snapshot/widgets/gallery_picker_screen.dart';
 import '../../../models/app_user.dart';
 import '../../../models/post_draft.dart';
 import '../../../models/spotify_track.dart';
@@ -199,56 +201,25 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   // ---- Media picking / capture ------------------------------------------------
 
-  Future<void> _addMediaSheet() async {
-    await showAppMenu(context, [
-      AppMenuAction(
-        icon: Icons.photo_library_outlined,
-        label: tr(
-          'Chọn ảnh từ thư viện (nhiều ảnh)',
-          'Choose photos from library (multiple)',
-        ),
-        onTap: _pickImages,
+  /// Opens the in-app gallery grid (multi-select) and appends the picks.
+  Future<void> _addFromGallery({RequestType type = RequestType.common}) async {
+    final picked = await Navigator.of(context).push<List<PickedMedia>>(
+      MaterialPageRoute(
+        builder: (_) => GalleryPickerScreen(multi: true, requestType: type),
       ),
-      AppMenuAction(
-        icon: Icons.photo_camera_outlined,
-        label: tr('Chụp ảnh mới', 'Take a new photo'),
-        onTap: () => _capture(isVideo: false),
-      ),
-      AppMenuAction(
-        icon: Icons.video_library_outlined,
-        label: tr('Chọn video từ thư viện', 'Choose video from library'),
-        onTap: _pickVideo,
-      ),
-      AppMenuAction(
-        icon: Icons.videocam_outlined,
-        label: tr('Quay video mới', 'Record a new video'),
-        onTap: () => _capture(isVideo: true),
-      ),
-    ]);
-  }
-
-  Future<void> _pickImages() async {
-    final picked = await ImagePicker().pickMultiImage(
-      maxWidth: 1440,
-      imageQuality: 90,
     );
-    if (picked.isEmpty) return;
+    if (picked == null || picked.isEmpty) return;
     setState(() {
       _items.addAll(
-        picked.map((x) => DraftMedia(file: File(x.path), isVideo: false)),
+        picked.map((p) => DraftMedia(file: p.file, isVideo: p.isVideo)),
       );
     });
     _markChanged();
   }
 
-  Future<void> _pickVideo() async {
-    final picked = await ImagePicker().pickVideo(source: ImageSource.gallery);
-    if (picked == null) return;
-    setState(
-      () => _items.add(DraftMedia(file: File(picked.path), isVideo: true)),
-    );
-    _markChanged();
-  }
+  Future<void> _addMediaSheet() => _addFromGallery();
+  Future<void> _pickImages() => _addFromGallery();
+  Future<void> _pickVideo() => _addFromGallery(type: RequestType.video);
 
   Future<void> _capture({required bool isVideo}) async {
     final picker = ImagePicker();
