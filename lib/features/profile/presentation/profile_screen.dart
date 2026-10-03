@@ -16,7 +16,7 @@ import '../../../widgets/empty_view.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../messages/presentation/chat_screen.dart';
 import '../../messages/providers/message_providers.dart';
-import '../../feed/presentation/widgets/post_card.dart';
+import '../../feed/presentation/post_detail_screen.dart';
 import '../../stories/presentation/widgets/highlights_row.dart';
 import '../providers/profile_providers.dart';
 import 'profile_menu_sheet.dart';
@@ -358,7 +358,7 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
                     )
                   : tr('Chưa có bài viết nào.', 'No posts yet.'),
               entered: _enteredGrid,
-              onTap: (p) => _showPostViewer(context, p),
+              onTap: (p) => _openPostFeed(context, active, p),
               onLongPress: onLongPress,
             ),
           ),
@@ -371,7 +371,7 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
               ),
               emptyIcon: Icons.movie_outlined,
               entered: _enteredReels,
-              onTap: (p) => _showPostViewer(context, p),
+              onTap: (p) => _openPostFeed(context, reels, p),
               onLongPress: onLongPress,
             ),
           ),
@@ -384,7 +384,7 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
               ),
               emptyIcon: Icons.person_pin_outlined,
               entered: _enteredTagged,
-              onTap: (p) => _showPostViewer(context, p),
+              onTap: (p) => _openPostFeed(context, tagged, p),
             ),
           ),
         ],
@@ -453,18 +453,14 @@ class _ProfileTabsState extends ConsumerState<_ProfileTabs>
     ]);
   }
 
-  void _showPostViewer(BuildContext context, Post post) {
-    // Show the full post card (media, actions, caption, music chip) so a post
-    // reads exactly like it does in the feed.
-    showAppSheet<void>(
-      context,
-      builder: (_) => AppSheetSurface(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: PostCard(post: post),
-          ),
-        ),
+  /// Opens a scrollable post feed starting at the tapped post, so the viewer
+  /// can scroll down through the rest instead of seeing just one post.
+  void _openPostFeed(BuildContext context, List<Post> posts, Post tapped) {
+    final idx = posts.indexWhere((p) => p.postId == tapped.postId);
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            PostDetailScreen(posts: posts, initialIndex: idx < 0 ? 0 : idx),
       ),
     );
   }

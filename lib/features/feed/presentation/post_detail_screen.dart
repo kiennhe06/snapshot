@@ -1,0 +1,49 @@
+import 'package:flutter/material.dart';
+
+import '../../../core/design/tokens.dart';
+import '../../../core/i18n/i18n.dart';
+import '../../../models/post.dart';
+import '../../../widgets/components/components.dart';
+import 'widgets/post_card.dart';
+
+/// A scrollable post feed opened from a grid: the tapped post sits at the top
+/// and the viewer scrolls down through the rest (like Instagram's post view),
+/// instead of seeing a single post in a sheet.
+class PostDetailScreen extends StatelessWidget {
+  const PostDetailScreen({
+    super.key,
+    required this.posts,
+    this.initialIndex = 0,
+    this.title,
+  });
+
+  final List<Post> posts;
+  final int initialIndex;
+  final String? title;
+
+  @override
+  Widget build(BuildContext context) {
+    final start = initialIndex.clamp(0, posts.isEmpty ? 0 : posts.length - 1);
+    final visible = posts.isEmpty ? const <Post>[] : posts.sublist(start);
+
+    return AppScaffold(
+      topBar: AppTopBar(
+        title: title ?? tr('Bài viết', 'Posts'),
+        showBack: true,
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        itemCount: visible.length,
+        itemBuilder: (_, i) => Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
+          child: PostCard(post: visible[i]),
+        ),
+      ),
+    );
+  }
+}
