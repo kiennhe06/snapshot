@@ -342,27 +342,27 @@ class _FavoritesArt extends StatelessWidget {
               ),
             ),
           ),
-          // Flanking favourited-person chips.
+          // Two other friends (unmarked) sitting behind the hero.
           Positioned(
-            left: 8,
-            top: 30,
+            left: 10,
+            top: 40,
             child: Transform.rotate(
               angle: -0.18,
-              child: const _MiniFav(),
+              child: const _PersonChip(size: 56),
             ),
           ),
           Positioned(
-            right: 8,
-            bottom: 24,
+            right: 10,
+            bottom: 26,
             child: Transform.rotate(
               angle: 0.16,
-              child: const _MiniFav(),
+              child: const _PersonChip(size: 56),
             ),
           ),
           // Sparkles.
           Positioned(
-            right: 54,
-            top: 16,
+            right: 46,
+            top: 8,
             child: Icon(
               Icons.auto_awesome,
               size: 18,
@@ -370,80 +370,86 @@ class _FavoritesArt extends StatelessWidget {
             ),
           ),
           Positioned(
-            left: 56,
-            bottom: 18,
+            left: 48,
+            bottom: 10,
             child: Icon(
               Icons.auto_awesome,
               size: 13,
               color: accent.withValues(alpha: 0.45),
             ),
           ),
-          // The hero star card.
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              gradient: AppGradients.card,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(color: accent.withValues(alpha: 0.35)),
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.24),
-                  blurRadius: 26,
-                  spreadRadius: -4,
-                ),
-              ],
-            ),
-            child: Icon(Icons.star_rounded, size: 48, color: accent),
-          ),
+          // Hero: a friend marked as a favourite (avatar + star badge).
+          const _PersonChip(size: 104, starred: true),
         ],
       ),
     );
   }
 }
 
-/// A small circular avatar placeholder with a star badge — a "favourited
-/// friend" token used to decorate the empty state.
-class _MiniFav extends StatelessWidget {
-  const _MiniFav();
+/// A circular avatar placeholder. With [starred] it wears a Favorites star
+/// badge — the "friend you favorited"; otherwise it's a plain person chip used
+/// to suggest the other people you could add.
+class _PersonChip extends StatelessWidget {
+  const _PersonChip({required this.size, this.starred = false});
+  final double size;
+  final bool starred;
 
   @override
   Widget build(BuildContext context) {
+    final badge = size * 0.34;
     return SizedBox(
-      width: 50,
-      height: 50,
+      width: size + 6,
+      height: size + 6,
       child: Stack(
         clipBehavior: Clip.none,
+        alignment: Alignment.center,
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: AppGradients.card,
-              border: Border.all(color: AppColors.borderSubtle),
-              boxShadow: AppShadows.soft,
+              border: Border.all(
+                color: starred
+                    ? AppColors.primary.withValues(alpha: 0.40)
+                    : AppColors.borderSubtle,
+              ),
+              boxShadow: starred
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.24),
+                        blurRadius: 26,
+                        spreadRadius: -4,
+                      ),
+                    ]
+                  : AppShadows.soft,
             ),
             child: Icon(
               Icons.person_rounded,
-              size: 24,
-              color: AppColors.textTertiary,
+              size: size * 0.5,
+              color: starred ? AppColors.textSecondary : AppColors.textTertiary,
             ),
           ),
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary,
-                border: Border.all(color: AppColors.layer1, width: 2),
+          if (starred)
+            Positioned(
+              right: -1,
+              bottom: -1,
+              child: Container(
+                width: badge,
+                height: badge,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary,
+                  border: Border.all(color: AppColors.layer1, width: 3),
+                ),
+                child: Icon(
+                  Icons.star_rounded,
+                  size: badge * 0.56,
+                  color: Colors.white,
+                ),
               ),
-              child: const Icon(Icons.star_rounded, size: 11, color: Colors.white),
             ),
-          ),
         ],
       ),
     );
