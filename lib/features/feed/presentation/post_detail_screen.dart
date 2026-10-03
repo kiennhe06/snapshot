@@ -31,18 +31,20 @@ class PostDetailScreen extends StatelessWidget {
         title: title ?? tr('Bài viết', 'Posts'),
         showBack: true,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        itemCount: visible.length,
-        itemBuilder: (_, i) => Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm,
-            AppSpacing.md,
-            AppSpacing.sm,
-          ),
-          child: PostCard(post: visible[i]),
+      // Each post floats as its own card with a clear gutter between them, so
+      // scrolling reads as moving from one post to the next rather than one
+      // continuous sheet.
+      body: ListView.separated(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
         ),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        itemCount: visible.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xxl),
+        itemBuilder: (_, i) => PostCard(post: visible[i]),
       ),
     );
   }
