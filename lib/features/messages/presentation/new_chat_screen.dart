@@ -15,8 +15,8 @@ import '../../profile/providers/profile_providers.dart';
 import '../providers/message_providers.dart';
 import 'chat_screen.dart';
 
-/// Starts a new conversation: a direct message, a group, or a broadcast
-/// channel. Candidates are people the current user follows.
+/// Starts a new conversation: a direct message or a group. DM candidates are
+/// anyone (searchable); group members must be friends (mutual follow).
 class NewChatScreen extends ConsumerStatefulWidget {
   const NewChatScreen({super.key});
 
@@ -25,7 +25,7 @@ class NewChatScreen extends ConsumerStatefulWidget {
 }
 
 class _NewChatScreenState extends ConsumerState<NewChatScreen> {
-  int _tab = 0; // 0 = DM, 1 = group, 2 = broadcast
+  int _tab = 0; // 0 = DM, 1 = group
   final _selected = <String>{};
   final _name = TextEditingController();
   final _search = TextEditingController();
@@ -56,17 +56,11 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
     if (me == null || _selected.isEmpty || _name.text.trim().isEmpty) return;
     setState(() => _busy = true);
     final repo = ref.read(chatRepositoryProvider);
-    final chatId = _tab == 1
-        ? await repo.createGroup(
-            me: me,
-            memberIds: _selected.toList(),
-            name: _name.text.trim(),
-          )
-        : await repo.createBroadcast(
-            me: me,
-            memberIds: _selected.toList(),
-            name: _name.text.trim(),
-          );
+    final chatId = await repo.createGroup(
+      me: me,
+      memberIds: _selected.toList(),
+      name: _name.text.trim(),
+    );
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => ChatScreen(chatId: chatId)),
@@ -105,11 +99,7 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
         showBack: true,
         bottom: AppSegmentedTabs(
           index: _tab,
-          labels: [
-            tr('Trực tiếp', 'Direct'),
-            tr('Nhóm', 'Group'),
-            tr('Kênh', 'Channel'),
-          ],
+          labels: [tr('Trực tiếp', 'Direct'), tr('Nhóm', 'Group')],
           onChanged: (i) => setState(() {
             _tab = i;
             _selected.clear();
@@ -128,11 +118,9 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
               ),
               child: AppTextField(
                 controller: _name,
-                label: _tab == 1
-                    ? tr('Tên nhóm', 'Group name')
-                    : tr('Tên kênh', 'Channel name'),
+                label: tr('Tên nhóm', 'Group name'),
                 hint: tr('Nhập tên...', 'Enter a name...'),
-                icon: _tab == 1 ? Icons.group_rounded : Icons.campaign_rounded,
+                icon: Icons.group_rounded,
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -209,15 +197,10 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
               child: SafeArea(
                 top: false,
                 child: AppButton(
-                  label: _tab == 1
-                      ? tr(
-                          'Tạo nhóm (${_selected.length})',
-                          'Create group (${_selected.length})',
-                        )
-                      : tr(
-                          'Tạo kênh (${_selected.length})',
-                          'Create channel (${_selected.length})',
-                        ),
+                  label: tr(
+                    'Tạo nhóm (${_selected.length})',
+                    'Create group (${_selected.length})',
+                  ),
                   isLoading: _busy,
                   onPressed: _selected.isEmpty || _name.text.trim().isEmpty
                       ? null

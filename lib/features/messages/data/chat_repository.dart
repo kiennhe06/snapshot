@@ -5,9 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../models/chat.dart';
 
-/// All Firestore reads/writes for Direct messages: conversations (1-1, group,
-/// broadcast), messages (text/image/video/voice/post/story), reactions, reply,
-/// pin, unsend, read receipts, typing indicators and inbox Notes.
+/// All Firestore reads/writes for Direct messages: conversations (1-1, group),
+/// messages (text/image/video/voice/post/story), reactions, reply, pin, unsend,
+/// read receipts, typing indicators, message requests and inbox Notes.
 class ChatRepository {
   ChatRepository({FirebaseFirestore? firestore, StorageService? storage})
     : _db = firestore ?? FirebaseFirestore.instance,
@@ -30,7 +30,27 @@ class ChatRepository {
     return 'dm_${pair[0]}_${pair[1]}';
   }
 
+  /// True when [other] follows [me] (so a DM from me is not a request). Reads
+  /// my own followers subcollection, which is world-readable under the rules.
+  Future<bool> _followsMe(String me, String other) async {
+    try {
+      final doc = await _db
+          .collection('users')
+          .doc(me)
+          .collection('followers')
+          .doc(other)
+          .get();
+      return doc.exists;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Finds (or creates) the 1-1 chat between [me] and [other]; returns its id.
+  ///
+  /// On first creation, the conversation starts as a message *request* (lands in
+  /// the recipient's Requests inbox, no push) unless the recipient already
+  /// follows [me]. An existing conversation is returned untouched.
   Future<String> openDm(String me, String other) async {
     final id = _dmId(me, other);
     final ref = _chats.doc(id);
@@ -43,16 +63,63 @@ class ChatRepository {
     } catch (_) {
       // Fall through to create.
     }
+    // People already connected (they follow me back) skip the request gate.
+    final pending = !await _followsMe(me, other);
     await ref.set(
       Chat(
         chatId: id,
         type: ChatType.dm,
         memberIds: [me, other],
+        pending: pending,
+        requestedBy: pending ? me : null,
         lastAt: DateTime.now(),
       ).toMap()..['lastAt'] = FieldValue.serverTimestamp(),
       SetOptions(merge: true),
     );
     return id;
+  }
+
+  /// Accepts a pending request — moves it into the recipient's main inbox.
+  Future<void> acceptRequest(String chatId) {
+    return _chats.doc(chatId).update({'pending': false, 'requestedBy': null});
+  }
+
+  /// Declines/deletes a conversation (used for request decline and leave-DM).
+  Future<void> deleteChat(String chatId) {
+    return _chats.doc(chatId).delete();
+  }
+
+  /// Mutes/unmutes a conversation for [uid].
+  Future<void> setMuted(String chatId, String uid, bool muted) {
+    return _chats.doc(chatId).update({
+      'mutedBy': muted
+          ? FieldValue.arrayUnion([uid])
+          : FieldValue.arrayRemove([uid]),
+    });
+  }
+
+  /// Archives/unarchives a conversation for [uid].
+  Future<void> setArchived(String chatId, String uid, bool archived) {
+    return _chats.doc(chatId).update({
+      'archivedBy': archived
+          ? FieldValue.arrayUnion([uid])
+          : FieldValue.arrayRemove([uid]),
+    });
+  }
+
+  /// Adds members to a group (friends picked by an admin).
+  Future<void> addMembers(String chatId, List<String> uids) {
+    return _chats.doc(chatId).update({
+      'memberIds': FieldValue.arrayUnion(uids),
+    });
+  }
+
+  /// Removes [uid] from a group (self-leave or admin kick).
+  Future<void> removeMember(String chatId, String uid) {
+    return _chats.doc(chatId).update({
+      'memberIds': FieldValue.arrayRemove([uid]),
+      'adminIds': FieldValue.arrayRemove([uid]),
+    });
   }
 
   /// Creates a group chat with [me] as the only admin; returns its id.
@@ -68,29 +135,6 @@ class ChatRepository {
       Chat(
         chatId: ref.id,
         type: ChatType.group,
-        memberIds: members,
-        adminIds: [me],
-        name: name,
-        photoUrl: photoUrl,
-        lastAt: DateTime.now(),
-      ).toMap()..['lastAt'] = FieldValue.serverTimestamp(),
-    );
-    return ref.id;
-  }
-
-  /// Creates a broadcast channel owned by [me]; subscribers are [memberIds].
-  Future<String> createBroadcast({
-    required String me,
-    required List<String> memberIds,
-    required String name,
-    String? photoUrl,
-  }) async {
-    final ref = _chats.doc();
-    final members = {me, ...memberIds}.toList();
-    await ref.set(
-      Chat(
-        chatId: ref.id,
-        type: ChatType.broadcast,
         memberIds: members,
         adminIds: [me],
         name: name,
@@ -305,13 +349,20 @@ class ChatRepository {
     });
   }
 
-  /// Marks every message in a chat as read by [uid] (adds uid to readBy).
+  /// Marks a chat as read by [uid].
+  ///
+  /// The read state lives in two places with distinct jobs: the chat's
+  /// `reads`/`unread` map drives the inbox (unread count + DM "Seen"), while the
+  /// latest message's `readBy` drives the per-message "Seen"/"Seen by N" shown
+  /// under the sender's most recent bubble. Only the newest message needs
+  /// `readBy`, so we update just that one instead of rewriting the last 30.
   Future<void> markRead(String chatId, String uid) async {
-    final unread = await _messages(
+    final latest = await _messages(
       chatId,
-    ).orderBy('createdAt', descending: true).limit(30).get();
+    ).orderBy('createdAt', descending: true).limit(1).get();
     final batch = _db.batch();
-    for (final d in unread.docs) {
+    if (latest.docs.isNotEmpty) {
+      final d = latest.docs.first;
       final readBy =
           (d.data()['readBy'] as List<dynamic>?)?.cast<String>() ?? const [];
       if (!readBy.contains(uid)) {

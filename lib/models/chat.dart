@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum ChatType { dm, group, broadcast }
+enum ChatType { dm, group }
 
 ChatType chatTypeFrom(String? s) =>
     ChatType.values.firstWhere((e) => e.name == s, orElse: () => ChatType.dm);
@@ -26,6 +26,10 @@ class Chat {
     this.lastType,
     this.unread = const {},
     this.reads = const {},
+    this.pending = false,
+    this.requestedBy,
+    this.mutedBy = const [],
+    this.archivedBy = const [],
     required this.lastAt,
   });
 
@@ -46,17 +50,40 @@ class Chat {
 
   /// Per-user last-read timestamps, keyed by uid.
   final Map<String, DateTime> reads;
+
+  /// Message-request gate: while true, the conversation sits in the recipient's
+  /// "Requests" inbox (not the main inbox) and raises no push. It is set when
+  /// the initiator messages someone who does not follow them back, and cleared
+  /// when the recipient accepts.
+  final bool pending;
+
+  /// Uid who started a [pending] request (so we can tell requester from
+  /// recipient).
+  final String? requestedBy;
+
+  /// Uids who muted this conversation (no unread emphasis / no push).
+  final List<String> mutedBy;
+
+  /// Uids who archived this conversation (hidden from the main inbox).
+  final List<String> archivedBy;
   final DateTime lastAt;
 
   bool get isDm => type == ChatType.dm;
   bool get isGroup => type == ChatType.group;
-  bool get isBroadcast => type == ChatType.broadcast;
 
   /// The other member of a DM, relative to [me].
   String otherMember(String me) =>
       memberIds.firstWhere((id) => id != me, orElse: () => me);
 
   int unreadFor(String uid) => unread[uid] ?? 0;
+
+  bool isMutedBy(String uid) => mutedBy.contains(uid);
+  bool isArchivedBy(String uid) => archivedBy.contains(uid);
+
+  /// True when this is a pending request waiting for [uid] to accept (i.e. [uid]
+  /// is the recipient, not the one who sent the request).
+  bool isRequestFor(String uid) =>
+      pending && requestedBy != null && requestedBy != uid;
 
   /// True when [uid] (the DM partner) has read up to the last message.
   bool readUpToLast(String uid) {
@@ -80,6 +107,10 @@ class Chat {
     reads: ((j['reads'] as Map<dynamic, dynamic>?) ?? const {}).map(
       (k, v) => MapEntry(k as String, _toDate(v)),
     ),
+    pending: j['pending'] as bool? ?? false,
+    requestedBy: j['requestedBy'] as String?,
+    mutedBy: (j['mutedBy'] as List<dynamic>?)?.cast<String>() ?? const [],
+    archivedBy: (j['archivedBy'] as List<dynamic>?)?.cast<String>() ?? const [],
     lastAt: _toDate(j['lastAt']),
   );
 
@@ -93,6 +124,10 @@ class Chat {
     'lastText': lastText,
     'lastSenderId': lastSenderId,
     'lastType': lastType,
+    'pending': pending,
+    'requestedBy': requestedBy,
+    'mutedBy': mutedBy,
+    'archivedBy': archivedBy,
     'lastAt': Timestamp.fromDate(lastAt),
   };
 

@@ -17,9 +17,20 @@ import '../../../widgets/components/components.dart';
 import '../../../widgets/gallery_picker_screen.dart';
 import '../../../widgets/stickers/sticker_message.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../interactions/providers/interaction_providers.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../providers/message_providers.dart';
+import 'conversation_detail_screen.dart';
 import 'widgets/message_bubble.dart';
+
+/// An optimistic outgoing message awaiting server confirmation (so the user
+/// sees a "sending"/"failed" state instead of a silent gap on a flaky network).
+class _Outgoing {
+  _Outgoing(this.tempId, this.text);
+  final String tempId;
+  final String text;
+  bool failed = false;
+}
 
 /// Full conversation view: pinned bar, message list, typing indicator and a
 /// composer with text, image/video and voice-note input.
@@ -43,6 +54,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _sending = false;
   DateTime? _recordStart;
   String? _me;
+
+  /// Optimistic text messages still in flight or failed (newest last).
+  final List<_Outgoing> _outbox = [];
 
   @override
   void initState() {
@@ -97,14 +111,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _typing = false;
     final repo = ref.read(chatRepositoryProvider);
     await repo.setTyping(chatId: widget.chatId, uid: me, typing: false);
-    await repo.sendText(
-      chatId: widget.chatId,
-      senderId: me,
-      text: text,
-      replyToId: reply?.messageId,
+
+    // Show the message immediately as "sending"; confirm or mark failed.
+    final out = _Outgoing(
+      'out_${DateTime.now().microsecondsSinceEpoch}',
+      text,
     );
+    setState(() => _outbox.add(out));
     _scrollToBottom();
+    try {
+      await repo.sendText(
+        chatId: widget.chatId,
+        senderId: me,
+        text: text,
+        replyToId: reply?.messageId,
+      );
+      // Success: the real message arrives via the stream — drop the optimistic one.
+      if (mounted) setState(() => _outbox.remove(out));
+    } catch (_) {
+      if (mounted) setState(() => out.failed = true);
+    }
   }
+
+  /// Retries a failed optimistic message.
+  Future<void> _retry(_Outgoing out) async {
+    final me = _me;
+    if (me == null) return;
+    setState(() => out.failed = false);
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .sendText(chatId: widget.chatId, senderId: me, text: out.text);
+      if (mounted) setState(() => _outbox.remove(out));
+    } catch (_) {
+      if (mounted) setState(() => out.failed = true);
+    }
+  }
+
+  void _discardOutgoing(_Outgoing out) =>
+      setState(() => _outbox.remove(out));
 
   Future<void> _sendSticker() async {
     final me = _me;
@@ -113,14 +158,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (s == null) return;
     final reply = _replyTo;
     setState(() => _replyTo = null);
-    await ref
-        .read(chatRepositoryProvider)
-        .sendText(
-          chatId: widget.chatId,
-          senderId: me,
-          text: stickerToken(s),
-          replyToId: reply?.messageId,
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .sendText(
+            chatId: widget.chatId,
+            senderId: me,
+            text: stickerToken(s),
+            replyToId: reply?.messageId,
+          );
+    } catch (_) {
+      if (mounted) {
+        showAppToast(
+          context,
+          tr('Không gửi được sticker.', 'Couldn\'t send sticker.'),
+          type: AppToastType.error,
         );
+      }
+    }
     _scrollToBottom();
   }
 
@@ -147,6 +202,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             replyToId: _replyTo?.messageId,
           );
       if (mounted) setState(() => _replyTo = null);
+    } catch (_) {
+      if (mounted) {
+        showAppToast(
+          context,
+          tr('Không gửi được. Hãy thử lại.', 'Couldn\'t send. Try again.'),
+          type: AppToastType.error,
+        );
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
       _scrollToBottom();
@@ -174,6 +237,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             );
       }
       if (mounted) setState(() => _replyTo = null);
+    } catch (_) {
+      if (mounted) {
+        showAppToast(
+          context,
+          tr('Một số tệp chưa gửi được.', 'Some files couldn\'t be sent.'),
+          type: AppToastType.error,
+        );
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
       _scrollToBottom();
@@ -216,6 +287,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             replyToId: _replyTo?.messageId,
           );
       if (mounted) setState(() => _replyTo = null);
+    } catch (_) {
+      if (mounted) {
+        showAppToast(
+          context,
+          tr('Không gửi được tin thoại.', 'Couldn\'t send voice note.'),
+          type: AppToastType.error,
+        );
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
       _scrollToBottom();
@@ -241,15 +320,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messages = ref.watch(messagesProvider(widget.chatId));
     final typing =
         ref.watch(typingProvider(widget.chatId)).valueOrNull ?? const [];
-    final canSend =
-        chat == null ||
-        !chat.isBroadcast ||
-        (_me != null && chat.adminIds.contains(_me));
+
+    final iBlocked =
+        chat != null &&
+        chat.isDm &&
+        (ref.watch(blockedIdsProvider).valueOrNull ?? const []).contains(
+          chat.otherMember(_me ?? ''),
+        );
+    final isRequestForMe = chat != null && chat.isRequestFor(_me ?? '');
 
     return AppScaffold(
       topBar: AppTopBar(
         showBack: true,
-        titleWidget: chat == null ? null : _Header(chat: chat, me: _me ?? ''),
+        titleWidget: chat == null
+            ? null
+            : PressScale(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ConversationDetailScreen(chatId: widget.chatId),
+                  ),
+                ),
+                child: _Header(chat: chat, me: _me ?? ''),
+              ),
         title: chat == null ? tr('Trò chuyện', 'Chat') : null,
       ),
       body: Column(
@@ -271,8 +364,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 return ListView.builder(
                   controller: _scroll,
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                  itemCount: list.length,
+                  itemCount: list.length + _outbox.length,
                   itemBuilder: (_, i) {
+                    // Optimistic (sending/failed) messages sit after the
+                    // confirmed ones.
+                    if (i >= list.length) {
+                      final out = _outbox[i - list.length];
+                      return _OutgoingBubble(
+                        out: out,
+                        onRetry: () => _retry(out),
+                        onDiscard: () => _discardOutgoing(out),
+                      );
+                    }
                     final m = list[i];
                     final prev = i > 0 ? list[i - 1] : null;
                     final showSender =
@@ -310,21 +413,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
           if (typing.isNotEmpty) _TypingIndicator(uids: typing),
-          if (_replyTo != null) _replyBanner(),
-          if (canSend)
-            _composer()
-          else
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Text(
-                tr(
-                  'Chỉ quản trị viên mới có thể gửi.',
-                  'Only admins can send.',
-                ),
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textTertiary),
-              ),
-            ),
+          if (iBlocked)
+            _BlockedBar(
+              onUnblock: () => ref
+                  .read(relationRepositoryProvider)
+                  .setRelation(
+                    uid: _me ?? '',
+                    kind: 'blocked',
+                    targetUid: chat.otherMember(_me ?? ''),
+                    on: false,
+                  ),
+            )
+          else if (isRequestForMe)
+            _RequestBar(chatId: widget.chatId, chat: chat, me: _me ?? '')
+          else ...[
+            if (chat != null &&
+                chat.pending &&
+                chat.requestedBy == (_me ?? ''))
+              _PendingHint(),
+            if (_replyTo != null) _replyBanner(),
+            _composer(),
+          ],
         ],
       ),
     );
@@ -727,9 +836,7 @@ class _Header extends ConsumerWidget {
           : (other?.displayName ?? '');
       photoUrl = other?.photoUrl;
     } else {
-      title =
-          chat.name ??
-          (chat.isBroadcast ? tr('Kênh', 'Channel') : tr('Nhóm', 'Group'));
+      title = chat.name ?? tr('Nhóm', 'Group');
       photoUrl = chat.photoUrl;
       sub = tr(
         '${chat.memberIds.length} thành viên',
@@ -744,9 +851,7 @@ class _Header extends ConsumerWidget {
       children: [
         AppAvatar(
           radius: 18,
-          icon: chat.isBroadcast
-              ? Icons.campaign_rounded
-              : (chat.isGroup ? Icons.group_rounded : Icons.person_rounded),
+          icon: chat.isGroup ? Icons.group_rounded : Icons.person_rounded,
           imageProvider: photoUrl != null
               ? CachedNetworkImageProvider(photoUrl)
               : null,
@@ -1025,6 +1130,240 @@ class _AttachItem extends StatelessWidget {
             style: AppText.label.copyWith(color: AppColors.textSecondary),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A right-aligned optimistic bubble showing a message that is still sending or
+/// has failed (with retry / discard).
+class _OutgoingBubble extends StatelessWidget {
+  const _OutgoingBubble({
+    required this.out,
+    required this.onRetry,
+    required this.onDiscard,
+  });
+
+  final _Outgoing out;
+  final VoidCallback onRetry;
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = stickerPreviewOr(out.text);
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.xxl,
+          2,
+          AppSpacing.md,
+          2,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Opacity(
+              opacity: out.failed ? 0.7 : 0.6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryBright, AppColors.primary],
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                ),
+                child: Text(
+                  preview,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            if (out.failed)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 13,
+                    color: AppColors.danger,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    tr('Chưa gửi được', 'Not sent'),
+                    style: AppText.caption.copyWith(color: AppColors.danger),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  GestureDetector(
+                    onTap: onRetry,
+                    child: Text(
+                      tr('Thử lại', 'Retry'),
+                      style: AppText.caption.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: AppType.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  GestureDetector(
+                    onTap: onDiscard,
+                    child: Text(
+                      tr('Bỏ', 'Discard'),
+                      style: AppText.caption.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Text(
+                tr('Đang gửi…', 'Sending…'),
+                style: AppText.caption.copyWith(color: AppColors.textTertiary),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom bar shown when the signed-in user has blocked the DM partner.
+class _BlockedBar extends StatelessWidget {
+  const _BlockedBar({required this.onUnblock});
+  final VoidCallback onUnblock;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.layer1,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              tr(
+                'Bạn đã chặn người này. Bỏ chặn để nhắn tin lại.',
+                'You blocked this person. Unblock to message again.',
+              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppButton(
+              label: tr('Bỏ chặn', 'Unblock'),
+              variant: AppButtonVariant.secondary,
+              onPressed: onUnblock,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A subtle note shown to the sender while a request is pending acceptance.
+class _PendingHint extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: AppColors.layer3,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: Text(
+        tr(
+          'Đây là tin nhắn chờ. Người nhận sẽ thấy khi họ chấp nhận.',
+          'This is a request. They\'ll see it once they accept.',
+        ),
+        textAlign: TextAlign.center,
+        style: AppText.caption.copyWith(color: AppColors.textSecondary),
+      ),
+    );
+  }
+}
+
+/// Accept / Delete / Block bar shown to the recipient of a pending request.
+class _RequestBar extends ConsumerWidget {
+  const _RequestBar({
+    required this.chatId,
+    required this.chat,
+    required this.me,
+  });
+  final String chatId;
+  final Chat chat;
+  final String me;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.read(chatRepositoryProvider);
+
+    Future<void> block() async {
+      await ref
+          .read(relationRepositoryProvider)
+          .setRelation(
+            uid: me,
+            kind: 'blocked',
+            targetUid: chat.otherMember(me),
+            on: true,
+          );
+      await repo.deleteChat(chatId);
+      if (context.mounted) Navigator.of(context).pop();
+    }
+
+    return Container(
+      color: AppColors.layer1,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              tr(
+                'Chấp nhận tin nhắn chờ này?',
+                'Accept this message request?',
+              ),
+              style: AppText.label.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: tr('Chấp nhận', 'Accept'),
+                    onPressed: () => repo.acceptRequest(chatId),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: AppButton(
+                    label: tr('Xoá', 'Delete'),
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () async {
+                      await repo.deleteChat(chatId);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                AppIconButton(
+                  icon: Icons.block_rounded,
+                  tooltip: tr('Chặn', 'Block'),
+                  onTap: block,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

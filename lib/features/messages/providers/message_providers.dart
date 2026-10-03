@@ -11,11 +11,52 @@ final chatRepositoryProvider = Provider<ChatRepository>(
   (ref) => ChatRepository(),
 );
 
-/// The signed-in user's conversations (inbox), newest activity first.
+/// Every conversation the signed-in user belongs to, newest activity first.
 final chatsProvider = StreamProvider.autoDispose<List<Chat>>((ref) {
   final uid = ref.watch(authStateProvider).valueOrNull?.uid;
   if (uid == null) return Stream.value(const []);
   return ref.watch(chatRepositoryProvider).watchChats(uid);
+});
+
+/// Main inbox: accepted conversations that the user has not archived. Pending
+/// requests waiting on the user are routed to [requestChatsProvider] instead.
+final inboxChatsProvider = Provider.autoDispose<AsyncValue<List<Chat>>>((ref) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
+  return ref
+      .watch(chatsProvider)
+      .whenData(
+        (list) => list
+            .where((c) => !c.isRequestFor(uid) && !c.isArchivedBy(uid))
+            .toList(),
+      );
+});
+
+/// Message requests: conversations started by someone the user does not follow
+/// back, awaiting accept/decline.
+final requestChatsProvider = Provider.autoDispose<AsyncValue<List<Chat>>>((ref) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
+  return ref
+      .watch(chatsProvider)
+      .whenData((list) => list.where((c) => c.isRequestFor(uid)).toList());
+});
+
+/// Conversations the user has archived (not requests).
+final archivedChatsProvider = Provider.autoDispose<AsyncValue<List<Chat>>>((
+  ref,
+) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
+  return ref
+      .watch(chatsProvider)
+      .whenData(
+        (list) => list
+            .where((c) => c.isArchivedBy(uid) && !c.isRequestFor(uid))
+            .toList(),
+      );
+});
+
+/// Number of pending requests (for the inbox badge).
+final requestCountProvider = Provider.autoDispose<int>((ref) {
+  return ref.watch(requestChatsProvider).valueOrNull?.length ?? 0;
 });
 
 /// A single conversation document.

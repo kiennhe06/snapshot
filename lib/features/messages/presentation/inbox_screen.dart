@@ -19,10 +19,11 @@ import '../../profile/providers/profile_providers.dart';
 import '../../../widgets/stickers/sticker_message.dart';
 import '../providers/message_providers.dart';
 import 'chat_screen.dart';
+import 'message_requests_screen.dart';
 import 'new_chat_screen.dart';
 
 /// Inbox filter tabs, each mapping to a real conversation kind.
-enum _InboxFilter { all, dm, group, channel }
+enum _InboxFilter { all, dm, group }
 
 /// Direct inbox: search + filters, a Notes strip, then the conversation list.
 class InboxScreen extends ConsumerStatefulWidget {
@@ -47,15 +48,17 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     _InboxFilter.all => true,
     _InboxFilter.dm => c.isDm,
     _InboxFilter.group => c.isGroup,
-    _InboxFilter.channel => c.isBroadcast,
   };
 
   @override
   Widget build(BuildContext context) {
-    final chats = ref.watch(chatsProvider);
+    final chats = ref.watch(inboxChatsProvider);
     final me = ref.watch(authStateProvider).valueOrNull?.uid;
+    // Unread emphasis ignores muted conversations.
     final totalUnread = (chats.valueOrNull ?? const <Chat>[])
+        .where((c) => !c.isMutedBy(me ?? ''))
         .fold<int>(0, (s, c) => s + c.unreadFor(me ?? ''));
+    final requestCount = ref.watch(requestCountProvider);
 
     return AppScaffold(
       topBar: AppTopBar(
@@ -133,6 +136,8 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
               ),
               const SizedBox(height: AppSpacing.xs),
               const Divider(height: 1),
+              if (requestCount > 0 && _filter == _InboxFilter.all)
+                _RequestsEntry(count: requestCount),
               if (filtered.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.xxxl),
@@ -168,7 +173,6 @@ class _FilterBar extends StatelessWidget {
       (_InboxFilter.all, tr('Tất cả', 'All')),
       (_InboxFilter.dm, tr('Chat 1-1', 'DMs')),
       (_InboxFilter.group, tr('Nhóm', 'Groups')),
-      (_InboxFilter.channel, tr('Kênh thông báo', 'Channels')),
     ];
     return SizedBox(
       height: 40,
@@ -186,6 +190,67 @@ class _FilterBar extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Entry row to the message-requests inbox, shown only when some exist.
+class _RequestsEntry extends StatelessWidget {
+  const _RequestsEntry({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressScale(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MessageRequestsScreen()),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.layer3,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.mark_email_unread_rounded,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr('Tin nhắn chờ', 'Message requests'),
+                    style: AppText.h3.copyWith(fontWeight: AppType.heavy),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    tr(
+                      '$count người muốn nhắn tin với bạn',
+                      '$count people want to message you',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.label.copyWith(color: AppColors.primary),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+          ],
+        ),
       ),
     );
   }
@@ -677,9 +742,7 @@ class _ChatRow extends ConsumerWidget {
       photoUrl = other?.photoUrl;
       verified = other?.isVerified ?? false;
     } else {
-      title =
-          chat.name ??
-          (chat.isBroadcast ? tr('Kênh', 'Channel') : tr('Nhóm', 'Group'));
+      title = chat.name ?? tr('Nhóm', 'Group');
       photoUrl = chat.photoUrl;
     }
 
@@ -690,8 +753,10 @@ class _ChatRow extends ConsumerWidget {
     }
 
     final typing = ref.watch(typingProvider(chat.chatId)).valueOrNull ?? const [];
+    final muted = chat.isMutedBy(me);
     final unread = chat.unreadFor(me);
-    final hasUnread = unread > 0;
+    // Muted conversations never draw unread emphasis.
+    final hasUnread = unread > 0 && !muted;
 
     // Group messages get a "Sender: " prefix.
     String? senderPrefix;
@@ -705,6 +770,7 @@ class _ChatRow extends ConsumerWidget {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => ChatScreen(chatId: chat.chatId)),
       ),
+      onLongPress: () => _showQuickActions(context, ref),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
@@ -714,9 +780,7 @@ class _ChatRow extends ConsumerWidget {
           children: [
             AppAvatar(
               radius: 26,
-              icon: chat.isBroadcast
-                  ? Icons.campaign_rounded
-                  : (chat.isGroup ? Icons.group_rounded : Icons.person_rounded),
+              icon: chat.isGroup ? Icons.group_rounded : Icons.person_rounded,
               imageProvider: photoUrl != null
                   ? CachedNetworkImageProvider(photoUrl)
                   : null,
@@ -748,9 +812,13 @@ class _ChatRow extends ConsumerWidget {
                           color: AppColors.accent,
                         ),
                       ],
-                      if (chat.isBroadcast) ...[
+                      if (muted) ...[
                         const SizedBox(width: AppSpacing.xs),
-                        AppTag(tr('Kênh', 'Channel')),
+                        Icon(
+                          Icons.notifications_off_rounded,
+                          size: AppIconSize.sm,
+                          color: AppColors.textTertiary,
+                        ),
                       ],
                       const Spacer(),
                       Text(
@@ -773,6 +841,16 @@ class _ChatRow extends ConsumerWidget {
                       if (hasUnread) ...[
                         const SizedBox(width: AppSpacing.sm),
                         AppCountBadge(unread),
+                      ] else if (muted && unread > 0) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: AppColors.textTertiary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ] else if (chat.isDm &&
                           chat.lastSenderId == me &&
                           chat.readUpToLast(chat.otherMember(me)))
@@ -823,6 +901,124 @@ class _ChatRow extends ConsumerWidget {
       style: AppText.label.copyWith(
         color: unreadForMe ? AppColors.textPrimary : AppColors.textSecondary,
         fontWeight: unreadForMe ? AppType.bold : AppType.regular,
+      ),
+    );
+  }
+
+  /// Long-press quick actions: mute, archive, and leave/delete.
+  void _showQuickActions(BuildContext context, WidgetRef ref) {
+    final repo = ref.read(chatRepositoryProvider);
+    final muted = chat.isMutedBy(me);
+    final archived = chat.isArchivedBy(me);
+    showAppSheet<void>(
+      context,
+      builder: (sheetCtx) => AppSheetSurface(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _QuickAction(
+              icon: muted
+                  ? Icons.notifications_active_rounded
+                  : Icons.notifications_off_rounded,
+              label: muted
+                  ? tr('Bật thông báo', 'Unmute')
+                  : tr('Tắt thông báo', 'Mute'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                repo.setMuted(chat.chatId, me, !muted);
+              },
+            ),
+            _QuickAction(
+              icon: archived
+                  ? Icons.unarchive_rounded
+                  : Icons.archive_rounded,
+              label: archived
+                  ? tr('Bỏ lưu trữ', 'Unarchive')
+                  : tr('Lưu trữ', 'Archive'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                repo.setArchived(chat.chatId, me, !archived);
+              },
+            ),
+            _QuickAction(
+              icon: chat.isGroup
+                  ? Icons.logout_rounded
+                  : Icons.delete_outline_rounded,
+              label: chat.isGroup
+                  ? tr('Rời nhóm', 'Leave group')
+                  : tr('Xoá cuộc trò chuyện', 'Delete conversation'),
+              destructive: true,
+              onTap: () async {
+                Navigator.pop(sheetCtx);
+                final ok = await showAppConfirm(
+                  context,
+                  title: chat.isGroup
+                      ? tr('Rời nhóm?', 'Leave group?')
+                      : tr('Xoá cuộc trò chuyện?', 'Delete conversation?'),
+                  message: chat.isGroup
+                      ? tr(
+                          'Bạn sẽ không nhận tin nhắn từ nhóm này nữa.',
+                          'You will stop receiving messages from this group.',
+                        )
+                      : tr(
+                          'Cuộc trò chuyện sẽ bị xoá khỏi hộp thư của bạn.',
+                          'This conversation will be removed from your inbox.',
+                        ),
+                  confirmLabel: chat.isGroup
+                      ? tr('Rời nhóm', 'Leave')
+                      : tr('Xoá', 'Delete'),
+                  destructive: true,
+                );
+                if (ok != true) return;
+                if (chat.isGroup) {
+                  await repo.removeMember(chat.chatId, me);
+                } else {
+                  await repo.deleteChat(chat.chatId);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A single row in the inbox long-press action sheet.
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive ? AppColors.danger : AppColors.textPrimary;
+    return PressScale(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: AppIconSize.md,
+              color: destructive ? AppColors.danger : AppColors.textSecondary,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Text(label, style: AppText.h3.copyWith(color: color)),
+          ],
+        ),
       ),
     );
   }
