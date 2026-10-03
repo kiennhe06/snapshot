@@ -14,6 +14,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../models/chat.dart';
 import '../../../widgets/async_value_view.dart';
 import '../../../widgets/components/components.dart';
+import '../../../widgets/gallery_picker_screen.dart';
 import '../../../widgets/stickers/sticker_message.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../profile/providers/profile_providers.dart';
@@ -123,13 +124,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _scrollToBottom();
   }
 
-  Future<void> _pickMedia(bool video) async {
+  Future<void> _pickMedia(
+    bool video, {
+    ImageSource source = ImageSource.gallery,
+  }) async {
     final me = _me;
     if (me == null) return;
     final picker = ImagePicker();
     final x = video
-        ? await picker.pickVideo(source: ImageSource.gallery)
-        : await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+        ? await picker.pickVideo(source: source)
+        : await picker.pickImage(source: source, imageQuality: 85);
     if (x == null) return;
     setState(() => _sending = true);
     try {
@@ -142,6 +146,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             type: video ? MessageType.video : MessageType.image,
             replyToId: _replyTo?.messageId,
           );
+      if (mounted) setState(() => _replyTo = null);
+    } finally {
+      if (mounted) setState(() => _sending = false);
+      _scrollToBottom();
+    }
+  }
+
+  /// Picks one or more items from the in-app gallery grid and sends them.
+  Future<void> _pickFromGallery() async {
+    final me = _me;
+    if (me == null) return;
+    final picked = await Navigator.of(context).push<List<PickedMedia>>(
+      MaterialPageRoute(builder: (_) => const GalleryPickerScreen(multi: true)),
+    );
+    if (picked == null || picked.isEmpty) return;
+    setState(() => _sending = true);
+    try {
+      for (final p in picked) {
+        await ref
+            .read(chatRepositoryProvider)
+            .sendMedia(
+              chatId: widget.chatId,
+              senderId: me,
+              file: p.file,
+              type: p.isVideo ? MessageType.video : MessageType.image,
+            );
+      }
       if (mounted) setState(() => _replyTo = null);
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -495,19 +526,68 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  /// Attachment panel — a tidy grid of the things you can send, the way
+  /// Messenger/Zalo lay it out.
   void _attachMenu() {
-    showAppMenu(context, [
-      AppMenuAction(
-        icon: Icons.photo_outlined,
-        label: tr('Ảnh', 'Photo'),
-        onTap: () => _pickMedia(false),
+    showAppSheet<void>(
+      context,
+      builder: (sheetCtx) => AppSheetSurface(
+        title: tr('Đính kèm', 'Attach'),
+        child: GridView.count(
+          crossAxisCount: 4,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: AppSpacing.md,
+          crossAxisSpacing: AppSpacing.md,
+          childAspectRatio: 0.85,
+          children: [
+            _AttachItem(
+              icon: Icons.photo_camera_rounded,
+              label: tr('Camera', 'Camera'),
+              color: const Color(0xFFEB5757),
+              onTap: () => _pickMedia(false, source: ImageSource.camera),
+            ),
+            _AttachItem(
+              icon: Icons.photo_library_rounded,
+              label: tr('Thư viện', 'Library'),
+              color: const Color(0xFF2D9CDB),
+              onTap: _pickFromGallery,
+            ),
+            _AttachItem(
+              icon: Icons.videocam_rounded,
+              label: tr('Video', 'Video'),
+              color: const Color(0xFF9B51E0),
+              onTap: () => _pickMedia(true),
+            ),
+            _AttachItem(
+              icon: Icons.mic_rounded,
+              label: tr('Ghi âm', 'Voice'),
+              color: const Color(0xFFF2994A),
+              onTap: _startRecording,
+            ),
+            _AttachItem(
+              icon: Icons.emoji_emotions_rounded,
+              label: tr('Sticker', 'Sticker'),
+              color: const Color(0xFF27AE60),
+              onTap: _sendSticker,
+            ),
+          ].map((w) => _wrapClose(sheetCtx, w)).toList(),
+        ),
       ),
-      AppMenuAction(
-        icon: Icons.videocam_outlined,
-        label: tr('Video', 'Video'),
-        onTap: () => _pickMedia(true),
-      ),
-    ]);
+    );
+  }
+
+  /// Wraps an attach item so tapping it closes the sheet first.
+  Widget _wrapClose(BuildContext sheetCtx, _AttachItem item) {
+    return _AttachItem(
+      icon: item.icon,
+      label: item.label,
+      color: item.color,
+      onTap: () {
+        Navigator.of(sheetCtx).pop();
+        item.onTap();
+      },
+    );
   }
 
   void _openMedia(String url, bool isVideo) {
@@ -901,6 +981,50 @@ class _DateChip extends StatelessWidget {
             fontWeight: AppType.medium,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// One tile in the chat attachment grid: a tinted round icon + label.
+class _AttachItem extends StatelessWidget {
+  const _AttachItem({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressScale(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.label.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
       ),
     );
   }

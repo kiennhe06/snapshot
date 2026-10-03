@@ -10,6 +10,7 @@ import '../../../core/constants.dart';
 import '../../../models/app_user.dart';
 import '../../../models/post.dart';
 import '../../../widgets/loading_view.dart';
+import '../../feed/providers/feed_providers.dart';
 import '../providers/search_providers.dart';
 
 /// Search across users, hashtags and locations.
@@ -51,11 +52,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         index: _tab,
         children: [
           _UserResults(query: _query),
-          _PostResults(provider: hashtagSearchProvider(_query), query: _query),
+          _PostResults(
+            provider: hashtagSearchProvider(_query),
+            query: _query,
+            emptyQuery: _TrendingTags(onPick: _setQuery),
+          ),
           _PostResults(provider: locationSearchProvider(_query), query: _query),
         ],
       ),
     );
+  }
+
+  void _setQuery(String q) {
+    _controller.text = q;
+    _controller.selection = TextSelection.collapsed(offset: q.length);
+    setState(() => _query = q.trim());
   }
 
   /// Rounded search pill with autofocus (styled plain [TextField], logic kept).
@@ -107,12 +118,43 @@ class _UserResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Empty query: suggest people to follow instead of a blank screen.
     if (query.isEmpty) {
-      return _Hint(
-        tr(
-          'Nhập tên hoặc username để tìm.',
-          'Enter a name or username to search.',
+      final suggested = ref.watch(suggestedUsersProvider);
+      return suggested.when(
+        loading: () => const LoadingView(),
+        error: (_, _) => _Hint(
+          tr('Nhập tên hoặc username để tìm.', 'Enter a name to search.'),
         ),
+        data: (users) {
+          if (users.isEmpty) {
+            return _Hint(
+              tr('Nhập tên hoặc username để tìm.', 'Enter a name to search.'),
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                ),
+                child: Text(
+                  tr('Gợi ý cho bạn', 'Suggested for you'),
+                  style: AppText.label.copyWith(
+                    color: AppColors.textTertiary,
+                    fontWeight: AppType.bold,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              ...users.take(15).map((u) => _userTile(context, u)),
+            ],
+          );
+        },
       );
     }
     final result = ref.watch(userSearchProvider(query));
@@ -145,14 +187,22 @@ class _UserResults extends ConsumerWidget {
 }
 
 class _PostResults extends ConsumerWidget {
-  const _PostResults({required this.provider, required this.query});
+  const _PostResults({
+    required this.provider,
+    required this.query,
+    this.emptyQuery,
+  });
   final ProviderListenable<AsyncValue<List<Post>>> provider;
   final String query;
+
+  /// Shown when the query is empty (e.g. trending hashtags), instead of a hint.
+  final Widget? emptyQuery;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (query.isEmpty) {
-      return _Hint(tr('Nhập từ khoá để tìm.', 'Enter a keyword to search.'));
+      return emptyQuery ??
+          _Hint(tr('Nhập từ khoá để tìm.', 'Enter a keyword to search.'));
     }
     final result = ref.watch(provider);
     return result.when(
@@ -195,6 +245,61 @@ class _PostResults extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Trending hashtags shown on the empty Hashtags tab; tapping one searches it.
+class _TrendingTags extends ConsumerWidget {
+  const _TrendingTags({required this.onPick});
+  final ValueChanged<String> onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tags = ref.watch(trendingHashtagsProvider).valueOrNull ?? const [];
+    if (tags.isEmpty) {
+      return _Hint(tr('Nhập từ khoá để tìm.', 'Enter a keyword to search.'));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      children: [
+        Text(
+          tr('Hashtag thịnh hành', 'Trending hashtags'),
+          style: AppText.label.copyWith(
+            color: AppColors.textTertiary,
+            fontWeight: AppType.bold,
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            for (final t in tags)
+              PressScale(
+                onTap: () => onPick(t),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.layer3,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    '#$t',
+                    style: AppText.label.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: AppType.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
